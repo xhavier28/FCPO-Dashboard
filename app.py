@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.colors
+from plotly.subplots import make_subplots
 
 DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
 YEAR_COLORS = {2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728"}
@@ -140,8 +141,10 @@ def build_spot_chart(df, year):
     return fig
 
 
-def build_term_structure_chart(df_term, year):
+def build_term_grid(df_term, year):
+    """4 rows (W1-W4) × 12 cols (Jan-Dec) — one mini curve per box."""
     col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
+
     year_rows = df_term[df_term["Week"].str.endswith(str(year))].reset_index(drop=True)
     n = len(year_rows)
     if n == 0:
@@ -150,24 +153,52 @@ def build_term_structure_chart(df_term, year):
     colorscale = plotly.colors.sample_colorscale(
         "Plasma", [i / max(n - 1, 1) for i in range(n)]
     )
-    fig = go.Figure()
-    for i, row in year_rows.iterrows():
-        y_vals = [row[col] for col in col_names]
-        fig.add_trace(go.Scatter(
-            x=col_names, y=y_vals,
-            mode="lines",
-            name=row["Week"],
-            line=dict(color=colorscale[i], width=1.5),
-            hovertemplate=row["Week"] + "<br>%{x}: MYR %{y:,.0f}<extra></extra>",
-        ))
+    week_color = {row["Week"]: colorscale[i] for i, row in year_rows.iterrows()}
+
+    # Parse each week label into (week_num 1-4, month_num 1-12)
+    grid = {}
+    for _, row in year_rows.iterrows():
+        parts = row["Week"].split()          # ["W2", "Mar", "2025"]
+        w_num = int(parts[0][1])             # 1-4
+        m_num = MONTH_ABBRS.index(parts[1]) + 1  # 1-12
+        grid[(w_num, m_num)] = row
+
+    fig = make_subplots(
+        rows=4, cols=12,
+        row_titles=["W1", "W2", "W3", "W4"],
+        column_titles=MONTH_ABBRS,
+        vertical_spacing=0.03,
+        horizontal_spacing=0.008,
+    )
+
+    for (w_num, m_num), row_data in grid.items():
+        y_vals = [row_data[col] for col in col_names]
+        color = week_color.get(row_data["Week"], "#636efa")
+        pairs = [(i, y) for i, y in enumerate(y_vals) if y is not None]
+        if not pairs:
+            continue
+        xs, ys = zip(*pairs)
+        fig.add_trace(
+            go.Scatter(
+                x=list(xs), y=list(ys),
+                mode="lines",
+                line=dict(color=color, width=1.5),
+                showlegend=False,
+                name=row_data["Week"],
+                hovertemplate=row_data["Week"] + "<br>%{x}: MYR %{y:,.0f}<extra></extra>",
+            ),
+            row=w_num, col=m_num,
+        )
+
+    fig.update_xaxes(showticklabels=False, showgrid=False, zeroline=False,
+                     showline=True, linecolor="#dddddd")
+    fig.update_yaxes(showticklabels=False, showgrid=False, zeroline=False,
+                     showline=True, linecolor="#dddddd")
     fig.update_layout(
-        title=f"{year} — Weekly Term Structure ({n} curves)",
-        xaxis=dict(title="Tenor", showgrid=True, gridcolor="#e0e0e0"),
-        yaxis=dict(title="Close (MYR)", showgrid=True, gridcolor="#e0e0e0"),
-        plot_bgcolor="white", height=450,
-        margin=dict(l=60, r=30, t=40, b=60),
+        plot_bgcolor="white", paper_bgcolor="white",
+        height=380,
+        margin=dict(l=60, r=30, t=50, b=20),
         showlegend=False,
-        hovermode="x",
     )
     return fig
 
@@ -264,13 +295,13 @@ with tab2:
     st.subheader(f"Spot Price — {selected_ts_year}")
     st.plotly_chart(build_spot_chart(df, selected_ts_year), use_container_width=True)
 
-    st.subheader(f"Term Structure — {selected_ts_year}")
+    st.subheader(f"Term Structure Grid — {selected_ts_year}")
     st.caption(
-        "Each line = one week's forward curve. "
-        "Color: blue/purple (Jan) → yellow (Dec) via Plasma scale. "
-        "Hover a line for week label and price."
+        "Each box = one week's forward curve (shape only — y-axis not to scale across boxes). "
+        "Columns = Jan–Dec · Rows = W1–W4 within each month. "
+        "Color: Plasma (blue/purple Jan → yellow Dec). Hover for week label and price."
     )
-    st.plotly_chart(build_term_structure_chart(df_term, selected_ts_year), use_container_width=True)
+    st.plotly_chart(build_term_grid(df_term, selected_ts_year), use_container_width=True)
 
     st.subheader("Weekly Data Table")
     st.caption(
