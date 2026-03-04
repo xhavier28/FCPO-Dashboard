@@ -5,6 +5,12 @@ import plotly.graph_objects as go
 DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
 YEAR_COLORS = {2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728"}
 
+
+def hex_to_rgba(hex_color, alpha):
+    h = hex_color.lstrip("#")
+    r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
 TICKVALS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335]
 TICKTEXT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -39,17 +45,25 @@ if not selected_years:
 
 fig = go.Figure()
 
+most_recent = max(selected_years)
+
 for year in selected_years:
-    yr_df = df[df["year"] == year].sort_values("doy")
+    yr_df = df[df["year"] == year].sort_values("doy").copy()
+    is_recent = year == most_recent
+    smoothed = yr_df["close"].rolling(window=5, min_periods=1, center=True).mean()
+    color = YEAR_COLORS[year] if is_recent else hex_to_rgba(YEAR_COLORS[year], 0.35)
+    line_width = 2.5 if is_recent else 1.5
     fig.add_trace(
         go.Scatter(
             x=yr_df["doy"],
-            y=yr_df["close"],
+            y=smoothed,
             mode="lines",
             name=str(year),
-            line=dict(color=YEAR_COLORS[year], width=2),
-            customdata=yr_df["date"].dt.strftime("%d %b %Y"),
-            hovertemplate="%{customdata}<br>MYR %{y:,.0f}<extra></extra>",
+            line=dict(color=color, width=line_width),
+            customdata=yr_df[["date", "close"]].assign(
+                date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
+            )[["date_fmt", "close"]].values,
+            hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
         )
     )
 
