@@ -113,90 +113,112 @@ def build_term_table(contracts):
     return df.sort_values("_sort").drop(columns="_sort").reset_index(drop=True)
 
 
-def build_spot_chart(df, year):
+def build_combined_chart(df, year, df_term):
+    """
+    Single figure, 2 rows, shared x-axis (doy), range-slider for scrolling.
+    Row 1: 5-day smoothed spot price (actual MYR scale).
+    Row 2: each week's term structure drawn as a normalised mini-curve
+            positioned at the week's day-of-year window — shape only.
+    Initial view: 6 months. Range slider scrolls both rows together.
+    """
+    col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
+
     yr_df = df[df["year"] == year].sort_values("doy").copy()
     smoothed = yr_df["close"].rolling(window=5, min_periods=1, center=True).mean()
-    fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=yr_df["doy"],
-        y=smoothed,
-        mode="lines",
-        name=str(year),
-        line=dict(color=YEAR_COLORS.get(year, "#636efa"), width=2.5),
-        customdata=yr_df[["date", "close"]].assign(
-            date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
-        )[["date_fmt", "close"]].values,
-        hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
-    ))
-    fig.update_layout(
-        title=f"{year} Spot Price (5-day smoothed)",
-        hovermode="x unified",
-        xaxis=dict(title="Month", tickvals=TICKVALS, ticktext=TICKTEXT,
-                   range=[1, 366], showgrid=True, gridcolor="#e0e0e0"),
-        yaxis=dict(title="Close (MYR)", showgrid=True, gridcolor="#e0e0e0"),
-        plot_bgcolor="white", height=300,
-        margin=dict(l=60, r=30, t=40, b=60),
-        showlegend=False,
-    )
-    return fig
-
-
-def build_term_grid(df_term, year):
-    """1 row × N cols (one box per week, left→right = Jan W1 → Dec W4)."""
-    col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
 
     year_rows = df_term[df_term["Week"].str.endswith(str(year))].reset_index(drop=True)
     n = len(year_rows)
-    if n == 0:
-        return go.Figure()
-
-    colorscale = plotly.colors.sample_colorscale(
-        "Plasma", [i / max(n - 1, 1) for i in range(n)]
-    )
 
     fig = make_subplots(
-        rows=1, cols=n,
-        horizontal_spacing=0.003,
+        rows=2, cols=1,
+        shared_xaxes=True,
+        row_heights=[0.70, 0.30],
+        vertical_spacing=0.04,
     )
 
-    for i, row_data in year_rows.iterrows():
-        y_vals = [row_data[col] for col in col_names]
-        pairs = [(j, y) for j, y in enumerate(y_vals) if y is not None]
-        if not pairs:
-            continue
-        xs, ys = zip(*pairs)
-        fig.add_trace(
-            go.Scatter(
-                x=list(xs), y=list(ys),
-                mode="lines",
-                line=dict(color=colorscale[i], width=1.5),
-                showlegend=False,
-                name=row_data["Week"],
-                hovertemplate=row_data["Week"] + "<br>%{x}: MYR %{y:,.0f}<extra></extra>",
-            ),
-            row=1, col=i + 1,
+    # --- Row 1: spot price ---
+    fig.add_trace(
+        go.Scatter(
+            x=yr_df["doy"], y=smoothed,
+            mode="lines",
+            line=dict(color=YEAR_COLORS.get(year, "#636efa"), width=2.5),
+            customdata=yr_df[["date", "close"]].assign(
+                date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
+            )[["date_fmt", "close"]].values,
+            hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
+            showlegend=False,
+            name="Spot",
+        ),
+        row=1, col=1,
+    )
+
+    # --- Row 2: mini normalised term-structure curves ---
+    if n > 0:
+        # Plasma truncated to [0, 0.78] → ends at warm orange, no bright yellow
+        colorscale = plotly.colors.sample_colorscale(
+            "Plasma", [i / max(n - 1, 1) * 0.78 for i in range(n)]
         )
 
-    # Add month label annotations every 4 boxes (start of each month)
-    for m_idx, abbr in enumerate(MONTH_ABBRS):
-        col_pos = m_idx * 4 + 1  # W1 of that month = subplot col index
-        if col_pos <= n:
-            x_frac = (col_pos - 1 + 0.5 * 4) / n  # centre of the 4 boxes
-            fig.add_annotation(
-                x=x_frac, y=1.08, xref="paper", yref="paper",
-                text=abbr, showarrow=False,
-                font=dict(size=9, color="#555555"),
+        for i, row_data in year_rows.iterrows():
+            parts = row_data["Week"].split()        # ["W2", "Mar", "2025"]
+            w_num = int(parts[0][1])                # 1-4
+            m_num = MONTH_ABBRS.index(parts[1]) + 1  # 1-12
+
+            # doy window for this week (6 days wide, 1-day gap between weeks)
+            week_start = TICKVALS[m_num - 1] + (w_num - 1) * 7
+            week_width = 6.0
+
+            y_raw = [row_data[col] for col in col_names]
+            pairs = [(j, y) for j, y in enumerate(y_raw) if y is not None]
+            if not pairs:
+                continue
+            tenor_idx, prices = zip(*pairs)
+            prices = list(prices)
+
+            # Normalise to [0, 1] — shape only
+            lo, hi = min(prices), max(prices)
+            norm = [(p - lo) / (hi - lo) if hi > lo else 0.5 for p in prices]
+
+            max_t = max(tenor_idx) or 1
+            x_pos = [week_start + (t / max_t) * week_width for t in tenor_idx]
+
+            hover = [f"{col_names[j]}: MYR {prices[k]:,.0f}"
+                     for k, j in enumerate(tenor_idx)]
+
+            fig.add_trace(
+                go.Scatter(
+                    x=x_pos, y=norm,
+                    mode="lines",
+                    line=dict(color=colorscale[i], width=1.5),
+                    showlegend=False,
+                    name=row_data["Week"],
+                    customdata=hover,
+                    hovertemplate=row_data["Week"] + "<br>%{customdata}<extra></extra>",
+                ),
+                row=2, col=1,
             )
 
-    fig.update_xaxes(showticklabels=False, showgrid=False, zeroline=False,
-                     showline=True, linecolor="#cccccc", linewidth=1)
-    fig.update_yaxes(showticklabels=False, showgrid=False, zeroline=False,
-                     showline=False)
     fig.update_layout(
+        hovermode="x",
         plot_bgcolor="white", paper_bgcolor="white",
-        height=160,
-        margin=dict(l=60, r=30, t=30, b=10),
+        height=520,
+        margin=dict(l=60, r=30, t=40, b=50),
         showlegend=False,
+        # shared x-axis: month ticks, initial 6-month window, range slider
+        xaxis=dict(
+            tickvals=TICKVALS, ticktext=TICKTEXT,
+            range=[1, 183],
+            showgrid=True, gridcolor="#e0e0e0",
+            rangeslider=dict(visible=True, thickness=0.04),
+        ),
+        yaxis=dict(
+            title="MYR", showgrid=True, gridcolor="#e0e0e0",
+        ),
+        yaxis2=dict(
+            showticklabels=False, showgrid=False,
+            zeroline=False, fixedrange=True,
+            range=[-0.15, 1.15],
+        ),
     )
     return fig
 
@@ -290,16 +312,13 @@ with tab2:
     years = available_years(contracts)
     selected_ts_year = st.selectbox("Year", options=years[::-1], index=0)
 
-    st.subheader(f"Spot Price — {selected_ts_year}")
-    st.plotly_chart(build_spot_chart(df, selected_ts_year), use_container_width=True)
-
-    st.subheader(f"Term Structure Grid — {selected_ts_year}")
     st.caption(
-        "48 boxes in one row, left → right = Jan W1 → Dec W4. "
-        "Each box shows the forward curve shape for that week (y-axis not to scale across boxes). "
-        "Color: Plasma (blue/purple Jan → yellow Dec). Hover a box for week label and prices."
+        "Top: 5-day smoothed spot price.  "
+        "Bottom: each sliver = one week's forward curve shape (y not to scale). "
+        "Drag the range bar or scroll to navigate — both panels move together. "
+        "Color: purple (Jan) → orange (Dec). Hover for week label and prices."
     )
-    st.plotly_chart(build_term_grid(df_term, selected_ts_year), use_container_width=True)
+    st.plotly_chart(build_combined_chart(df, selected_ts_year, df_term), use_container_width=True)
 
     st.subheader("Weekly Data Table")
     st.caption(
