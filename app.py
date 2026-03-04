@@ -1,9 +1,13 @@
+import os
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
+import plotly.colors
 
 DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
 YEAR_COLORS = {2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728"}
+TERM_DIR = "Raw Data/Term Structure"
+MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 
 def hex_to_rgba(hex_color, alpha):
@@ -28,8 +32,148 @@ def load_data(path):
     return df[["date", "year", "doy", "open", "high", "low", "close", "Volume"]]
 
 
-st.set_page_config(page_title="FCPO Year-over-Year", layout="wide")
-st.title("MYX FCPO Futures — Year-over-Year Price Comparison")
+@st.cache_data
+def load_contracts():
+    contracts = {}
+    if not os.path.exists(TERM_DIR):
+        return contracts
+    for year_dir in sorted(os.listdir(TERM_DIR)):
+        if not year_dir.isdigit():
+            continue
+        year = int(year_dir)
+        for m, abbr in enumerate(MONTH_ABBRS, 1):
+            yy = str(year)[2:]
+            path = f"{TERM_DIR}/{year_dir}/FCPO {abbr}{yy}_Daily.csv"
+            if not os.path.exists(path):
+                continue
+            df_c = pd.read_csv(path)
+            df_c["date"] = pd.to_datetime(
+                df_c["Timestamp (UTC)"], infer_datetime_format=True
+            ).dt.normalize()
+            series = df_c.set_index("date")["Close"]
+            contracts[(year, m)] = series[~series.index.duplicated(keep="last")]
+    return contracts
+
+
+def available_years(contracts):
+    return sorted({y for y, m in contracts.keys()})
+
+
+def front_month(date):
+    if date.day <= 15:
+        return (date.year, date.month)
+    else:
+        m = date.month + 1
+        y = date.year + (1 if m > 12 else 0)
+        return (y, m % 12 or 12)
+
+
+def add_months(ym, n):
+    y, m = ym
+    m += n
+    y += (m - 1) // 12
+    m = (m - 1) % 12 + 1
+    return (y, m)
+
+
+def build_term_table(contracts):
+    all_dates = sorted(set(d for s in contracts.values() for d in s.index))
+    all_dates = [d for d in all_dates if d >= pd.Timestamp("2023-01-01")]
+
+    def week_label(d):
+        w = ["W1", "W2", "W3", "W4"][(d.day - 1) // 7 if d.day <= 28 else 3]
+        return f"{w} {d.strftime('%b %Y')}"
+
+    rows = {}  # week_label → {col_index: [prices]}
+    for date in all_dates:
+        wl = week_label(date)
+        if wl not in rows:
+            rows[wl] = {i: [] for i in range(12)}
+        fm = front_month(date)
+        for i in range(12):
+            ym = add_months(fm, i)
+            if ym in contracts and date in contracts[ym].index:
+                rows[wl][i].append(contracts[ym][date])
+
+    col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
+    records = []
+    for wl, cols in rows.items():
+        row = {"Week": wl}
+        for i, col in enumerate(col_names):
+            vals = cols[i]
+            row[col] = round(sum(vals) / len(vals), 0) if vals else None
+        records.append(row)
+
+    df = pd.DataFrame(records)
+    df["_sort"] = (
+        pd.to_datetime(df["Week"].str.extract(r'(\w+ \d{4})')[0], format="%b %Y")
+        + pd.to_timedelta((df["Week"].str.extract(r'(W\d)')[0].str[1].astype(int) - 1) * 7, unit='d')
+    )
+    return df.sort_values("_sort").drop(columns="_sort").reset_index(drop=True)
+
+
+def build_spot_chart(df, year):
+    yr_df = df[df["year"] == year].sort_values("doy").copy()
+    smoothed = yr_df["close"].rolling(window=5, min_periods=1, center=True).mean()
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=yr_df["doy"],
+        y=smoothed,
+        mode="lines",
+        name=str(year),
+        line=dict(color=YEAR_COLORS.get(year, "#636efa"), width=2.5),
+        customdata=yr_df[["date", "close"]].assign(
+            date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
+        )[["date_fmt", "close"]].values,
+        hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
+    ))
+    fig.update_layout(
+        title=f"{year} Spot Price (5-day smoothed)",
+        hovermode="x unified",
+        xaxis=dict(title="Month", tickvals=TICKVALS, ticktext=TICKTEXT,
+                   range=[1, 366], showgrid=True, gridcolor="#e0e0e0"),
+        yaxis=dict(title="Close (MYR)", showgrid=True, gridcolor="#e0e0e0"),
+        plot_bgcolor="white", height=300,
+        margin=dict(l=60, r=30, t=40, b=60),
+        showlegend=False,
+    )
+    return fig
+
+
+def build_term_structure_chart(df_term, year):
+    col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
+    year_rows = df_term[df_term["Week"].str.endswith(str(year))].reset_index(drop=True)
+    n = len(year_rows)
+    if n == 0:
+        return go.Figure()
+
+    colorscale = plotly.colors.sample_colorscale(
+        "Plasma", [i / max(n - 1, 1) for i in range(n)]
+    )
+    fig = go.Figure()
+    for i, row in year_rows.iterrows():
+        y_vals = [row[col] for col in col_names]
+        fig.add_trace(go.Scatter(
+            x=col_names, y=y_vals,
+            mode="lines",
+            name=row["Week"],
+            line=dict(color=colorscale[i], width=1.5),
+            hovertemplate=row["Week"] + "<br>%{x}: MYR %{y:,.0f}<extra></extra>",
+        ))
+    fig.update_layout(
+        title=f"{year} — Weekly Term Structure ({n} curves)",
+        xaxis=dict(title="Tenor", showgrid=True, gridcolor="#e0e0e0"),
+        yaxis=dict(title="Close (MYR)", showgrid=True, gridcolor="#e0e0e0"),
+        plot_bgcolor="white", height=450,
+        margin=dict(l=60, r=30, t=40, b=60),
+        showlegend=False,
+        hovermode="x",
+    )
+    return fig
+
+
+st.set_page_config(page_title="FCPO Dashboard", layout="wide")
+st.title("MYX FCPO Futures")
 
 df = load_data(DATA_PATH)
 
@@ -39,72 +183,97 @@ selected_years = st.sidebar.multiselect(
     default=[2023, 2024, 2025, 2026],
 )
 
-if not selected_years:
-    st.warning("Select at least one year from the sidebar.")
-    st.stop()
+tab1, tab2 = st.tabs(["Year-over-Year", "Term Structure"])
 
-fig = go.Figure()
+with tab1:
+    if not selected_years:
+        st.warning("Select at least one year from the sidebar.")
+    else:
+        fig = go.Figure()
 
-most_recent = max(selected_years)
+        most_recent = max(selected_years)
 
-for year in selected_years:
-    yr_df = df[df["year"] == year].sort_values("doy").copy()
-    is_recent = year == most_recent
-    smoothed = yr_df["close"].rolling(window=5, min_periods=1, center=True).mean()
-    color = YEAR_COLORS[year] if is_recent else hex_to_rgba(YEAR_COLORS[year], 0.35)
-    line_width = 2.5 if is_recent else 1.5
-    fig.add_trace(
-        go.Scatter(
-            x=yr_df["doy"],
-            y=smoothed,
-            mode="lines",
-            name=str(year),
-            line=dict(color=color, width=line_width),
-            customdata=yr_df[["date", "close"]].assign(
-                date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
-            )[["date_fmt", "close"]].values,
-            hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
+        for year in selected_years:
+            yr_df = df[df["year"] == year].sort_values("doy").copy()
+            is_recent = year == most_recent
+            smoothed = yr_df["close"].rolling(window=5, min_periods=1, center=True).mean()
+            color = YEAR_COLORS[year] if is_recent else hex_to_rgba(YEAR_COLORS[year], 0.35)
+            line_width = 2.5 if is_recent else 1.5
+            fig.add_trace(
+                go.Scatter(
+                    x=yr_df["doy"],
+                    y=smoothed,
+                    mode="lines",
+                    name=str(year),
+                    line=dict(color=color, width=line_width),
+                    customdata=yr_df[["date", "close"]].assign(
+                        date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
+                    )[["date_fmt", "close"]].values,
+                    hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
+                )
+            )
+
+        fig.update_layout(
+            hovermode="x unified",
+            xaxis=dict(
+                title="Month",
+                tickvals=TICKVALS,
+                ticktext=TICKTEXT,
+                range=[1, 366],
+                showgrid=True,
+                gridcolor="#e0e0e0",
+            ),
+            yaxis=dict(
+                title="Close (MYR)",
+                showgrid=True,
+                gridcolor="#e0e0e0",
+            ),
+            legend=dict(title="Year", orientation="v"),
+            plot_bgcolor="white",
+            height=520,
+            margin=dict(l=60, r=30, t=30, b=60),
         )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("Summary Statistics")
+
+        stat_rows = []
+        for year in selected_years:
+            yr_df = df[df["year"] == year]
+            stat_rows.append(
+                {
+                    "Year": year,
+                    "Trading Days": len(yr_df),
+                    "Min Close": f"MYR {yr_df['close'].min():,.0f}",
+                    "Max Close": f"MYR {yr_df['close'].max():,.0f}",
+                    "Latest Close": f"MYR {yr_df.sort_values('date')['close'].iloc[-1]:,.0f}",
+                    "Avg Volume": f"{yr_df['Volume'].mean():,.0f}",
+                }
+            )
+
+        st.dataframe(pd.DataFrame(stat_rows).set_index("Year"), use_container_width=True)
+
+with tab2:
+    contracts = load_contracts()
+    df_term = build_term_table(contracts)
+
+    years = available_years(contracts)
+    selected_ts_year = st.selectbox("Year", options=years[::-1], index=0)
+
+    st.subheader(f"Spot Price — {selected_ts_year}")
+    st.plotly_chart(build_spot_chart(df, selected_ts_year), use_container_width=True)
+
+    st.subheader(f"Term Structure — {selected_ts_year}")
+    st.caption(
+        "Each line = one week's forward curve. "
+        "Color: blue/purple (Jan) → yellow (Dec) via Plasma scale. "
+        "Hover a line for week label and price."
     )
+    st.plotly_chart(build_term_structure_chart(df_term, selected_ts_year), use_container_width=True)
 
-fig.update_layout(
-    hovermode="x unified",
-    xaxis=dict(
-        title="Month",
-        tickvals=TICKVALS,
-        ticktext=TICKTEXT,
-        range=[1, 366],
-        showgrid=True,
-        gridcolor="#e0e0e0",
-    ),
-    yaxis=dict(
-        title="Close (MYR)",
-        showgrid=True,
-        gridcolor="#e0e0e0",
-    ),
-    legend=dict(title="Year", orientation="v"),
-    plot_bgcolor="white",
-    height=520,
-    margin=dict(l=60, r=30, t=30, b=60),
-)
-
-st.plotly_chart(fig, use_container_width=True)
-
-# Summary stats table
-st.subheader("Summary Statistics")
-
-rows = []
-for year in selected_years:
-    yr_df = df[df["year"] == year]
-    rows.append(
-        {
-            "Year": year,
-            "Trading Days": len(yr_df),
-            "Min Close": f"MYR {yr_df['close'].min():,.0f}",
-            "Max Close": f"MYR {yr_df['close'].max():,.0f}",
-            "Latest Close": f"MYR {yr_df.sort_values('date')['close'].iloc[-1]:,.0f}",
-            "Avg Volume": f"{yr_df['Volume'].mean():,.0f}",
-        }
+    st.subheader("Weekly Data Table")
+    st.caption(
+        "Average daily Close per week per contract. Front month rolls on the 16th."
     )
-
-st.dataframe(pd.DataFrame(rows).set_index("Year"), use_container_width=True)
+    st.dataframe(df_term.set_index("Week"), use_container_width=True)
