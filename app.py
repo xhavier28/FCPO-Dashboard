@@ -142,7 +142,7 @@ def build_spot_chart(df, year):
 
 
 def build_term_grid(df_term, year):
-    """4 rows (W1-W4) × 12 cols (Jan-Dec) — one mini curve per box."""
+    """1 row × N cols (one box per week, left→right = Jan W1 → Dec W4)."""
     col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
 
     year_rows = df_term[df_term["Week"].str.endswith(str(year))].reset_index(drop=True)
@@ -153,28 +153,15 @@ def build_term_grid(df_term, year):
     colorscale = plotly.colors.sample_colorscale(
         "Plasma", [i / max(n - 1, 1) for i in range(n)]
     )
-    week_color = {row["Week"]: colorscale[i] for i, row in year_rows.iterrows()}
-
-    # Parse each week label into (week_num 1-4, month_num 1-12)
-    grid = {}
-    for _, row in year_rows.iterrows():
-        parts = row["Week"].split()          # ["W2", "Mar", "2025"]
-        w_num = int(parts[0][1])             # 1-4
-        m_num = MONTH_ABBRS.index(parts[1]) + 1  # 1-12
-        grid[(w_num, m_num)] = row
 
     fig = make_subplots(
-        rows=4, cols=12,
-        row_titles=["W1", "W2", "W3", "W4"],
-        column_titles=MONTH_ABBRS,
-        vertical_spacing=0.03,
-        horizontal_spacing=0.008,
+        rows=1, cols=n,
+        horizontal_spacing=0.003,
     )
 
-    for (w_num, m_num), row_data in grid.items():
+    for i, row_data in year_rows.iterrows():
         y_vals = [row_data[col] for col in col_names]
-        color = week_color.get(row_data["Week"], "#636efa")
-        pairs = [(i, y) for i, y in enumerate(y_vals) if y is not None]
+        pairs = [(j, y) for j, y in enumerate(y_vals) if y is not None]
         if not pairs:
             continue
         xs, ys = zip(*pairs)
@@ -182,22 +169,33 @@ def build_term_grid(df_term, year):
             go.Scatter(
                 x=list(xs), y=list(ys),
                 mode="lines",
-                line=dict(color=color, width=1.5),
+                line=dict(color=colorscale[i], width=1.5),
                 showlegend=False,
                 name=row_data["Week"],
                 hovertemplate=row_data["Week"] + "<br>%{x}: MYR %{y:,.0f}<extra></extra>",
             ),
-            row=w_num, col=m_num,
+            row=1, col=i + 1,
         )
 
+    # Add month label annotations every 4 boxes (start of each month)
+    for m_idx, abbr in enumerate(MONTH_ABBRS):
+        col_pos = m_idx * 4 + 1  # W1 of that month = subplot col index
+        if col_pos <= n:
+            x_frac = (col_pos - 1 + 0.5 * 4) / n  # centre of the 4 boxes
+            fig.add_annotation(
+                x=x_frac, y=1.08, xref="paper", yref="paper",
+                text=abbr, showarrow=False,
+                font=dict(size=9, color="#555555"),
+            )
+
     fig.update_xaxes(showticklabels=False, showgrid=False, zeroline=False,
-                     showline=True, linecolor="#dddddd")
+                     showline=True, linecolor="#cccccc", linewidth=1)
     fig.update_yaxes(showticklabels=False, showgrid=False, zeroline=False,
-                     showline=True, linecolor="#dddddd")
+                     showline=False)
     fig.update_layout(
         plot_bgcolor="white", paper_bgcolor="white",
-        height=380,
-        margin=dict(l=60, r=30, t=50, b=20),
+        height=160,
+        margin=dict(l=60, r=30, t=30, b=10),
         showlegend=False,
     )
     return fig
@@ -297,9 +295,9 @@ with tab2:
 
     st.subheader(f"Term Structure Grid — {selected_ts_year}")
     st.caption(
-        "Each box = one week's forward curve (shape only — y-axis not to scale across boxes). "
-        "Columns = Jan–Dec · Rows = W1–W4 within each month. "
-        "Color: Plasma (blue/purple Jan → yellow Dec). Hover for week label and price."
+        "48 boxes in one row, left → right = Jan W1 → Dec W4. "
+        "Each box shows the forward curve shape for that week (y-axis not to scale across boxes). "
+        "Color: Plasma (blue/purple Jan → yellow Dec). Hover a box for week label and prices."
     )
     st.plotly_chart(build_term_grid(df_term, selected_ts_year), use_container_width=True)
 
