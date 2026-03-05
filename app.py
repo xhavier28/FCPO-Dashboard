@@ -355,7 +355,7 @@ def build_combined_chart(df, year, df_term, compare_year=None):
 
 
 st.set_page_config(page_title="FCPO Dashboard", layout="wide")
-st.title("MYX FCPO Futures")
+st.title("Investasi Sinergi Indonesia - MYX FCPO Futures Dashboard")
 
 df = load_data(DATA_PATH)
 
@@ -468,3 +468,13 @@ with tab2:
         "Average daily Close per week per contract. Front month rolls on the 16th."
     )
     st.dataframe(df_term.set_index("Week"), use_container_width=True)
+
+    import io
+    _buf = io.BytesIO()
+    df_term.set_index("Week").to_excel(_buf, engine="openpyxl")
+    st.download_button(
+        label="Download as Excel",
+        data=_buf.getvalue(),
+        file_name="fcpo_weekly_term_structure.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
