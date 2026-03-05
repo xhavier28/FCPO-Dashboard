@@ -6,7 +6,10 @@ import plotly.colors
 from plotly.subplots import make_subplots
 
 DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
-YEAR_COLORS = {2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728"}
+YEAR_COLORS = {
+    2020: "#9467bd", 2021: "#8c564b", 2022: "#e377c2",
+    2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728",
+}
 TERM_DIR = "Raw Data/Term Structure"
 SD_DIR   = "Raw Data/Stock and Production"
 MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -45,7 +48,7 @@ def load_data(path):
     df["date"] = pd.to_datetime(df["date"])
     df["year"] = df["date"].dt.year
     df["doy"] = df["date"].dt.dayofyear
-    df = df[df["year"].isin([2023, 2024, 2025, 2026])]
+    df = df[df["year"].isin([2020, 2021, 2022, 2023, 2024, 2025, 2026])]
     return df[["date", "year", "doy", "open", "high", "low", "close", "Volume"]]
 
 
@@ -95,7 +98,7 @@ def add_months(ym, n):
 
 def build_term_table(contracts):
     all_dates = sorted(set(d for s in contracts.values() for d in s.index))
-    all_dates = [d for d in all_dates if d >= pd.Timestamp("2023-01-01")]
+    all_dates = [d for d in all_dates if d >= pd.Timestamp("2020-01-01")]
 
     def week_label(d):
         w = ["W1", "W2", "W3", "W4"][(d.day - 1) // 7 if d.day <= 28 else 3]
@@ -518,8 +521,8 @@ tab1, tab2, tab3 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand
 with tab1:
     selected_years = st.multiselect(
         "Select Years",
-        options=[2023, 2024, 2025, 2026],
-        default=[2023, 2024, 2025, 2026],
+        options=[2020, 2021, 2022, 2023, 2024, 2025, 2026],
+        default=[2020, 2021, 2022, 2023, 2024, 2025, 2026],
     )
     if not selected_years:
         st.warning("Select at least one year.")
