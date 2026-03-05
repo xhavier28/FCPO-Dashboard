@@ -16,6 +16,16 @@ def hex_to_rgba(hex_color, alpha):
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
     return f"rgba({r},{g},{b},{alpha})"
 
+
+def color_with_alpha(color, alpha):
+    """Add alpha to hex (#rrggbb) or plotly rgb(...) color strings."""
+    if color.startswith("#"):
+        return hex_to_rgba(color, alpha)
+    if color.startswith("rgb("):
+        inner = color[4:-1]
+        return f"rgba({inner},{alpha})"
+    return color
+
 TICKVALS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335]
 TICKTEXT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
@@ -141,12 +151,18 @@ def build_combined_chart(df, year, df_term, compare_year=None):
         vertical_spacing=0.04,
     )
 
+    # When comparing, most-recent year is bold (alpha=1); earlier year is dimmed (alpha=0.35)
+    recent_year = max(year, compare_year) if compare_year is not None else year
+    primary_alpha = 1.0 if year == recent_year else 0.35
+    primary_width = 2.5 if year == recent_year else 1.5
+    primary_color = color_with_alpha(YEAR_COLORS.get(year, "#636efa"), primary_alpha)
+
     # --- Row 1: spot price ---
     fig.add_trace(
         go.Scatter(
             x=yr_df["doy"], y=smoothed,
             mode="lines",
-            line=dict(color=YEAR_COLORS.get(year, "#636efa"), width=2.5),
+            line=dict(color=primary_color, width=primary_width),
             customdata=yr_df[["date", "close"]].assign(
                 date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
             )[["date_fmt", "close"]].values,
@@ -158,13 +174,16 @@ def build_combined_chart(df, year, df_term, compare_year=None):
     )
 
     if compare_year is not None:
+        comp_alpha = 1.0 if compare_year == recent_year else 0.35
+        comp_width = 2.5 if compare_year == recent_year else 1.5
+        comp_color = color_with_alpha(YEAR_COLORS.get(compare_year, "#aaaaaa"), comp_alpha)
         comp_df = df[df["year"] == compare_year].sort_values("doy").copy()
         comp_smoothed = comp_df["close"].rolling(window=5, min_periods=1, center=True).mean()
         fig.add_trace(
             go.Scatter(
                 x=comp_df["doy"], y=comp_smoothed,
                 mode="lines",
-                line=dict(color=YEAR_COLORS.get(compare_year, "#aaaaaa"), width=2, dash="dash"),
+                line=dict(color=comp_color, width=comp_width),
                 customdata=comp_df[["date", "close"]].assign(
                     date_fmt=comp_df["date"].dt.strftime("%d %b %Y")
                 )[["date_fmt", "close"]].values,
@@ -176,6 +195,8 @@ def build_combined_chart(df, year, df_term, compare_year=None):
         )
 
     # --- Row 2: mini normalised term-structure curves ---
+    sliver_alpha = 1.0 if year == recent_year else 0.35
+    sliver_width = 1.5 if year == recent_year else 1.0
     if n > 0:
         # Turbo [0.05, 0.95] → vivid cyan→green→yellow→orange→red, pops on dark bg
         colorscale = plotly.colors.sample_colorscale(
@@ -212,7 +233,7 @@ def build_combined_chart(df, year, df_term, compare_year=None):
                 go.Scatter(
                     x=x_pos, y=norm,
                     mode="lines",
-                    line=dict(color=colorscale[i], width=1.5),
+                    line=dict(color=color_with_alpha(colorscale[i], sliver_alpha), width=sliver_width),
                     showlegend=False,
                     name=row_data["Week"],
                     customdata=hover,
@@ -221,8 +242,10 @@ def build_combined_chart(df, year, df_term, compare_year=None):
                 row=2, col=1,
             )
 
-    # --- Row 2: comparison year slivers (dashed) ---
+    # --- Row 2: comparison year slivers ---
     if compare_year is not None:
+        comp_sliver_alpha = 1.0 if compare_year == recent_year else 0.35
+        comp_sliver_width = 1.5 if compare_year == recent_year else 1.0
         comp_rows = df_term[df_term["Week"].str.endswith(str(compare_year))].reset_index(drop=True)
         comp_n = len(comp_rows)
         if comp_n > 0:
@@ -257,7 +280,7 @@ def build_combined_chart(df, year, df_term, compare_year=None):
                     go.Scatter(
                         x=x_pos, y=norm,
                         mode="lines",
-                        line=dict(color=comp_colorscale[i], width=1.5, dash="dash"),
+                        line=dict(color=color_with_alpha(comp_colorscale[i], comp_sliver_alpha), width=comp_sliver_width),
                         showlegend=False,
                         name=row_data["Week"],
                         customdata=hover,
