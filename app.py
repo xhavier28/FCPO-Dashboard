@@ -19,6 +19,11 @@ def hex_to_rgba(hex_color, alpha):
 TICKVALS = [1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335]
 TICKTEXT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
+DARK_BG    = "#0e1117"
+DARK_PLOT  = "#262730"
+DARK_GRID  = "#3a3a4a"
+DARK_TEXT  = "#fafafa"
+
 
 @st.cache_data
 def load_data(path):
@@ -154,9 +159,9 @@ def build_combined_chart(df, year, df_term):
 
     # --- Row 2: mini normalised term-structure curves ---
     if n > 0:
-        # Plasma truncated to [0, 0.78] → ends at warm orange, no bright yellow
+        # Turbo [0.05, 0.95] → vivid cyan→green→yellow→orange→red, pops on dark bg
         colorscale = plotly.colors.sample_colorscale(
-            "Plasma", [i / max(n - 1, 1) * 0.78 for i in range(n)]
+            "Turbo", [0.05 + i / max(n - 1, 1) * 0.90 for i in range(n)]
         )
 
         for i, row_data in year_rows.iterrows():
@@ -198,21 +203,41 @@ def build_combined_chart(df, year, df_term):
                 row=2, col=1,
             )
 
+    # Build week-level tick labels: "W1 Jan", "W2", "W3", "W4", "W1 Feb", ...
+    week_tickvals, week_ticktext = [], []
+    for mi in range(12):
+        for w in range(4):
+            doy = TICKVALS[mi] + w * 7
+            week_tickvals.append(doy)
+            week_ticktext.append(f"W{w+1} {MONTH_ABBRS[mi]}" if w == 0 else f"W{w+1}")
+
+    # With shared_xaxes=True on 2 rows: xaxis = row1 (hidden), xaxis2 = row2 (visible bottom)
+    # Tick labels and range must be set on xaxis2; dragmode='pan' locks zoom width
     fig.update_layout(
         hovermode="x",
-        plot_bgcolor="white", paper_bgcolor="white",
-        height=520,
-        margin=dict(l=60, r=30, t=40, b=50),
+        dragmode="pan",
+        plot_bgcolor=DARK_PLOT, paper_bgcolor=DARK_BG,
+        font=dict(color=DARK_TEXT),
+        height=540,
+        margin=dict(l=60, r=30, t=40, b=90),
         showlegend=False,
-        # shared x-axis: month ticks, initial 6-month window, range slider
         xaxis=dict(
-            tickvals=TICKVALS, ticktext=TICKTEXT,
-            range=[1, 183],
-            showgrid=True, gridcolor="#e0e0e0",
-            rangeslider=dict(visible=True, thickness=0.04),
+            showgrid=True, gridcolor=DARK_GRID,
+            showticklabels=False,
+            minallowed=1, maxallowed=366,
+        ),
+        xaxis2=dict(
+            tickvals=week_tickvals, ticktext=week_ticktext,
+            range=[1, 122],
+            minallowed=1, maxallowed=366,
+            showgrid=True, gridcolor=DARK_GRID,
+            tickangle=-45,
+            tickfont=dict(color=DARK_TEXT),
+            rangeslider=dict(visible=False),
         ),
         yaxis=dict(
-            title="MYR", showgrid=True, gridcolor="#e0e0e0",
+            title="MYR", showgrid=True, gridcolor=DARK_GRID,
+            tickfont=dict(color=DARK_TEXT),
         ),
         yaxis2=dict(
             showticklabels=False, showgrid=False,
@@ -228,17 +253,16 @@ st.title("MYX FCPO Futures")
 
 df = load_data(DATA_PATH)
 
-selected_years = st.sidebar.multiselect(
-    "Select Years",
-    options=[2023, 2024, 2025, 2026],
-    default=[2023, 2024, 2025, 2026],
-)
-
 tab1, tab2 = st.tabs(["Year-over-Year", "Term Structure"])
 
 with tab1:
+    selected_years = st.multiselect(
+        "Select Years",
+        options=[2023, 2024, 2025, 2026],
+        default=[2023, 2024, 2025, 2026],
+    )
     if not selected_years:
-        st.warning("Select at least one year from the sidebar.")
+        st.warning("Select at least one year.")
     else:
         fig = go.Figure()
 
@@ -266,21 +290,22 @@ with tab1:
 
         fig.update_layout(
             hovermode="x unified",
+            plot_bgcolor=DARK_PLOT, paper_bgcolor=DARK_BG,
+            font=dict(color=DARK_TEXT),
             xaxis=dict(
                 title="Month",
                 tickvals=TICKVALS,
                 ticktext=TICKTEXT,
                 range=[1, 366],
                 showgrid=True,
-                gridcolor="#e0e0e0",
+                gridcolor=DARK_GRID,
             ),
             yaxis=dict(
                 title="Close (MYR)",
                 showgrid=True,
-                gridcolor="#e0e0e0",
+                gridcolor=DARK_GRID,
             ),
             legend=dict(title="Year", orientation="v"),
-            plot_bgcolor="white",
             height=520,
             margin=dict(l=60, r=30, t=30, b=60),
         )
