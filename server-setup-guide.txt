@@ -1,0 +1,151 @@
+========================================================
+  FCPO DASHBOARD — WINDOWS SERVER DEPLOYMENT GUIDE
+  Investasi Sinergi Indonesia
+========================================================
+
+STATUS: IN PROGRESS (prerequisites not yet complete)
+
+--------------------------------------------------------
+PREREQUISITES (complete these first)
+--------------------------------------------------------
+
+1. DOMAIN NAME (required for HTTPS)
+   - Buy one (~$10-15/yr): Namecheap, Porkbun, GoDaddy
+   - Free option: https://www.duckdns.org
+     e.g. myisi.duckdns.org
+   - After getting domain: point A record to server's public IP
+   - Wait up to 30 min for DNS to propagate
+
+2. FIREWALL PORTS
+   - Open inbound TCP port 80  (for SSL certificate verification)
+   - Open inbound TCP port 443 (for HTTPS traffic)
+   - Must be open at TWO levels:
+     a) Windows Defender Firewall (on the server itself)
+     b) Hosting provider firewall / security group
+
+--------------------------------------------------------
+STEP 1 — INSTALL PYTHON 3
+--------------------------------------------------------
+Download: https://www.python.org/downloads/ (version 3.11+)
+IMPORTANT: Check "Add Python to PATH" during install
+
+Verify in Command Prompt (run as Administrator):
+  python --version
+  pip --version
+
+--------------------------------------------------------
+STEP 2 — INSTALL GIT
+--------------------------------------------------------
+Download: https://git-scm.com/download/win
+Install with all defaults.
+
+Verify:
+  git --version
+
+--------------------------------------------------------
+STEP 3 — CLONE REPO AND INSTALL DEPENDENCIES
+--------------------------------------------------------
+Open Command Prompt as Administrator:
+
+  cd C:\
+  git clone https://github.com/xhavier28/FCPO-Dashboard.git FCPOApp
+  cd FCPOApp
+  pip install -r requirements.txt
+
+Create the secrets file (this file is NOT in git):
+  Location: C:\FCPOApp\.streamlit\secrets.toml
+  Content:
+    [auth]
+    username = "ISI"
+    password = "ISI1234"
+
+--------------------------------------------------------
+STEP 4 — TEST THE APP
+--------------------------------------------------------
+  python -m streamlit run app.py --server.port 8505 --server.headless true
+
+Open http://localhost:8505 on the server.
+Login page should appear. Press Ctrl+C to stop when done.
+
+--------------------------------------------------------
+STEP 5 — INSTALL NSSM (Run App as Windows Service)
+--------------------------------------------------------
+NSSM keeps Streamlit running in the background and
+restarts it automatically on crash or reboot.
+
+Download: https://nssm.cc/download (get 64-bit version)
+Extract to: C:\nssm\
+
+Install the service:
+  C:\nssm\win64\nssm.exe install FCPODashboard
+
+In the NSSM window that opens:
+  Path            : <full path to python.exe>
+                    (run "where python" to find it)
+                    e.g. C:\Python311\python.exe
+  Startup dir     : C:\FCPOApp
+  Arguments       : -m streamlit run app.py --server.port 8505 --server.headless true
+
+Click "Install Service", then start it:
+  C:\nssm\win64\nssm.exe start FCPODashboard
+
+Verify at http://localhost:8505
+
+--------------------------------------------------------
+STEP 6 — INSTALL CADDY (Reverse Proxy + Auto HTTPS)
+--------------------------------------------------------
+Caddy automatically gets and renews the HTTPS certificate.
+No manual certificate management needed.
+
+Download: https://caddyserver.com/download
+  Select: Windows, amd64
+Place caddy.exe in: C:\Caddy\
+
+Create file C:\Caddy\Caddyfile with this content:
+  yourdomain.com {
+      reverse_proxy localhost:8505
+  }
+  (replace yourdomain.com with your actual domain)
+
+Install and start Caddy as a Windows Service:
+  cd C:\Caddy
+  caddy service install
+  net start caddy
+
+On first start, Caddy automatically gets the HTTPS
+certificate from Let's Encrypt. This takes ~30 seconds.
+
+--------------------------------------------------------
+STEP 7 — OPEN WINDOWS FIREWALL PORTS
+--------------------------------------------------------
+1. Open "Windows Defender Firewall with Advanced Security"
+2. Click "Inbound Rules" → "New Rule"
+3. Select "Port" → TCP → 80
+4. Allow the connection → apply to all profiles
+5. Repeat for port 443
+
+Also check your hosting provider's firewall (see Prerequisites).
+
+--------------------------------------------------------
+UPDATING THE APP IN THE FUTURE
+--------------------------------------------------------
+When new changes are pushed to GitHub:
+
+  cd C:\FCPOApp
+  git pull
+  C:\nssm\win64\nssm.exe restart FCPODashboard
+
+--------------------------------------------------------
+FINAL VERIFICATION CHECKLIST
+--------------------------------------------------------
+[ ] Domain A record points to server public IP
+[ ] http://localhost:8505 works on the server
+[ ] FCPODashboard Windows service is running
+[ ] Caddy Windows service is running
+[ ] Ports 80 and 443 open in Windows Firewall
+[ ] Ports 80 and 443 open at provider/datacenter level
+[ ] https://yourdomain.com shows the login page
+[ ] Login with ISI / ISI1234 works
+[ ] Server reboot test: both services restart automatically
+
+========================================================
