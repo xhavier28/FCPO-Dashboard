@@ -354,8 +354,65 @@ def build_combined_chart(df, year, df_term, compare_year=None):
     return fig
 
 
+def show_login_page():
+    st.markdown(
+        f"""
+        <style>
+        .login-box {{
+            max-width: 380px;
+            margin: 80px auto 0 auto;
+            padding: 2.5rem;
+            background: {DARK_PLOT};
+            border-radius: 12px;
+            border: 1px solid {DARK_GRID};
+        }}
+        .login-title {{
+            text-align: center;
+            color: {DARK_TEXT};
+            font-size: 1.15rem;
+            margin-bottom: 0.3rem;
+        }}
+        .login-subtitle {{
+            text-align: center;
+            color: #aaaaaa;
+            font-size: 0.85rem;
+            margin-bottom: 1.8rem;
+        }}
+        </style>
+        <div class="login-box">
+          <div class="login-title"><strong>Investasi Sinergi Indonesia</strong></div>
+          <div class="login-subtitle">MYX FCPO Futures Dashboard</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    _, col, _ = st.columns([1, 2, 1])
+    with col:
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login", use_container_width=True):
+            if (
+                username == st.secrets["auth"]["username"]
+                and password == st.secrets["auth"]["password"]
+            ):
+                st.session_state["authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect username or password.")
+
+
 st.set_page_config(page_title="FCPO Dashboard", layout="wide")
+
+if not st.session_state.get("authenticated"):
+    show_login_page()
+    st.stop()
+
 st.title("Investasi Sinergi Indonesia - MYX FCPO Futures Dashboard")
+
+with st.sidebar:
+    if st.button("Logout"):
+        st.session_state["authenticated"] = False
+        st.rerun()
 
 df = load_data(DATA_PATH)
 

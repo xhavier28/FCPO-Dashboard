@@ -23,6 +23,9 @@ Thumbs.db
 # Misc
 *.log
 
+# Streamlit secrets (never commit credentials)
+.streamlit/secrets.toml
+
 # Claude Code workspace
 .claude/
 
