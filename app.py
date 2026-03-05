@@ -118,7 +118,7 @@ def build_term_table(contracts):
     return df.sort_values("_sort").drop(columns="_sort").reset_index(drop=True)
 
 
-def build_combined_chart(df, year, df_term):
+def build_combined_chart(df, year, df_term, compare_year=None):
     """
     Single figure, 2 rows, shared x-axis (doy), range-slider for scrolling.
     Row 1: 5-day smoothed spot price (actual MYR scale).
@@ -151,11 +151,29 @@ def build_combined_chart(df, year, df_term):
                 date_fmt=yr_df["date"].dt.strftime("%d %b %Y")
             )[["date_fmt", "close"]].values,
             hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
-            showlegend=False,
-            name="Spot",
+            showlegend=compare_year is not None,
+            name=str(year),
         ),
         row=1, col=1,
     )
+
+    if compare_year is not None:
+        comp_df = df[df["year"] == compare_year].sort_values("doy").copy()
+        comp_smoothed = comp_df["close"].rolling(window=5, min_periods=1, center=True).mean()
+        fig.add_trace(
+            go.Scatter(
+                x=comp_df["doy"], y=comp_smoothed,
+                mode="lines",
+                line=dict(color=YEAR_COLORS.get(compare_year, "#aaaaaa"), width=2, dash="dash"),
+                customdata=comp_df[["date", "close"]].assign(
+                    date_fmt=comp_df["date"].dt.strftime("%d %b %Y")
+                )[["date_fmt", "close"]].values,
+                hovertemplate="%{customdata[0]}<br>MYR %{customdata[1]:,.0f}<extra></extra>",
+                showlegend=True,
+                name=str(compare_year),
+            ),
+            row=1, col=1,
+        )
 
     # --- Row 2: mini normalised term-structure curves ---
     if n > 0:
@@ -203,6 +221,51 @@ def build_combined_chart(df, year, df_term):
                 row=2, col=1,
             )
 
+    # --- Row 2: comparison year slivers (dashed) ---
+    if compare_year is not None:
+        comp_rows = df_term[df_term["Week"].str.endswith(str(compare_year))].reset_index(drop=True)
+        comp_n = len(comp_rows)
+        if comp_n > 0:
+            comp_colorscale = plotly.colors.sample_colorscale(
+                "Turbo", [0.05 + i / max(comp_n - 1, 1) * 0.90 for i in range(comp_n)]
+            )
+            for i, row_data in comp_rows.iterrows():
+                parts = row_data["Week"].split()
+                w_num = int(parts[0][1])
+                m_num = MONTH_ABBRS.index(parts[1]) + 1
+
+                week_start = TICKVALS[m_num - 1] + (w_num - 1) * 7
+                week_width = 6.0
+
+                y_raw = [row_data[col] for col in col_names]
+                pairs = [(j, y) for j, y in enumerate(y_raw) if y is not None]
+                if not pairs:
+                    continue
+                tenor_idx, prices = zip(*pairs)
+                prices = list(prices)
+
+                lo, hi = min(prices), max(prices)
+                norm = [(p - lo) / (hi - lo) if hi > lo else 0.5 for p in prices]
+
+                max_t = max(tenor_idx) or 1
+                x_pos = [week_start + (t / max_t) * week_width for t in tenor_idx]
+
+                hover = [f"{col_names[j]}: MYR {prices[k]:,.0f}"
+                         for k, j in enumerate(tenor_idx)]
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=x_pos, y=norm,
+                        mode="lines",
+                        line=dict(color=comp_colorscale[i], width=1.5, dash="dash"),
+                        showlegend=False,
+                        name=row_data["Week"],
+                        customdata=hover,
+                        hovertemplate=row_data["Week"] + "<br>%{customdata}<extra></extra>",
+                    ),
+                    row=2, col=1,
+                )
+
     # Build week-level tick labels: "W1 Jan", "W2", "W3", "W4", "W1 Feb", ...
     week_tickvals, week_ticktext = [], []
     for mi in range(12):
@@ -210,6 +273,23 @@ def build_combined_chart(df, year, df_term):
             doy = TICKVALS[mi] + w * 7
             week_tickvals.append(doy)
             week_ticktext.append(f"W{w+1} {MONTH_ABBRS[mi]}" if w == 0 else f"W{w+1}")
+
+    # Full-height vertical dividers spanning both subplots via yref='paper'
+    shapes = []
+    for mi in range(12):
+        # Month boundary — solid, more visible
+        shapes.append(dict(
+            type='line', xref='x', yref='paper',
+            x0=TICKVALS[mi], x1=TICKVALS[mi], y0=0, y1=1,
+            line=dict(color='#6a7a8a', width=1),
+        ))
+        # Week sub-dividers (W2, W3, W4) — subtle dashed
+        for w in range(1, 4):
+            shapes.append(dict(
+                type='line', xref='x', yref='paper',
+                x0=TICKVALS[mi] + w * 7, x1=TICKVALS[mi] + w * 7, y0=0, y1=1,
+                line=dict(color='#3e3e50', width=0.5, dash='dot'),
+            ))
 
     # With shared_xaxes=True on 2 rows: xaxis = row1 (hidden), xaxis2 = row2 (visible bottom)
     # Tick labels and range must be set on xaxis2; dragmode='pan' locks zoom width
@@ -220,9 +300,11 @@ def build_combined_chart(df, year, df_term):
         font=dict(color=DARK_TEXT),
         height=540,
         margin=dict(l=60, r=30, t=40, b=90),
-        showlegend=False,
+        showlegend=(compare_year is not None),
+        legend=dict(orientation="h", x=0.01, y=0.99, bgcolor="rgba(0,0,0,0)", font=dict(color=DARK_TEXT)),
+        shapes=shapes,
         xaxis=dict(
-            showgrid=True, gridcolor=DARK_GRID,
+            showgrid=False,
             showticklabels=False,
             minallowed=1, maxallowed=366,
         ),
@@ -230,7 +312,7 @@ def build_combined_chart(df, year, df_term):
             tickvals=week_tickvals, ticktext=week_ticktext,
             range=[1, 122],
             minallowed=1, maxallowed=366,
-            showgrid=True, gridcolor=DARK_GRID,
+            showgrid=False,
             tickangle=-45,
             tickfont=dict(color=DARK_TEXT),
             rangeslider=dict(visible=False),
@@ -238,11 +320,12 @@ def build_combined_chart(df, year, df_term):
         yaxis=dict(
             title="MYR", showgrid=True, gridcolor=DARK_GRID,
             tickfont=dict(color=DARK_TEXT),
+            showline=False,
         ),
         yaxis2=dict(
             showticklabels=False, showgrid=False,
-            zeroline=False, fixedrange=True,
-            range=[-0.15, 1.15],
+            zeroline=False, showline=False,
+            fixedrange=True, range=[-0.15, 1.15],
         ),
     )
     return fig
@@ -335,15 +418,27 @@ with tab2:
     df_term = build_term_table(contracts)
 
     years = available_years(contracts)
-    selected_ts_year = st.selectbox("Year", options=years[::-1], index=0)
+
+    col1, col2, col3 = st.columns([2, 1, 2])
+    with col1:
+        selected_ts_year = st.selectbox("Year", options=years[::-1], index=0)
+    with col2:
+        st.write("")
+        compare_mode = st.checkbox("Comparison")
+    with col3:
+        if compare_mode:
+            other_years = [y for y in years[::-1] if y != selected_ts_year]
+            compare_year = st.selectbox("Compare Year", options=other_years, index=0) if other_years else None
+        else:
+            compare_year = None
 
     st.caption(
         "Top: 5-day smoothed spot price.  "
         "Bottom: each sliver = one week's forward curve shape (y not to scale). "
-        "Drag the range bar or scroll to navigate — both panels move together. "
-        "Color: purple (Jan) → orange (Dec). Hover for week label and prices."
+        "Solid = primary year, dashed = comparison year. "
+        "Color: cyan (Jan) → red (Dec). Hover for week label and prices."
     )
-    st.plotly_chart(build_combined_chart(df, selected_ts_year, df_term), use_container_width=True)
+    st.plotly_chart(build_combined_chart(df, selected_ts_year, df_term, compare_year=compare_year), use_container_width=True)
 
     st.subheader("Weekly Data Table")
     st.caption(
