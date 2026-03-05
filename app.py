@@ -8,6 +8,7 @@ from plotly.subplots import make_subplots
 DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
 YEAR_COLORS = {2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728"}
 TERM_DIR = "Raw Data/Term Structure"
+SD_DIR   = "Raw Data/Stock and Production"
 MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 
@@ -354,6 +355,102 @@ def build_combined_chart(df, year, df_term, compare_year=None):
     return fig
 
 
+@st.cache_data
+def load_supply_demand():
+    def _read(fname, col):
+        df = pd.read_excel(f"{SD_DIR}/{fname}", sheet_name="Table Data")
+        df = df.iloc[1:].reset_index(drop=True)   # drop the "Close" text row
+        df.columns = ["Date", col]
+        df["Date"] = pd.to_datetime(df["Date"])
+        return df.dropna(subset=["Date"]).set_index("Date")[col]
+
+    df = pd.DataFrame({
+        "Stock":      _read("FCPO Stock 3Y.xlsx",       "Stock"),
+        "Exports":    _read("MPOB Exports 3Y.xlsx",     "Exports"),
+        "Production": _read("MPOB Production 3Y.xlsx",  "Production"),
+    }).sort_index().reset_index().rename(columns={"index": "Date"})
+
+    df["year"]        = df["Date"].dt.year
+    df["month"]       = df["Date"].dt.month
+    df["Delta_Stock"] = df["Stock"].diff()
+    df["Consumption"] = df["Production"] - df["Exports"] - df["Delta_Stock"]
+    return df
+
+
+METRIC_LABELS = {
+    "Stock":       "Stock Level (tonnes)",
+    "Production":  "Production (tonnes)",
+    "Exports":     "Exports (tonnes)",
+    "Consumption": "Consumption (tonnes)",
+}
+
+
+def build_sd_chart(df_sd, metric, selected_years):
+    most_recent = max(selected_years)
+    fig = go.Figure()
+    for year in sorted(selected_years):
+        yr = df_sd[df_sd["year"] == year].sort_values("month")
+        is_recent = (year == most_recent)
+        color = YEAR_COLORS.get(year, "#aaaaaa")
+        fig.add_trace(go.Scatter(
+            x=yr["month"],
+            y=yr[metric],
+            mode="lines+markers",
+            name=str(year),
+            line=dict(
+                color=color if is_recent else hex_to_rgba(color, 0.35),
+                width=2.5 if is_recent else 1.5,
+            ),
+            marker=dict(size=5 if is_recent else 3),
+            customdata=yr[["Date", metric]].assign(
+                date_fmt=yr["Date"].dt.strftime("%b %Y")
+            )[["date_fmt", metric]].values,
+            hovertemplate="%{customdata[0]}<br>%{customdata[1]:,.0f} tonnes<extra></extra>",
+        ))
+    fig.update_layout(
+        hovermode="x unified",
+        plot_bgcolor=DARK_PLOT, paper_bgcolor=DARK_BG,
+        font=dict(color=DARK_TEXT),
+        xaxis=dict(
+            title="Month",
+            tickvals=list(range(1, 13)),
+            ticktext=MONTH_ABBRS,
+            showgrid=True, gridcolor=DARK_GRID,
+            tickfont=dict(color=DARK_TEXT),
+        ),
+        yaxis=dict(
+            title=METRIC_LABELS[metric],
+            showgrid=True, gridcolor=DARK_GRID,
+            tickformat=",",
+            tickfont=dict(color=DARK_TEXT),
+        ),
+        legend=dict(title="Year", orientation="v", font=dict(color=DARK_TEXT)),
+        height=480,
+        margin=dict(l=60, r=30, t=30, b=60),
+    )
+    return fig
+
+
+def build_sd_table(df_sd, year):
+    metrics = ["Stock", "Production", "Exports", "Consumption"]
+    yr = df_sd[df_sd["year"] == year].sort_values("month").copy()
+    yr.index = [MONTH_ABBRS[int(m) - 1] for m in yr["month"]]
+
+    result = {}
+    for m in metrics:
+        vals = yr[m]
+        result[m] = vals.apply(lambda v: f"{int(v):,}" if pd.notna(v) else "–")
+        pct = vals.pct_change() * 100
+        result[f"{m} %MoM"] = pct.apply(
+            lambda v: f"{v:+.1f}%" if pd.notna(v) else "–"
+        )
+
+    ordered = []
+    for m in metrics:
+        ordered += [m, f"{m} %MoM"]
+    return pd.DataFrame(result)[ordered]
+
+
 def show_login_page():
     st.markdown(
         f"""
@@ -416,7 +513,7 @@ with st.sidebar:
 
 df = load_data(DATA_PATH)
 
-tab1, tab2 = st.tabs(["Year-over-Year", "Term Structure"])
+tab1, tab2, tab3 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand"])
 
 with tab1:
     selected_years = st.multiselect(
@@ -535,3 +632,30 @@ with tab2:
         file_name="fcpo_weekly_term_structure.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
+
+with tab3:
+    df_sd = load_supply_demand()
+    sd_years = sorted(df_sd["year"].unique().tolist())
+
+    col1, col2 = st.columns([2, 3])
+    with col1:
+        sd_metric = st.selectbox(
+            "Metric",
+            options=["Production", "Exports", "Consumption", "Stock"],
+            index=0,
+        )
+    with col2:
+        sd_years_sel = st.multiselect(
+            "Years",
+            options=sd_years[::-1],
+            default=sd_years[::-1],
+        )
+
+    if not sd_years_sel:
+        st.warning("Select at least one year.")
+    else:
+        st.plotly_chart(build_sd_chart(df_sd, sd_metric, sd_years_sel), use_container_width=True)
+
+    st.subheader("Monthly Breakdown — All Metrics")
+    table_year = st.selectbox("Table Year", options=sd_years[::-1], index=0, key="sd_table_year")
+    st.dataframe(build_sd_table(df_sd, table_year), use_container_width=True)
