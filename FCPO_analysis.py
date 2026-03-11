@@ -197,6 +197,41 @@ def load_combined_dataset():
     return df.reset_index()
 
 
+def enrich_dataset(df):
+    """
+    Add derived analysis columns to the combined dataset.
+
+    New columns added:
+      term_shape     — 'Contango' if +3M > Current, else 'Backwardation'
+      spread_3m      — +3M minus Current (MYR)
+
+      dod_close_pct  — day-over-day % change in spot close: (today-yesterday)/yesterday*100
+      dod_<tenor>_pct— same for each of the 12 tenor columns
+
+      open_close     — open minus close (positive = day closed lower than open)
+      high_low       — high minus low (day's price range)
+    """
+    df = df.copy().sort_values("date").reset_index(drop=True)
+
+    # ── Term shape ────────────────────────────────────────────────────────────
+    df["spread_3m"]  = df["+3M"] - df["Current"]
+    df["term_shape"] = df["spread_3m"].apply(
+        lambda x: "Contango" if pd.notna(x) and x > 0 else "Backwardation"
+    )
+
+    # ── Day-over-day % changes ────────────────────────────────────────────────
+    # Formula: (today - yesterday) / yesterday * 100
+    df["dod_close_pct"] = df["close"].pct_change() * 100
+    for col in TENOR_COLS:
+        df[f"dod_{col.replace('+','').replace('M','m')}_pct"] = df[col].pct_change() * 100
+
+    # ── Intraday range columns ────────────────────────────────────────────────
+    df["open_close"] = df["open"] - df["close"]   # >0: closed lower than open
+    df["high_low"]   = df["high"] - df["low"]     # day's trading range
+
+    return df
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # SPOT PRICE ANALYSIS
 # ──────────────────────────────────────────────────────────────────────────────
