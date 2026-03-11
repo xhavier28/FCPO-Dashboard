@@ -202,8 +202,10 @@ def enrich_dataset(df):
     Add derived analysis columns to the combined dataset.
 
     New columns added:
-      term_shape     — 'Contango' if +3M > Current, else 'Backwardation'
-      spread_3m      — +3M minus Current (MYR)
+      em_avg      — average of +3M to +7M (Early Month)
+      fm_avg      — average of +8M to +11M (Far Month)
+      em_fm_spread— EM minus FM (positive = Backwardation, negative = Contango)
+      term_shape  — 'Backwardation' if EM > FM, else 'Contango'
 
       dod_close_pct  — day-over-day % change in spot close: (today-yesterday)/yesterday*100
       dod_<tenor>_pct— same for each of the 12 tenor columns
@@ -214,9 +216,16 @@ def enrich_dataset(df):
     df = df.copy().sort_values("date").reset_index(drop=True)
 
     # ── Term shape ────────────────────────────────────────────────────────────
-    df["spread_3m"]  = df["+3M"] - df["Current"]
-    df["term_shape"] = df["spread_3m"].apply(
-        lambda x: "Contango" if pd.notna(x) and x > 0 else "Backwardation"
+    # Early Month (EM): average of +3M to +7M
+    # Far Month  (FM): average of +8M to +11M
+    # EM > FM → Backwardation  |  FM > EM → Contango
+    em_cols = ["+3M", "+4M", "+5M", "+6M", "+7M"]
+    fm_cols = ["+8M", "+9M", "+10M", "+11M"]
+    df["em_avg"]       = df[em_cols].mean(axis=1)
+    df["fm_avg"]       = df[fm_cols].mean(axis=1)
+    df["em_fm_spread"] = df["em_avg"] - df["fm_avg"]
+    df["term_shape"]   = df["em_fm_spread"].apply(
+        lambda x: "Backwardation" if pd.notna(x) and x > 0 else "Contango"
     )
 
     # ── Day-over-day % changes ────────────────────────────────────────────────
