@@ -25,9 +25,10 @@ warnings.filterwarnings("ignore")
 # CONSTANTS
 # ──────────────────────────────────────────────────────────────────────────────
 
-DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
-TERM_DIR  = "Raw Data/Term Structure"
-SD_DIR    = "Raw Data/Stock and Production"
+DATA_PATH      = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
+DAILY_TERM_PATH = "Raw Data/Daily Term/fcpo_daily_term_structure.xlsx"
+TERM_DIR       = "Raw Data/Term Structure"
+SD_DIR         = "Raw Data/Stock and Production"
 
 MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun",
                "Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -142,6 +143,58 @@ def load_supply_demand():
     df["Delta_Stock"] = df["Stock"].diff()
     df["Consumption"] = df["Production"] - df["Exports"] - df["Delta_Stock"]
     return df
+
+
+def load_combined_dataset():
+    """
+    Merge daily term structure with spot OHLCV into one clean DataFrame.
+
+    Data quality fixes applied:
+      1. Missing 'Current' (~45 days, contract roll 13th–15th): filled with +1M,
+         which always has data on those days — the +1M is effectively the new
+         front month when the current contract expires.
+      2. Missing spot OHLCV on Fridays (~300 days): the continuous contract CSV
+         has almost no Friday data. Forward-filled from the previous trading day.
+
+    Returns DataFrame indexed by date with columns:
+        open, high, low, close, volume,
+        Current, +1M, +2M, ... +11M,
+        year, month, doy, weekday,
+        current_filled (bool — True on days where Current was imputed from +1M)
+    """
+    # ── Term structure ────────────────────────────────────────────────────────
+    df_term = pd.read_excel(DAILY_TERM_PATH, index_col=0)
+    df_term.index = pd.to_datetime(df_term.index, format="%d %b %Y")
+    df_term.index.name = "date"
+    df_term = df_term[df_term.index.year >= 2020].sort_index()
+
+    # Fix 1: fill missing Current with +1M on roll days
+    roll_mask = df_term["Current"].isnull() & df_term["+1M"].notnull()
+    df_term.loc[roll_mask, "Current"] = df_term.loc[roll_mask, "+1M"]
+    df_term["current_filled"] = roll_mask
+
+    # ── Spot OHLCV ───────────────────────────────────────────────────────────
+    df_spot = pd.read_csv(DATA_PATH)
+    df_spot["datetime"] = pd.to_datetime(df_spot["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur")
+    df_spot["date"]     = pd.to_datetime(df_spot["datetime"].dt.date)
+    df_spot = df_spot.sort_values("time").groupby("date", as_index=False).last()
+    df_spot = df_spot[df_spot["date"].dt.year >= 2020].set_index("date")
+    df_spot = df_spot[["open", "high", "low", "close", "Volume"]].rename(columns={"Volume": "volume"})
+
+    # ── Merge ─────────────────────────────────────────────────────────────────
+    df = df_term.join(df_spot, how="left")
+
+    # Fix 2: forward-fill missing spot OHLCV (mostly Fridays — no data in source)
+    spot_cols = ["open", "high", "low", "close", "volume"]
+    df[spot_cols] = df[spot_cols].ffill()
+
+    # ── Add calendar columns ─────────────────────────────────────────────────
+    df["year"]    = df.index.year
+    df["month"]   = df.index.month
+    df["doy"]     = df.index.dayofyear
+    df["weekday"] = df.index.day_name()
+
+    return df.reset_index()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -498,10 +551,28 @@ def plot_sd_vs_price(df_spot, df_sd, metric="Stock"):
 if __name__ == "__main__":
 
     print("Loading data...")
+    df_combined = load_combined_dataset()
     df_spot     = load_spot_prices()
     contracts   = load_contracts()
     df_curves   = build_daily_curves(contracts)
     df_sd       = load_supply_demand()
+
+    # ── Combined Dataset Preview ──────────────────────────────────────────────
+    print("\n=== COMBINED DATASET (spot + term structure) ===")
+    print(f"Rows: {len(df_combined)} | Date range: {df_combined['date'].min().date()} → {df_combined['date'].max().date()}")
+    print(f"Columns: {df_combined.columns.tolist()}")
+    print(f"\nCurrent filled from +1M (roll days): {df_combined['current_filled'].sum()} days")
+    print(f"Spot forward-filled (Fridays/gaps):   {(df_combined['weekday'] == 'Friday').sum()} Fridays in dataset")
+    print()
+    display_cols = ["date", "open", "high", "low", "close", "volume", "Current", "+1M", "+3M", "+6M", "+11M"]
+    print("Sample (first 5 rows):")
+    print(df_combined[display_cols].head().to_string(index=False))
+    print()
+    print("Sample (last 5 rows):")
+    print(df_combined[display_cols].tail().to_string(index=False))
+    print()
+    print("Null counts after cleaning:")
+    print(df_combined[["close", "Current", "+1M", "+10M", "+11M"]].isnull().sum().to_string())
 
     # ── Spot Price Summary ────────────────────────────────────────────────────
     print("\n=== SPOT PRICE SUMMARY ===")
