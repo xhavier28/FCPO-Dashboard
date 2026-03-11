@@ -352,13 +352,21 @@ def plot_rolling_volatility(df, window=30):
 def curve_shape_stats(df_curves):
     """
     Classify each day's forward curve as contango or backwardation.
-    Compares Current vs +3M tenor.
-    Returns DataFrame with: Date, Current, +3M, spread_3m, shape.
+    Early Month (EM) = average of +3M to +7M
+    Far Month  (FM) = average of +8M to +11M
+    EM > FM → Backwardation  |  FM > EM → Contango
+    Returns DataFrame with: Date, em_avg, fm_avg, em_fm_spread, shape.
     """
-    df = df_curves[["Current", "+3M"]].dropna().copy()
-    df["spread_3m"] = df["+3M"] - df["Current"]
-    df["shape"]     = df["spread_3m"].apply(lambda x: "Contango" if x > 0 else "Backwardation")
-    return df.reset_index()
+    em_cols = ["+3M", "+4M", "+5M", "+6M", "+7M"]
+    fm_cols = ["+8M", "+9M", "+10M", "+11M"]
+    df = df_curves[em_cols + fm_cols].copy()
+    df["em_avg"]       = df[em_cols].mean(axis=1)
+    df["fm_avg"]       = df[fm_cols].mean(axis=1)
+    df["em_fm_spread"] = df["em_avg"] - df["fm_avg"]
+    df["shape"]        = df["em_fm_spread"].apply(
+        lambda x: "Backwardation" if pd.notna(x) and x > 0 else "Contango"
+    )
+    return df[["em_avg", "fm_avg", "em_fm_spread", "shape"]].dropna().reset_index()
 
 
 def tenor_spreads(df_curves):
@@ -404,26 +412,33 @@ def plot_curve_snapshot(df_curves, date=None):
     return fig
 
 
-def plot_spread_history(df_curves, tenor="+3M"):
+def plot_spread_history(df_curves):
     """
-    Plot historical spread between Current and a given tenor.
-    Colours positive (contango) and negative (backwardation) areas differently.
+    Plot historical EM vs FM spread.
+    Early Month (EM) = avg +3M to +7M  |  Far Month (FM) = avg +8M to +11M
+    Positive spread (EM > FM) = Backwardation (red)
+    Negative spread (FM > EM) = Contango (green)
     """
-    df = df_curves[["Current", tenor]].dropna().copy()
-    df["spread"] = df[tenor] - df["Current"]
+    em_cols = ["+3M", "+4M", "+5M", "+6M", "+7M"]
+    fm_cols = ["+8M", "+9M", "+10M", "+11M"]
+    df = df_curves[em_cols + fm_cols].copy()
+    df["em_avg"]       = df[em_cols].mean(axis=1)
+    df["fm_avg"]       = df[fm_cols].mean(axis=1)
+    df["em_fm_spread"] = df["em_avg"] - df["fm_avg"]
+    df = df.dropna(subset=["em_fm_spread"])
 
     fig, ax = plt.subplots(figsize=(14, 4))
-    ax.fill_between(df.index, df["spread"],
-                    where=df["spread"] >= 0, color="#2ca02c", alpha=0.4, label="Contango")
-    ax.fill_between(df.index, df["spread"],
-                    where=df["spread"] <  0, color="#d62728", alpha=0.4, label="Backwardation")
-    ax.plot(df.index, df["spread"], color="#444444", lw=0.8)
+    ax.fill_between(df.index, df["em_fm_spread"],
+                    where=df["em_fm_spread"] >= 0, color="#d62728", alpha=0.4, label="Backwardation (EM > FM)")
+    ax.fill_between(df.index, df["em_fm_spread"],
+                    where=df["em_fm_spread"] <  0, color="#2ca02c", alpha=0.4, label="Contango (FM > EM)")
+    ax.plot(df.index, df["em_fm_spread"], color="#444444", lw=0.8)
     ax.axhline(0, color="black", lw=0.8, linestyle="--")
     ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"MYR {x:,.0f}"))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
     plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right")
-    ax.set_title(f"FCPO Spread: Current vs {tenor} (+ = Contango, − = Backwardation)",
+    ax.set_title("FCPO Term Structure Spread: Early Month (EM) vs Far Month (FM)",
                  fontsize=13, fontweight="bold")
     ax.set_xlabel("Date")
     ax.set_ylabel(f"Spread (MYR)")
