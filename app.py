@@ -133,6 +133,26 @@ def build_term_table(contracts):
     return df.sort_values("_sort").drop(columns="_sort").reset_index(drop=True)
 
 
+def build_daily_table(contracts):
+    all_dates = sorted(set(d for s in contracts.values() for d in s.index))
+    today = pd.Timestamp.today().normalize()
+    all_dates = [d for d in all_dates if pd.Timestamp("2020-01-01") <= d <= today]
+
+    col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
+    records = []
+    for date in all_dates:
+        fm = front_month(date)
+        row = {"Date": date}
+        for i, col in enumerate(col_names):
+            ym = add_months(fm, i)
+            row[col] = contracts[ym][date] if ym in contracts and date in contracts[ym].index else None
+        records.append(row)
+
+    df = pd.DataFrame(records)
+    df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%d %b %Y")
+    return df
+
+
 def build_combined_chart(df, year, df_term, compare_year=None):
     """
     Single figure, 2 rows, shared x-axis (doy), range-slider for scrolling.
@@ -624,19 +644,26 @@ with tab2:
     )
     st.plotly_chart(build_combined_chart(df, selected_ts_year, df_term, compare_year=compare_year), use_container_width=True)
 
-    st.subheader("Weekly Data Table")
-    st.caption(
-        "Average daily Close per week per contract. Front month rolls on the 16th."
-    )
-    st.dataframe(df_term.set_index("Week"), use_container_width=True)
+    st.subheader("Raw Data Table")
+    _freq = st.radio("View", options=["Weekly", "Daily"], horizontal=True, key="ts_freq")
+    if _freq == "Weekly":
+        st.caption("Average daily Close per week per contract. Front month rolls on the 16th.")
+        _display_df = df_term.set_index("Week")
+        _fname = "fcpo_weekly_term_structure.xlsx"
+    else:
+        st.caption("Raw daily Close per contract. Front month rolls on the 16th.")
+        _display_df = build_daily_table(contracts).set_index("Date")
+        _fname = "fcpo_daily_term_structure.xlsx"
+
+    st.dataframe(_display_df, use_container_width=True)
 
     import io
     _buf = io.BytesIO()
-    df_term.set_index("Week").to_excel(_buf, engine="openpyxl")
+    _display_df.to_excel(_buf, engine="openpyxl")
     st.download_button(
         label="Download as Excel",
         data=_buf.getvalue(),
-        file_name="fcpo_weekly_term_structure.xlsx",
+        file_name=_fname,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
