@@ -98,7 +98,8 @@ def add_months(ym, n):
 
 def build_term_table(contracts):
     all_dates = sorted(set(d for s in contracts.values() for d in s.index))
-    all_dates = [d for d in all_dates if d >= pd.Timestamp("2020-01-01")]
+    today = pd.Timestamp.today().normalize()
+    all_dates = [d for d in all_dates if pd.Timestamp("2020-01-01") <= d <= today]
 
     def week_label(d):
         w = ["W1", "W2", "W3", "W4"][(d.day - 1) // 7 if d.day <= 28 else 3]
@@ -597,7 +598,10 @@ with tab2:
     contracts = load_contracts()
     df_term = build_term_table(contracts)
 
-    years = available_years(contracts)
+    # Limit selectable years to those with spot price data (2027 contracts are
+    # used for forward tenors only, not as a standalone display year)
+    spot_years = set(df["year"].unique())
+    years = [y for y in available_years(contracts) if y in spot_years]
 
     col1, col2, col3 = st.columns([2, 1, 2])
     with col1:
