@@ -23,6 +23,9 @@ Thumbs.db
 # Misc
 *.log
 
+# Jupyter
+.ipynb_checkpoints/
+
 # Streamlit secrets (never commit credentials)
 .streamlit/secrets.toml
 
