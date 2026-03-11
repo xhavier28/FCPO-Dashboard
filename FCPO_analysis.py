@@ -241,6 +241,61 @@ def enrich_dataset(df):
     return df
 
 
+def build_spread_table(df):
+    """
+    Compute consecutive tenor spreads (+4M−+3M … +11M−+10M) and their
+    roll-adjusted day-over-day changes.
+
+    Parameters
+    ----------
+    df : DataFrame from load_combined_dataset() — must have date + tenor columns
+
+    Returns
+    -------
+    DataFrame with columns:
+        date,
+        spd_4m … spd_11m   (8 spread values in MYR)
+        dod_spd_4m … dod_spd_11m  (roll-adjusted DoD change in MYR)
+    """
+    df = df[["date", "+3M", "+4M", "+5M", "+6M", "+7M", "+8M", "+9M", "+10M", "+11M"]].copy()
+    df = df.sort_values("date").reset_index(drop=True)
+
+    spread_pairs = [
+        ("spd_4m",  "+4M",  "+3M"),
+        ("spd_5m",  "+5M",  "+4M"),
+        ("spd_6m",  "+6M",  "+5M"),
+        ("spd_7m",  "+7M",  "+6M"),
+        ("spd_8m",  "+8M",  "+7M"),
+        ("spd_9m",  "+9M",  "+8M"),
+        ("spd_10m", "+10M", "+9M"),
+        ("spd_11m", "+11M", "+10M"),
+    ]
+
+    # Compute spread values
+    for name, hi, lo in spread_pairs:
+        df[name] = df[hi] - df[lo]
+
+    # Detect roll days: first trading day after day-of-month crosses 15
+    df["_day"] = pd.to_datetime(df["date"]).dt.day
+    df["_prev_day"] = df["_day"].shift(1)
+    df["_is_roll"] = (df["_day"] > 15) & (df["_prev_day"] <= 15)
+
+    # Shifted spread columns for roll-day lookup (yesterday's spread one step up)
+    spd_cols  = [s[0] for s in spread_pairs]   # spd_4m … spd_11m
+    spd_shift = spd_cols[1:] + [None]           # spd_5m … spd_11m, None
+
+    for i, (spd, next_spd) in enumerate(zip(spd_cols, spd_shift)):
+        normal_dod = df[spd] - df[spd].shift(1)
+        if next_spd is not None:
+            roll_dod = df[spd] - df[next_spd].shift(1)
+        else:
+            roll_dod = pd.Series(np.nan, index=df.index)
+        df[f"dod_{spd}"] = np.where(df["_is_roll"], roll_dod, normal_dod)
+
+    df.drop(columns=["_day", "_prev_day", "_is_roll"], inplace=True)
+    return df[["date"] + spd_cols + [f"dod_{s}" for s in spd_cols]]
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # SPOT PRICE ANALYSIS
 # ──────────────────────────────────────────────────────────────────────────────
