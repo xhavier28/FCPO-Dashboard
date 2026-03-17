@@ -582,7 +582,7 @@ def main():
         date_max = df_daily["date"].max().date()
         start_date = st.date_input("Start Date", value=pd.Timestamp("2024-01-01").date(),
                                    min_value=date_min, max_value=date_max)
-        end_date   = st.date_input("End Date",   value=pd.Timestamp("2026-03-17").date(),
+        end_date   = st.date_input("End Date",   value=date_max,
                                    min_value=date_min, max_value=date_max)
         z_lookback  = st.selectbox("Z-score Lookback", [20, 60, 120], index=1)
         z_threshold = st.slider("Entry Z Threshold",    1.0, 3.5, 2.0, 0.1)
