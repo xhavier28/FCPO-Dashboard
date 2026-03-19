@@ -673,7 +673,7 @@ if __name__ == "__main__":
 
     # ── Combined Dataset Preview ──────────────────────────────────────────────
     print("\n=== COMBINED DATASET (spot + term structure) ===")
-    print(f"Rows: {len(df_combined)} | Date range: {df_combined['date'].min().date()} → {df_combined['date'].max().date()}")
+    print(f"Rows: {len(df_combined)} | Date range: {df_combined['date'].min().date()} -> {df_combined['date'].max().date()}")
     print(f"Columns: {df_combined.columns.tolist()}")
     print(f"\nCurrent filled from +1M (roll days): {df_combined['current_filled'].sum()} days")
     print(f"Spot forward-filled (Fridays/gaps):   {(df_combined['weekday'] == 'Friday').sum()} Fridays in dataset")
@@ -699,7 +699,7 @@ if __name__ == "__main__":
     total  = len(shape)
     for s, c in counts.items():
         print(f"  {s}: {c} days ({c/total*100:.1f}%)")
-    print(f"  Avg +3M spread: MYR {shape['spread_3m'].mean():+,.0f}")
+    print(f"  Avg EM-FM spread: MYR {shape['em_fm_spread'].mean():+,.0f}")
 
     # ── Monthly Seasonality ───────────────────────────────────────────────────
     print("\n=== MONTHLY SEASONALITY ===")
@@ -718,7 +718,7 @@ if __name__ == "__main__":
     fig1 = plot_spot_yoy(df_spot)
     fig2 = plot_rolling_volatility(df_spot, window=30)
     fig3 = plot_curve_snapshot(df_curves)
-    fig4 = plot_spread_history(df_curves, tenor="+3M")
+    fig4 = plot_spread_history(df_curves)
     fig5 = plot_monthly_seasonality(df_spot)
     fig6 = plot_monthly_close_heatmap(df_spot)
     fig7 = plot_sd_vs_price(df_spot, df_sd, metric="Stock")
