@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 After completing any meaningful piece of work, commit and push to GitHub so progress is never lost.
 
+**Repository**: https://github.com/xhavier28/FCPO-Dashboard
+
 ```bash
 git add app.py                # stage specific files, not git add -A
 git commit -m "feat: short description of what changed"
