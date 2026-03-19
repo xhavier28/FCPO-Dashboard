@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.colors
 from plotly.subplots import make_subplots
+from FCPO_analysis import build_spread_table, load_combined_dataset
 
 DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
 YEAR_COLORS = {
@@ -380,6 +381,11 @@ def build_combined_chart(df, year, df_term, compare_year=None):
 
 
 @st.cache_data
+def load_spread_data():
+    return build_spread_table(load_combined_dataset())
+
+
+@st.cache_data
 def load_supply_demand():
     def _read(fname, col):
         df = pd.read_excel(f"{SD_DIR}/{fname}", sheet_name="Table Data")
@@ -537,7 +543,7 @@ with st.sidebar:
 
 df = load_data(DATA_PATH)
 
-tab1, tab2, tab3 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand"])
+tab1, tab2, tab3, tab4 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand", "Mean Reversion"])
 
 with tab1:
     selected_years = st.multiselect(
@@ -693,3 +699,119 @@ with tab3:
     st.subheader("Monthly Breakdown — All Metrics")
     table_year = st.selectbox("Table Year", options=sd_years[::-1], index=0, key="sd_table_year")
     st.dataframe(build_sd_table(df_sd, table_year), use_container_width=True)
+
+SPREAD_COLS = ["spd_4m", "spd_5m", "spd_6m", "spd_7m", "spd_8m", "spd_9m", "spd_10m", "spd_11m"]
+SPREAD_LABELS = {
+    "spd_4m":  "+3M / +4M",
+    "spd_5m":  "+4M / +5M",
+    "spd_6m":  "+5M / +6M",
+    "spd_7m":  "+6M / +7M",
+    "spd_8m":  "+7M / +8M",
+    "spd_9m":  "+8M / +9M",
+    "spd_10m": "+9M / +10M",
+    "spd_11m": "+10M / +11M",
+}
+SPREAD_COLORS = [
+    "#00b4d8", "#0077b6", "#48cae4", "#90e0ef",
+    "#f4a261", "#e76f51", "#e9c46a", "#2a9d8f",
+]
+
+with tab4:
+    df_spd = load_spread_data()
+    df_spd["date"] = pd.to_datetime(df_spd["date"])
+    df_spd_filt = df_spd[df_spd["date"].dt.year.isin([2025, 2026])].copy()
+    df_spd_filt = df_spd_filt.dropna(subset=SPREAD_COLS, how="all").sort_values("date")
+
+    all_dates = df_spd_filt["date"].dt.date.tolist()
+    date_options = sorted(set(all_dates), reverse=True)
+
+    col_ctrl1, col_ctrl2 = st.columns([2, 3])
+    with col_ctrl1:
+        end_date = st.selectbox(
+            "End Date",
+            options=date_options,
+            index=0,
+            format_func=lambda d: d.strftime("%d %b %Y"),
+        )
+    with col_ctrl2:
+        lookback = st.radio(
+            "Lookback",
+            options=[7, 14, 21, 30],
+            format_func=lambda x: f"{x} days",
+            horizontal=True,
+        )
+
+    end_dt = pd.Timestamp(end_date)
+    window_df = df_spd_filt[df_spd_filt["date"] <= end_dt].tail(lookback).copy()
+
+    # ── Line chart ────────────────────────────────────────────────────────────
+    fig_mr = go.Figure()
+
+    # y=0 reference line
+    fig_mr.add_hline(
+        y=0,
+        line=dict(color="#888888", width=1, dash="dash"),
+    )
+
+    for i, col in enumerate(SPREAD_COLS):
+        label = SPREAD_LABELS[col]
+        color = SPREAD_COLORS[i]
+        valid = window_df[["date", col]].dropna()
+        fig_mr.add_trace(go.Scatter(
+            x=valid["date"],
+            y=valid[col],
+            mode="lines+markers",
+            name=label,
+            line=dict(color=color, width=2),
+            marker=dict(size=5),
+            hovertemplate="%{x|%d %b %Y}<br>" + label + ": MYR %{y:,.0f}<extra></extra>",
+        ))
+
+    fig_mr.update_layout(
+        hovermode="x unified",
+        plot_bgcolor=DARK_PLOT, paper_bgcolor=DARK_BG,
+        font=dict(color=DARK_TEXT),
+        xaxis=dict(
+            title="Date",
+            showgrid=True, gridcolor=DARK_GRID,
+            tickfont=dict(color=DARK_TEXT),
+            tickformat="%d %b",
+        ),
+        yaxis=dict(
+            title="Spread (MYR)",
+            showgrid=True, gridcolor=DARK_GRID,
+            tickfont=dict(color=DARK_TEXT),
+            zeroline=False,
+        ),
+        legend=dict(orientation="v", font=dict(color=DARK_TEXT)),
+        height=460,
+        margin=dict(l=60, r=30, t=30, b=60),
+    )
+    st.plotly_chart(fig_mr, use_container_width=True)
+
+    # ── Main table: rows = spreads, columns = dates ───────────────────────────
+    date_cols = window_df["date"].dt.strftime("%d %b").tolist()
+    table_data = {}
+    for col, label in SPREAD_LABELS.items():
+        row_vals = window_df[col].tolist()
+        table_data[label] = [int(round(v)) if pd.notna(v) else None for v in row_vals]
+
+    df_main = pd.DataFrame(table_data, index=date_cols).T
+    df_main.index.name = "Spread"
+
+    st.subheader("Spread Values by Date")
+    st.dataframe(df_main, use_container_width=True)
+
+    # ── Summary table: per-spread mean & std dev across the window ────────────
+    summary_rows = {}
+    for col, label in SPREAD_LABELS.items():
+        vals = window_df[col].dropna()
+        summary_rows[label] = {
+            "Mean": round(vals.mean(), 1) if len(vals) else None,
+            "Std Dev": round(vals.std(), 1) if len(vals) > 1 else None,
+        }
+    df_summary = pd.DataFrame(summary_rows).T
+    df_summary.index.name = "Spread"
+
+    st.subheader("Summary Statistics")
+    st.dataframe(df_summary, use_container_width=True)
