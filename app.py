@@ -877,30 +877,43 @@ with tab5:
     _df["_year"]  = _df["_dt"].dt.year
     _df["_month"] = _df["_dt"].dt.month
 
-    delta_cols = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    delta_cols  = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    short_names = [c.replace("%DeltaS", "S") for c in delta_cols]
 
-    stat_years = sorted(_df["_year"].unique().tolist(), reverse=True)
-    stat_year  = st.selectbox("Year", options=stat_years, index=0, key="el_year")
+    analysis_mode = st.radio("Analysis", options=["Monthly", "Yearly"], horizontal=True, key="el_mode")
 
-    yr_df = _df[_df["_year"] == stat_year]
+    if analysis_mode == "Monthly":
+        stat_years = sorted(_df["_year"].unique().tolist(), reverse=True)
+        stat_year  = st.selectbox("Year", options=stat_years, index=0, key="el_year")
+        grp_df = _df[_df["_year"] == stat_year]
+        grp = grp_df.groupby("_month")[delta_cols]
+        mean_tbl = grp.mean().round(1)
+        std_tbl  = grp.std().round(1)
+        mean_tbl.index = [MONTH_ABBRS[i - 1] for i in mean_tbl.index]
+        std_tbl.index  = [MONTH_ABBRS[i - 1] for i in std_tbl.index]
+        row_label = "Month"
+        title = f"DoD Spread Change Stats — {stat_year}"
+    else:
+        grp = _df.groupby("_year")[delta_cols]
+        mean_tbl = grp.mean().round(1)
+        std_tbl  = grp.std().round(1)
+        mean_tbl.index = mean_tbl.index.astype(str)
+        std_tbl.index  = std_tbl.index.astype(str)
+        row_label = "Year"
+        title = "DoD Spread Change Stats — All Years"
 
-    grp = yr_df.groupby("_month")[delta_cols]
-    mean_tbl = grp.mean().round(1)
-    std_tbl  = grp.std().round(1)
+    # Build combined MultiIndex DataFrame: columns = (SpreadName, Mean/Std)
+    col_data = {}
+    for short, col in zip(short_names, delta_cols):
+        col_data[(short, "Mean")] = mean_tbl[col]
+        col_data[(short, "Std")]  = std_tbl[col]
+    combined_df = pd.DataFrame(col_data)
+    combined_df.columns = pd.MultiIndex.from_tuples(list(col_data.keys()))
+    combined_df.index.name = row_label
 
-    # Rename index to month names
-    mean_tbl.index = [MONTH_ABBRS[i - 1] for i in mean_tbl.index]
-    std_tbl.index  = [MONTH_ABBRS[i - 1] for i in std_tbl.index]
-    mean_tbl.index.name = "Month"
-    std_tbl.index.name  = "Month"
-
-    st.subheader(f"Monthly Average DoD Change — {stat_year}")
-    st.caption("Mean daily spread DoD change per month (MYR). Roll days adjusted.")
-    st.dataframe(mean_tbl, use_container_width=True)
-
-    st.subheader(f"Monthly Std Dev — {stat_year}")
-    st.caption("Standard deviation of daily spread DoD change per month (MYR).")
-    st.dataframe(std_tbl, use_container_width=True)
+    st.subheader(title)
+    st.caption("Mean and Std Dev of daily spread DoD change (MYR). Roll days adjusted.")
+    st.dataframe(combined_df, use_container_width=True)
 
     st.subheader("Raw Daily Term Delta")
     st.caption("Date, 12 tenor prices, 8 consecutive spreads, 8 roll-adjusted DoD deltas.")
