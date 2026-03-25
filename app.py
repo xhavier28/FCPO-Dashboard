@@ -15,6 +15,17 @@ TERM_DIR = "Raw Data/Term Structure"
 SD_DIR   = "Raw Data/Stock and Production"
 MONTH_ABBRS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
+SPREAD_PAIRS = [
+    ("Spread3M4M",   "+3M",  "+4M"),
+    ("Spread4M5M",   "+4M",  "+5M"),
+    ("Spread5M6M",   "+5M",  "+6M"),
+    ("Spread6M7M",   "+6M",  "+7M"),
+    ("Spread7M8M",   "+7M",  "+8M"),
+    ("Spread8M9M",   "+8M",  "+9M"),
+    ("Spread9M10M",  "+9M",  "+10M"),
+    ("Spread10M11M", "+10M", "+11M"),
+]
+
 
 def hex_to_rgba(hex_color, alpha):
     h = hex_color.lstrip("#")
@@ -150,7 +161,41 @@ def build_daily_table(contracts):
         records.append(row)
 
     df = pd.DataFrame(records)
+
+    # Fill missing Current with +1M on roll days (contract expiry gap ~13th–15th)
+    roll_mask = df["Current"].isnull() & df["+1M"].notnull()
+    df.loc[roll_mask, "Current"] = df.loc[roll_mask, "+1M"]
+
     df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%d %b %Y")
+    return df
+
+
+def build_delta_table(df):
+    import numpy as np
+    df = df.copy()
+    df["date"] = pd.to_datetime(df["Date"], format="%d %b %Y")
+    df = df.sort_values("date").reset_index(drop=True)
+
+    for name, near, far in SPREAD_PAIRS:
+        df[name] = df[near] - df[far]
+
+    df["_day"]      = df["date"].dt.day
+    df["_prev_day"] = df["_day"].shift(1)
+    df["_is_roll"]  = (df["_day"] > 15) & (df["_prev_day"] <= 15)
+
+    spd_cols   = [p[0] for p in SPREAD_PAIRS]
+    delta_cols = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    spd_shift  = spd_cols[1:] + [None]
+
+    for spd, next_spd, delta in zip(spd_cols, spd_shift, delta_cols):
+        normal_dod = df[spd] - df[spd].shift(1)
+        if next_spd is not None:
+            roll_dod = df[spd] - df[next_spd].shift(1)
+        else:
+            roll_dod = pd.Series(np.nan, index=df.index)
+        df[delta] = np.where(df["_is_roll"], roll_dod, normal_dod)
+
+    df.drop(columns=["_day", "_prev_day", "_is_roll", "date"], inplace=True)
     return df
 
 
@@ -386,6 +431,13 @@ def load_spread_data():
 
 
 @st.cache_data
+def load_delta_data():
+    contracts = load_contracts()
+    df_raw = build_daily_table(contracts)
+    return build_delta_table(df_raw)
+
+
+@st.cache_data
 def load_supply_demand():
     def _read(fname, col):
         df = pd.read_excel(f"{SD_DIR}/{fname}", sheet_name="Table Data")
@@ -543,7 +595,7 @@ with st.sidebar:
 
 df = load_data(DATA_PATH)
 
-tab1, tab2, tab3, tab4 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand", "Mean Reversion"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand", "Mean Reversion", "Event Log"])
 
 with tab1:
     selected_years = st.multiselect(
@@ -815,3 +867,51 @@ with tab4:
 
     st.subheader("Summary Statistics")
     st.dataframe(df_summary, use_container_width=True)
+
+with tab5:
+    df_delta = load_delta_data()
+
+    # Parse dates for grouping (don't mutate cached df)
+    _df = df_delta.copy()
+    _df["_dt"]    = pd.to_datetime(_df["Date"], format="%d %b %Y")
+    _df["_year"]  = _df["_dt"].dt.year
+    _df["_month"] = _df["_dt"].dt.month
+
+    delta_cols = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+
+    stat_years = sorted(_df["_year"].unique().tolist(), reverse=True)
+    stat_year  = st.selectbox("Year", options=stat_years, index=0, key="el_year")
+
+    yr_df = _df[_df["_year"] == stat_year]
+
+    grp = yr_df.groupby("_month")[delta_cols]
+    mean_tbl = grp.mean().round(1)
+    std_tbl  = grp.std().round(1)
+
+    # Rename index to month names
+    mean_tbl.index = [MONTH_ABBRS[i - 1] for i in mean_tbl.index]
+    std_tbl.index  = [MONTH_ABBRS[i - 1] for i in std_tbl.index]
+    mean_tbl.index.name = "Month"
+    std_tbl.index.name  = "Month"
+
+    st.subheader(f"Monthly Average DoD Change — {stat_year}")
+    st.caption("Mean daily spread DoD change per month (MYR). Roll days adjusted.")
+    st.dataframe(mean_tbl, use_container_width=True)
+
+    st.subheader(f"Monthly Std Dev — {stat_year}")
+    st.caption("Standard deviation of daily spread DoD change per month (MYR).")
+    st.dataframe(std_tbl, use_container_width=True)
+
+    st.subheader("Raw Daily Term Delta")
+    st.caption("Date, 12 tenor prices, 8 consecutive spreads, 8 roll-adjusted DoD deltas.")
+    st.dataframe(df_delta.set_index("Date"), use_container_width=True)
+
+    import io
+    _buf = io.BytesIO()
+    df_delta.set_index("Date").to_excel(_buf, engine="openpyxl")
+    st.download_button(
+        label="Download as Excel",
+        data=_buf.getvalue(),
+        file_name="fcpo_daily_term_delta.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
