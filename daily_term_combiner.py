@@ -61,13 +61,19 @@ def build_daily_table(contracts):
         records.append(row)
 
     df = pd.DataFrame(records)
+
+    # Fill missing Current with +1M on roll days (contract expiry gap ~13th–15th)
+    roll_mask = df["Current"].isnull() & df["+1M"].notnull()
+    df.loc[roll_mask, "Current"] = df.loc[roll_mask, "+1M"]
+
     df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%d %b %Y")
-    return df
+    return df, roll_mask.sum()
 
 
 if __name__ == "__main__":
     contracts = load_contracts()
-    df = build_daily_table(contracts)
+    df, filled = build_daily_table(contracts)
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     df.to_excel(OUTPUT_PATH, index=False, engine="openpyxl")
     print(f"Saved {len(df)} rows -> {OUTPUT_PATH}")
+    print(f"  Current filled from +1M (roll days): {filled} rows")
