@@ -195,7 +195,7 @@ def build_delta_table(df):
     df["_is_roll"]  = (df["_day"] > 15) & (df["_prev_day"] <= 15)
 
     spd_cols   = [p[0] for p in SPREAD_PAIRS]
-    delta_cols = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    delta_cols = [f"DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
     spd_shift  = spd_cols[1:] + [None]
 
     for spd, next_spd, delta in zip(spd_cols, spd_shift, delta_cols):
@@ -544,59 +544,86 @@ def build_sd_table(df_sd, year):
     return pd.DataFrame(result)[ordered]
 
 
-def _style_outlier_table(df_z):
-    def cell_color(val):
-        if pd.isna(val):
+def _style_outlier_table(df_d, df_z):
+    """df_d: display df (raw deltas + Prev Date).  df_z: z-score df (spread cols only)."""
+    def z_color(z_val):
+        if pd.isna(z_val):
             return ""
-        az = abs(val)
+        az = abs(z_val)
         if az < 2.0:
             return ""
-        if val > 0:
-            if az < 2.25:  return "background-color: #fff176; color: #333333"
-            elif az < 2.5: return "background-color: #ff9800; color: #ffffff"
-            else:          return "background-color: #d32f2f; color: #ffffff"
+        if z_val > 0:
+            if az < 2.25:  return "background-color: #c8e6c9; color: #1b5e20"
+            elif az < 2.5: return "background-color: #43a047; color: #ffffff"
+            else:          return "background-color: #1b5e20; color: #ffffff"
         else:
-            if az < 2.25:  return "background-color: #b3e5fc; color: #333333"
-            elif az < 2.5: return "background-color: #1565c0; color: #ffffff"
-            else:          return "background-color: #0d47a1; color: #ffffff"
+            if az < 2.25:  return "background-color: #ffcdd2; color: #b71c1c"
+            elif az < 2.5: return "background-color: #ef5350; color: #ffffff"
+            else:          return "background-color: #b71c1c; color: #ffffff"
+
+    style_df = pd.DataFrame("", index=df_d.index, columns=df_d.columns)
+    for col in df_z.columns:
+        style_df[col] = df_z[col].map(z_color)
 
     def fmt(val):
-        return "–" if pd.isna(val) else f"{val:+.2f}"
+        if isinstance(val, str):
+            return val
+        return "–" if pd.isna(val) else f"{val:+.1f}"
 
-    return df_z.style.map(cell_color).format(fmt)
+    return df_d.style.apply(lambda _: style_df, axis=None).format(fmt)
 
 
 def build_outlier_table(df_delta, year):
     import numpy as np
-    delta_cols  = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
-    short_names = [c.replace("%DeltaS", "S") for c in delta_cols]
+    delta_cols  = [f"DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    short_names = [c.replace("DeltaS", "S") for c in delta_cols]
 
     df = df_delta.copy()
-    df["date"] = pd.to_datetime(df["Date"], format="%d %b %Y")
-    df = df[df["date"].dt.year == year].sort_values("date").reset_index(drop=True)
+    df["_date"]      = pd.to_datetime(df["Date"], format="%d %b %Y")
+    df = df.sort_values("_date").reset_index(drop=True)
+    df["_prev_date"] = df["_date"].shift(1)          # previous trading day (full dataset)
+    df = df[df["_date"].dt.year == year].reset_index(drop=True)
 
     if df.empty:
         return None, None
 
-    df["_month"] = df["date"].dt.month
+    df["_month"] = df["_date"].dt.month
     stats = df.groupby("_month")[delta_cols].agg(["mean", "std"])
 
     df_z_vals = {}
+    df_d_vals = {}
     for col, short in zip(delta_cols, short_names):
         mean_s = df["_month"].map(stats[col]["mean"])
         std_s  = df["_month"].map(stats[col]["std"])
         z = (df[col] - mean_s) / std_s
         z = z.where(std_s.notna() & (std_s != 0))
         df_z_vals[short] = z.values
+        df_d_vals[short] = df[col].values            # raw delta (MYR) for display
 
-    df_z = pd.DataFrame(df_z_vals, index=df["date"].dt.strftime("%d %b %Y"))
+    date_strs = df["_date"].dt.strftime("%d %b %Y")
+    df_z = pd.DataFrame(df_z_vals, index=date_strs)
+    df_d = pd.DataFrame(df_d_vals, index=date_strs)
+
+    # Align prev_date by date-string index for easy lookup after masking
+    prev_lookup = df.copy()
+    prev_lookup.index = date_strs
+
     mask = df_z.abs().ge(2.0).any(axis=1)
     df_z = df_z[mask]
+    df_d = df_d[mask]
 
     if df_z.empty:
         return None, None
 
-    return df_z, _style_outlier_table(df_z)
+    prev_vals = (
+        prev_lookup.loc[df_z.index, "_prev_date"]
+        .dt.strftime("%d %b %Y")
+        .fillna("–")
+        .values
+    )
+    df_d.insert(0, "Prev Date", prev_vals)
+
+    return df_d, _style_outlier_table(df_d, df_z)
 
 
 def show_login_page():
@@ -948,8 +975,8 @@ with tab5:
     _df["_year"]  = _df["_dt"].dt.year
     _df["_month"] = _df["_dt"].dt.month
 
-    delta_cols  = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
-    short_names = [c.replace("%DeltaS", "S") for c in delta_cols]
+    delta_cols  = [f"DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    short_names = [c.replace("DeltaS", "S") for c in delta_cols]
 
     analysis_mode = st.radio("Analysis", options=["Monthly", "Yearly"], horizontal=True, key="el_mode")
 
@@ -987,14 +1014,14 @@ with tab5:
     st.dataframe(combined_df, use_container_width=True)
 
     st.subheader("Outlier Detection")
-    st.caption("Days where any spread DoD delta exceeds ±2.0σ from that month's mean. Z-scores computed per spread per month.")
+    st.caption("Days where any spread DoD delta exceeds ±2.0σ from that month's mean. Values show raw delta (MYR); colour indicates σ tier.")
     st.markdown(
-        '<span style="background-color:#fff176;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">+2–2.25σ</span>'
-        '<span style="background-color:#ff9800;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">+2.25–2.5σ</span>'
-        '<span style="background-color:#d32f2f;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:12px">+≥2.5σ</span>'
-        '<span style="background-color:#b3e5fc;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">−2–2.25σ</span>'
-        '<span style="background-color:#1565c0;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">−2.25–2.5σ</span>'
-        '<span style="background-color:#0d47a1;color:#ffffff;padding:2px 6px;border-radius:3px">−≥2.5σ</span>',
+        '<span style="background-color:#c8e6c9;color:#1b5e20;padding:2px 6px;border-radius:3px;margin-right:4px">+2–2.25σ</span>'
+        '<span style="background-color:#43a047;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">+2.25–2.5σ</span>'
+        '<span style="background-color:#1b5e20;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:12px">+≥2.5σ</span>'
+        '<span style="background-color:#ffcdd2;color:#b71c1c;padding:2px 6px;border-radius:3px;margin-right:4px">−2–2.25σ</span>'
+        '<span style="background-color:#ef5350;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">−2.25–2.5σ</span>'
+        '<span style="background-color:#b71c1c;color:#ffffff;padding:2px 6px;border-radius:3px">−≥2.5σ</span>',
         unsafe_allow_html=True,
     )
     _outlier_years = sorted(_df["_year"].unique().tolist(), reverse=True)
