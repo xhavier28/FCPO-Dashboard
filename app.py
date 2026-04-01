@@ -573,7 +573,7 @@ def _style_outlier_table(df_d, df_z):
     return df_d.style.apply(lambda _: style_df, axis=None).format(fmt)
 
 
-def build_outlier_table(df_delta, year):
+def build_outlier_table(df_delta, year, min_z=2.0):
     import numpy as np
     delta_cols  = [f"DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
     short_names = [c.replace("DeltaS", "S") for c in delta_cols]
@@ -608,7 +608,7 @@ def build_outlier_table(df_delta, year):
     prev_lookup = df.copy()
     prev_lookup.index = date_strs
 
-    mask = df_z.abs().ge(2.0).any(axis=1)
+    mask = df_z.abs().ge(min_z).any(axis=1)
     df_z = df_z[mask]
     df_d = df_d[mask]
 
@@ -1026,7 +1026,15 @@ with tab5:
     )
     _outlier_years = sorted(_df["_year"].unique().tolist(), reverse=True)
     _outlier_year  = st.selectbox("Year", options=_outlier_years, index=0, key="el_outlier_year")
-    _df_z, _z_styler = build_outlier_table(df_delta, _outlier_year)
+    _tier_options = {2.0: "All (≥ 2.0σ)", 2.25: "≥ 2.25σ", 2.5: "≥ 2.5σ"}
+    _tier_filter = st.radio(
+        "Show tiers",
+        options=list(_tier_options.keys()),
+        format_func=lambda x: _tier_options[x],
+        horizontal=True,
+        key="el_tier_filter",
+    )
+    _df_z, _z_styler = build_outlier_table(df_delta, _outlier_year, min_z=_tier_filter)
     if _df_z is None:
         st.info(f"No outlier days found in {_outlier_year}.")
     else:
