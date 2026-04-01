@@ -6,7 +6,7 @@ import plotly.colors
 from plotly.subplots import make_subplots
 from FCPO_analysis import build_spread_table, load_combined_dataset
 
-DATA_PATH = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
+SPOT_DIR = "Raw Data"
 YEAR_COLORS = {
     2020: "#9467bd", 2021: "#8c564b", 2022: "#e377c2",
     2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728",
@@ -52,15 +52,26 @@ DARK_TEXT  = "#fafafa"
 
 
 @st.cache_data
-def load_data(path):
-    df = pd.read_csv(path)
-    df["datetime"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur")
-    df["date"] = df["datetime"].dt.date
-    df = df.sort_values("time").groupby("date", as_index=False).last()
+def load_data(spot_dir):
+    csvs = [
+        f for f in os.listdir(spot_dir)
+        if f.lower().endswith(".csv") and f.lower().startswith("myx_dly_fcpo")
+    ]
+    frames = []
+    for fname in csvs:
+        raw = pd.read_csv(f"{spot_dir}/{fname}")
+        sample = str(raw["time"].iloc[0])
+        if sample.replace(".", "").isdigit():
+            raw["date"] = pd.to_datetime(raw["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur").dt.date
+        else:
+            raw["date"] = pd.to_datetime(raw["time"]).dt.date
+        frames.append(raw)
+    df = pd.concat(frames, ignore_index=True)
     df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date").groupby("date", as_index=False).last()
     df["year"] = df["date"].dt.year
     df["doy"] = df["date"].dt.dayofyear
-    df = df[df["year"].isin([2020, 2021, 2022, 2023, 2024, 2025, 2026])]
+    df = df[df["year"] >= 2020]
     return df[["date", "year", "doy", "open", "high", "low", "close", "Volume"]]
 
 
@@ -533,6 +544,61 @@ def build_sd_table(df_sd, year):
     return pd.DataFrame(result)[ordered]
 
 
+def _style_outlier_table(df_z):
+    def cell_color(val):
+        if pd.isna(val):
+            return ""
+        az = abs(val)
+        if az < 1.5:
+            return ""
+        if val > 0:
+            if az < 2.0:   return "background-color: #fff176; color: #333333"
+            elif az < 2.5: return "background-color: #ff9800; color: #ffffff"
+            else:           return "background-color: #d32f2f; color: #ffffff"
+        else:
+            if az < 2.0:   return "background-color: #b3e5fc; color: #333333"
+            elif az < 2.5: return "background-color: #1565c0; color: #ffffff"
+            else:           return "background-color: #0d47a1; color: #ffffff"
+
+    def fmt(val):
+        return "–" if pd.isna(val) else f"{val:+.2f}"
+
+    return df_z.style.map(cell_color).format(fmt)
+
+
+def build_outlier_table(df_delta, year):
+    import numpy as np
+    delta_cols  = [f"%DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+    short_names = [c.replace("%DeltaS", "S") for c in delta_cols]
+
+    df = df_delta.copy()
+    df["date"] = pd.to_datetime(df["Date"], format="%d %b %Y")
+    df = df[df["date"].dt.year == year].sort_values("date").reset_index(drop=True)
+
+    if df.empty:
+        return None, None
+
+    df["_month"] = df["date"].dt.month
+    stats = df.groupby("_month")[delta_cols].agg(["mean", "std"])
+
+    df_z_vals = {}
+    for col, short in zip(delta_cols, short_names):
+        mean_s = df["_month"].map(stats[col]["mean"])
+        std_s  = df["_month"].map(stats[col]["std"])
+        z = (df[col] - mean_s) / std_s
+        z = z.where(std_s.notna() & (std_s != 0))
+        df_z_vals[short] = z.values
+
+    df_z = pd.DataFrame(df_z_vals, index=df["date"].dt.strftime("%d %b %Y"))
+    mask = df_z.abs().ge(1.5).any(axis=1)
+    df_z = df_z[mask]
+
+    if df_z.empty:
+        return None, None
+
+    return df_z, _style_outlier_table(df_z)
+
+
 def show_login_page():
     st.markdown(
         f"""
@@ -593,15 +659,16 @@ with st.sidebar:
         st.session_state["authenticated"] = False
         st.rerun()
 
-df = load_data(DATA_PATH)
+df = load_data(SPOT_DIR)
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand", "Mean Reversion", "Event Log"])
 
 with tab1:
+    data_years = sorted(df["year"].unique().tolist())
     selected_years = st.multiselect(
         "Select Years",
-        options=[2020, 2021, 2022, 2023, 2024, 2025, 2026],
-        default=[2020, 2021, 2022, 2023, 2024, 2025, 2026],
+        options=data_years,
+        default=data_years,
     )
     if not selected_years:
         st.warning("Select at least one year.")
@@ -612,9 +679,11 @@ with tab1:
 
         for year in selected_years:
             yr_df = df[df["year"] == year].sort_values("doy").copy()
+            if yr_df.empty:
+                continue
             is_recent = year == most_recent
             smoothed = yr_df["close"].rolling(window=5, min_periods=1, center=True).mean()
-            color = YEAR_COLORS[year] if is_recent else hex_to_rgba(YEAR_COLORS[year], 0.35)
+            color = YEAR_COLORS.get(year, "#aaaaaa") if is_recent else hex_to_rgba(YEAR_COLORS.get(year, "#aaaaaa"), 0.35)
             line_width = 2.5 if is_recent else 1.5
             fig.add_trace(
                 go.Scatter(
@@ -659,6 +728,8 @@ with tab1:
         stat_rows = []
         for year in selected_years:
             yr_df = df[df["year"] == year]
+            if yr_df.empty:
+                continue
             stat_rows.append(
                 {
                     "Year": year,
@@ -914,6 +985,27 @@ with tab5:
     st.subheader(title)
     st.caption("Mean and Std Dev of daily spread DoD change (MYR). Roll days adjusted.")
     st.dataframe(combined_df, use_container_width=True)
+
+    st.subheader("Outlier Detection")
+    st.caption("Days where any spread DoD delta exceeds ±1.5σ from that month's mean. Z-scores computed per spread per month.")
+    st.markdown(
+        '<span style="background-color:#fff176;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">+1.5–2σ</span>'
+        '<span style="background-color:#ff9800;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">+2–2.5σ</span>'
+        '<span style="background-color:#d32f2f;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:12px">+≥2.5σ</span>'
+        '<span style="background-color:#b3e5fc;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">−1.5–2σ</span>'
+        '<span style="background-color:#1565c0;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">−2–2.5σ</span>'
+        '<span style="background-color:#0d47a1;color:#ffffff;padding:2px 6px;border-radius:3px">−≥2.5σ</span>',
+        unsafe_allow_html=True,
+    )
+    _outlier_years = sorted(_df["_year"].unique().tolist(), reverse=True)
+    _outlier_year  = st.selectbox("Year", options=_outlier_years, index=0, key="el_outlier_year")
+    _df_z, _z_styler = build_outlier_table(df_delta, _outlier_year)
+    if _df_z is None:
+        st.info(f"No outlier days found in {_outlier_year}.")
+    else:
+        _total_days = len(_df[_df["_year"] == _outlier_year])
+        st.caption(f"{len(_df_z)} outlier days out of {_total_days} trading days.")
+        st.dataframe(_z_styler, use_container_width=True)
 
     st.subheader("Raw Daily Term Delta")
     st.caption("Date, 12 tenor prices, 8 consecutive spreads, 8 roll-adjusted DoD deltas.")
