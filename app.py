@@ -549,16 +549,16 @@ def _style_outlier_table(df_z):
         if pd.isna(val):
             return ""
         az = abs(val)
-        if az < 1.5:
+        if az < 2.0:
             return ""
         if val > 0:
-            if az < 2.0:   return "background-color: #fff176; color: #333333"
+            if az < 2.25:  return "background-color: #fff176; color: #333333"
             elif az < 2.5: return "background-color: #ff9800; color: #ffffff"
-            else:           return "background-color: #d32f2f; color: #ffffff"
+            else:          return "background-color: #d32f2f; color: #ffffff"
         else:
-            if az < 2.0:   return "background-color: #b3e5fc; color: #333333"
+            if az < 2.25:  return "background-color: #b3e5fc; color: #333333"
             elif az < 2.5: return "background-color: #1565c0; color: #ffffff"
-            else:           return "background-color: #0d47a1; color: #ffffff"
+            else:          return "background-color: #0d47a1; color: #ffffff"
 
     def fmt(val):
         return "–" if pd.isna(val) else f"{val:+.2f}"
@@ -590,7 +590,7 @@ def build_outlier_table(df_delta, year):
         df_z_vals[short] = z.values
 
     df_z = pd.DataFrame(df_z_vals, index=df["date"].dt.strftime("%d %b %Y"))
-    mask = df_z.abs().ge(1.5).any(axis=1)
+    mask = df_z.abs().ge(2.0).any(axis=1)
     df_z = df_z[mask]
 
     if df_z.empty:
@@ -987,13 +987,13 @@ with tab5:
     st.dataframe(combined_df, use_container_width=True)
 
     st.subheader("Outlier Detection")
-    st.caption("Days where any spread DoD delta exceeds ±1.5σ from that month's mean. Z-scores computed per spread per month.")
+    st.caption("Days where any spread DoD delta exceeds ±2.0σ from that month's mean. Z-scores computed per spread per month.")
     st.markdown(
-        '<span style="background-color:#fff176;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">+1.5–2σ</span>'
-        '<span style="background-color:#ff9800;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">+2–2.5σ</span>'
+        '<span style="background-color:#fff176;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">+2–2.25σ</span>'
+        '<span style="background-color:#ff9800;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">+2.25–2.5σ</span>'
         '<span style="background-color:#d32f2f;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:12px">+≥2.5σ</span>'
-        '<span style="background-color:#b3e5fc;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">−1.5–2σ</span>'
-        '<span style="background-color:#1565c0;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">−2–2.5σ</span>'
+        '<span style="background-color:#b3e5fc;color:#333333;padding:2px 6px;border-radius:3px;margin-right:4px">−2–2.25σ</span>'
+        '<span style="background-color:#1565c0;color:#ffffff;padding:2px 6px;border-radius:3px;margin-right:4px">−2.25–2.5σ</span>'
         '<span style="background-color:#0d47a1;color:#ffffff;padding:2px 6px;border-radius:3px">−≥2.5σ</span>',
         unsafe_allow_html=True,
     )
