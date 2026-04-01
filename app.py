@@ -688,7 +688,7 @@ with st.sidebar:
 
 df = load_data(SPOT_DIR)
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Year-over-Year", "Term Structure", "Supply & Demand", "Mean Reversion", "Event Log"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["Year-over-Year", "Term Structure", "Event Log", "Supply & Demand", "Mean Reversion"])
 
 with tab1:
     data_years = sorted(df["year"].unique().tolist())
@@ -752,23 +752,28 @@ with tab1:
 
         st.subheader("Summary Statistics")
 
-        stat_rows = []
-        for year in selected_years:
-            yr_df = df[df["year"] == year]
-            if yr_df.empty:
-                continue
-            stat_rows.append(
-                {
-                    "Year": year,
-                    "Trading Days": len(yr_df),
-                    "Min Close": f"MYR {yr_df['close'].min():,.0f}",
-                    "Max Close": f"MYR {yr_df['close'].max():,.0f}",
-                    "Latest Close": f"MYR {yr_df.sort_values('date')['close'].iloc[-1]:,.0f}",
-                    "Avg Volume": f"{yr_df['Volume'].mean():,.0f}",
-                }
-            )
+        months_order = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+        month_num_map = {i+1: m for i, m in enumerate(months_order)}
 
-        st.dataframe(pd.DataFrame(stat_rows).set_index("Year"), use_container_width=True)
+        cols = pd.MultiIndex.from_product([selected_years, ["Avg", "Min", "Max", "Range"]])
+        stat_df = pd.DataFrame(index=months_order, columns=cols, dtype=float)
+        stat_df.index.name = "Month"
+
+        for year in selected_years:
+            yr_df = df[df["year"] == year].copy()
+            yr_df["_month"] = yr_df["date"].dt.month
+            for m_num in range(1, 13):
+                m_df = yr_df[yr_df["_month"] == m_num]
+                if m_df.empty:
+                    continue
+                m_name = month_num_map[m_num]
+                stat_df.loc[m_name, (year, "Avg")]   = round(m_df["close"].mean(), 0)
+                stat_df.loc[m_name, (year, "Min")]   = m_df["close"].min()
+                stat_df.loc[m_name, (year, "Max")]   = m_df["close"].max()
+                stat_df.loc[m_name, (year, "Range")] = m_df["close"].max() - m_df["close"].min()
+
+        stat_df = stat_df.dropna(how="all")
+        st.dataframe(stat_df, use_container_width=True)
 
 with tab2:
     contracts = load_contracts()
@@ -823,7 +828,7 @@ with tab2:
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
 
-with tab3:
+with tab4:
     df_sd = load_supply_demand()
     sd_years = sorted(df_sd["year"].unique().tolist())
 
@@ -866,7 +871,7 @@ SPREAD_COLORS = [
     "#f4a261", "#e76f51", "#e9c46a", "#2a9d8f",
 ]
 
-with tab4:
+with tab5:
     df_spd = load_spread_data()
     df_spd["date"] = pd.to_datetime(df_spd["date"])
     df_spd_filt = df_spd[df_spd["date"].dt.year.isin([2025, 2026])].copy()
@@ -966,7 +971,7 @@ with tab4:
     st.subheader("Summary Statistics")
     st.dataframe(df_summary, use_container_width=True)
 
-with tab5:
+with tab3:
     df_delta = load_delta_data()
 
     # Parse dates for grouping (don't mutate cached df)
