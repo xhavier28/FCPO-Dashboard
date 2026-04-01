@@ -1036,14 +1036,38 @@ with tab5:
 
     st.subheader("Raw Daily Term Delta")
     st.caption("Date, 12 tenor prices, 8 consecutive spreads, 8 roll-adjusted DoD deltas.")
-    st.dataframe(df_delta.set_index("Date"), use_container_width=True)
+
+    _raw_df = df_delta.copy()
+    _raw_df["_dt"] = pd.to_datetime(_raw_df["Date"], format="%d %b %Y")
+    _raw_years  = sorted(_raw_df["_dt"].dt.year.unique().tolist(), reverse=True)
+    _raw_months = list(range(1, 13))
+
+    _fc1, _fc2 = st.columns(2)
+    with _fc1:
+        _raw_year = st.selectbox("Year", options=_raw_years, index=0, key="raw_year")
+    with _fc2:
+        _raw_month = st.selectbox(
+            "Month",
+            options=[0] + _raw_months,
+            format_func=lambda m: "All" if m == 0 else MONTH_ABBRS[m - 1],
+            index=0,
+            key="raw_month",
+        )
+
+    _mask = _raw_df["_dt"].dt.year == _raw_year
+    if _raw_month != 0:
+        _mask &= _raw_df["_dt"].dt.month == _raw_month
+    _raw_filtered = _raw_df[_mask].drop(columns=["_dt"]).set_index("Date")
+
+    st.dataframe(_raw_filtered, use_container_width=True)
 
     import io
     _buf = io.BytesIO()
-    df_delta.set_index("Date").to_excel(_buf, engine="openpyxl")
+    _raw_filtered.to_excel(_buf, engine="openpyxl")
+    _fname = f"fcpo_daily_term_delta_{_raw_year}" + (f"_{MONTH_ABBRS[_raw_month-1]}" if _raw_month else "") + ".xlsx"
     st.download_button(
         label="Download as Excel",
         data=_buf.getvalue(),
-        file_name="fcpo_daily_term_delta.xlsx",
+        file_name=_fname,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
