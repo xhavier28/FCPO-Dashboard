@@ -1,10 +1,13 @@
 import os
 import streamlit as st
 import pandas as pd
+import numpy as np
 import plotly.graph_objects as go
 import plotly.colors
 from plotly.subplots import make_subplots
 from FCPO_analysis import build_spread_table, load_combined_dataset
+from mr_screener.data.loader import load_pair
+from mr_screener.screener.pipeline import run_pair
 
 SPOT_DIR = "Raw Data"
 YEAR_COLORS = {
@@ -688,7 +691,7 @@ with st.sidebar:
 
 df = load_data(SPOT_DIR)
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(["Year-over-Year", "Term Structure", "Event Log", "Supply & Demand", "Mean Reversion"])
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Year-over-Year", "Term Structure", "Event Log", "Supply & Demand", "Mean Reversion", "Pair Screener"])
 
 with tab1:
     data_years = sorted(df["year"].unique().tolist())
@@ -1084,3 +1087,218 @@ with tab3:
         file_name=_fname,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
+
+# ── Tab 6: Mean Reversion Pair Screener ──────────────────────────────────────
+with tab6:
+    st.header("Mean Reversion Pair Screener")
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        label_y = st.text_input("Series A label", "Asset A", key="mr_label_y")
+        file_y  = st.file_uploader("Upload Series A CSV", type="csv", key="mr_file_y")
+    with col_b:
+        label_x = st.text_input("Series B label", "Asset B", key="mr_label_x")
+        file_x  = st.file_uploader("Upload Series B CSV", type="csv", key="mr_file_x")
+
+    with st.expander("Advanced settings"):
+        mr_delta = st.number_input("Kalman delta", value=1e-4, format="%.1e", key="mr_delta")
+        mr_Ve    = st.number_input("Kalman Ve",    value=0.001, format="%.4f", key="mr_Ve")
+
+    run_btn = st.button("Run Screener", disabled=(file_y is None or file_x is None), key="mr_run")
+
+    if run_btn:
+        with st.spinner("Running screener…"):
+            data    = load_pair(file_y.read(), file_x.read(), label_y, label_x)
+            results = run_pair(data, delta=mr_delta, Ve=mr_Ve)
+
+        raw_res = results["raw"]
+        log_res = results["log"]
+        dates   = results["dates"]
+
+        # ── Section 1: Stationarity & Gating ─────────────────────────────────
+        st.subheader("Stationarity & Cointegration")
+        st.caption(f"Observations: {results['n_obs']} hourly bars")
+
+        gate_rows = []
+        for space_label, r in [("Raw", raw_res), ("Log", log_res)]:
+            gate_rows.append({
+                "Test":    f"ADF {label_y}",
+                "Space":   space_label,
+                "Stat":    r["adf_y"]["adf_stat"],
+                "p-value": r["adf_y"]["adf_pvalue"],
+                "Verdict": r["adf_y"]["verdict"],
+            })
+            gate_rows.append({
+                "Test":    f"ADF {label_x}",
+                "Space":   space_label,
+                "Stat":    r["adf_x"]["adf_stat"],
+                "p-value": r["adf_x"]["adf_pvalue"],
+                "Verdict": r["adf_x"]["verdict"],
+            })
+            gate_rows.append({
+                "Test":    "EG Coint",
+                "Space":   space_label,
+                "Stat":    r["coint_eg"]["eg_stat"],
+                "p-value": r["coint_eg"]["eg_pvalue"],
+                "Verdict": r["coint_eg"]["verdict"],
+            })
+            gate_rows.append({
+                "Test":    "Johansen",
+                "Space":   space_label,
+                "Stat":    r["johansen"]["trace_stat"],
+                "p-value": "—",
+                "Verdict": r["johansen"]["verdict"],
+            })
+            gate_rows.append({
+                "Test":    "Hurst",
+                "Space":   space_label,
+                "Stat":    r["hurst"]["hurst"],
+                "p-value": "—",
+                "Verdict": r["hurst"]["verdict"],
+            })
+
+        gate_df = pd.DataFrame(gate_rows)
+
+        def _color_verdict(val):
+            if val in ("cointegrated", "I(1)", "strong_mr", "mild_mr", "tradeable"):
+                return "background-color: #1a4a1a; color: #7fff7f"
+            if val in ("borderline", "ambiguous", "random_walk"):
+                return "background-color: #4a4a00; color: #ffff7f"
+            if val in ("not_cointegrated", "stationary", "trending", "reject"):
+                return "background-color: #4a1a1a; color: #ff7f7f"
+            return ""
+
+        styled_gate = gate_df.style.applymap(_color_verdict, subset=["Verdict"])
+        st.dataframe(styled_gate, use_container_width=True, hide_index=True)
+
+        gate_label = "GATE PASSED — Kalman & OU computed" if results["gate_passed"] else "GATE FAILED — insufficient cointegration or mean-reversion evidence"
+        if results["gate_passed"]:
+            st.success(f"**{gate_label}**")
+        else:
+            st.error(f"**{gate_label}**")
+
+        # ── Sections 2–4 only if gate passed ─────────────────────────────────
+        if results["gate_passed"]:
+
+            # ── Section 2: Kalman beta(t) chart ──────────────────────────────
+            st.subheader("Kalman Beta Over Time")
+
+            fig_beta = go.Figure()
+            fig_beta.add_trace(go.Scatter(
+                x=dates,
+                y=raw_res["kalman"]["beta_t"],
+                name="β (raw)",
+                line=dict(color="#00b4d8", width=1.5),
+            ))
+            fig_beta.add_trace(go.Scatter(
+                x=dates,
+                y=log_res["kalman"]["beta_t"],
+                name="β (log)",
+                line=dict(color="#f4a261", width=1.5, dash="dash"),
+                yaxis="y2",
+            ))
+            fig_beta.update_layout(
+                paper_bgcolor=DARK_BG,
+                plot_bgcolor=DARK_PLOT,
+                font=dict(color=DARK_TEXT),
+                xaxis=dict(gridcolor=DARK_GRID),
+                yaxis=dict(
+                    title="β raw",
+                    gridcolor=DARK_GRID,
+                    titlefont=dict(color="#00b4d8"),
+                    tickfont=dict(color="#00b4d8"),
+                ),
+                yaxis2=dict(
+                    title="β log",
+                    overlaying="y",
+                    side="right",
+                    gridcolor=DARK_GRID,
+                    titlefont=dict(color="#f4a261"),
+                    tickfont=dict(color="#f4a261"),
+                ),
+                legend=dict(bgcolor=DARK_PLOT, bordercolor=DARK_GRID),
+                height=300,
+                margin=dict(l=60, r=60, t=30, b=30),
+            )
+            st.plotly_chart(fig_beta, use_container_width=True)
+
+            # ── Section 3: Kalman spread + z-score ───────────────────────────
+            st.subheader("Kalman Spread & Z-Score")
+
+            for space_label, k_res in [("Raw", raw_res["kalman"]), ("Log", log_res["kalman"])]:
+                spread_arr  = k_res["spread"]
+                spread_mean = np.nanmean(spread_arr)
+                spread_std  = np.nanstd(spread_arr)
+                z_score = (spread_arr - spread_mean) / spread_std if spread_std > 0 else spread_arr * 0
+
+                fig_spd = make_subplots(
+                    rows=2, cols=1,
+                    shared_xaxes=True,
+                    row_heights=[0.6, 0.4],
+                    vertical_spacing=0.05,
+                    subplot_titles=[f"Spread ({space_label})", "Z-Score"],
+                )
+                fig_spd.add_trace(go.Scatter(
+                    x=dates, y=spread_arr,
+                    name="Spread", line=dict(color="#2ca02c", width=1),
+                ), row=1, col=1)
+                fig_spd.add_trace(go.Scatter(
+                    x=dates, y=z_score,
+                    name="Z-Score", line=dict(color="#ff7f0e", width=1),
+                ), row=2, col=1)
+                for z_lv, col in [(2, "#ff4444"), (-2, "#ff4444"), (1, "#888888"), (-1, "#888888")]:
+                    fig_spd.add_hline(y=z_lv, line=dict(color=col, dash="dot", width=1), row=2, col=1)
+
+                fig_spd.update_layout(
+                    paper_bgcolor=DARK_BG,
+                    plot_bgcolor=DARK_PLOT,
+                    font=dict(color=DARK_TEXT),
+                    height=380,
+                    margin=dict(l=60, r=30, t=40, b=30),
+                    showlegend=False,
+                )
+                fig_spd.update_xaxes(gridcolor=DARK_GRID)
+                fig_spd.update_yaxes(gridcolor=DARK_GRID)
+                st.plotly_chart(fig_spd, use_container_width=True)
+
+            # ── Section 4: OU parameters table ───────────────────────────────
+            st.subheader("Ornstein-Uhlenbeck Parameters")
+
+            ou_rows = []
+            for space_label, ou_res in [("Raw", raw_res["ou"]), ("Log", log_res["ou"])]:
+                if ou_res is None:
+                    continue
+                ou_rows.append({
+                    "Space":         space_label,
+                    "κ (kappa)":     ou_res.get("kappa"),
+                    "μ (mu)":        ou_res.get("mu"),
+                    "σ_OU":          ou_res.get("ou_std"),
+                    "Half-life (h)": ou_res.get("half_life"),
+                    "LB p@5":        ou_res.get("lb_pval_5"),
+                    "LB p@10":       ou_res.get("lb_pval_10"),
+                    "JB p":          ou_res.get("jb_pvalue"),
+                    "Verdict":       ou_res.get("verdict"),
+                })
+
+            if ou_rows:
+                ou_df     = pd.DataFrame(ou_rows)
+                ou_styled = ou_df.style.applymap(_color_verdict, subset=["Verdict"])
+                st.dataframe(ou_styled, use_container_width=True, hide_index=True)
+
+        # ── Section 5: Final verdict ──────────────────────────────────────────
+        st.subheader("Final Verdict")
+
+        if not results["gate_passed"]:
+            st.error("REJECT — pair does not pass cointegration/mean-reversion gate.")
+        else:
+            ou_verdicts = [
+                r.get("verdict")
+                for r in [raw_res.get("ou"), log_res.get("ou")]
+                if r is not None
+            ]
+            if "tradeable" in ou_verdicts:
+                st.success("TRADEABLE — mean-reverting pair with sweet-spot half-life.")
+            elif "borderline" in ou_verdicts:
+                st.warning("BORDERLINE — some mean-reversion but half-life or residuals marginal.")
+            else:
+                st.error("REJECT — OU parameters outside acceptable range.")
