@@ -7,10 +7,10 @@ from statsmodels.stats.diagnostic import acorr_ljungbox
 def fit_ou(spread, dt: float = 1.0) -> dict:
     """
     Fit Ornstein-Uhlenbeck process to a spread via AR(1) regression.
-    dt = 1.0 hour (since data is hourly).
+    dt = 1.0 day (daily bars after bucketing).
 
     Returns kappa (mean-reversion speed), mu (long-run mean),
-    sigma_eps (noise std), ou_std (equilibrium std), half_life (hours).
+    sigma_eps (noise std), ou_std (equilibrium std), half_life (days).
     """
     s = np.asarray(spread, dtype=float)
     s = s[~np.isnan(s)]
@@ -43,7 +43,7 @@ def fit_ou(spread, dt: float = 1.0) -> dict:
     mu        = intercept / (1.0 - beta_ar1)     # long-run mean
     sigma_eps = float(np.std(residuals, ddof=1))
     ou_std    = sigma_eps / np.sqrt(2.0 * kappa * dt) if kappa > 0 else float("nan")
-    half_life = np.log(2.0) / kappa              # hours
+    half_life = np.log(2.0) / kappa              # days
 
     # Diagnostics
     lb_result = acorr_ljungbox(residuals, lags=[5, 10], return_df=True)

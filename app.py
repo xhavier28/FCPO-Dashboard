@@ -1096,9 +1096,11 @@ with tab6:
     with col_a:
         label_y = st.text_input("Series A label", "Asset A", key="mr_label_y")
         file_y  = st.file_uploader("Upload Series A CSV", type="csv", key="mr_file_y")
+        mult_y  = st.number_input("Price multiplier A", value=1.0, step=0.5, min_value=0.01, key="mr_mult_y")
     with col_b:
         label_x = st.text_input("Series B label", "Asset B", key="mr_label_x")
         file_x  = st.file_uploader("Upload Series B CSV", type="csv", key="mr_file_x")
+        mult_x  = st.number_input("Price multiplier B", value=1.0, step=0.5, min_value=0.01, key="mr_mult_x")
 
     with st.expander("Advanced settings"):
         mr_delta = st.number_input("Kalman delta", value=1e-4, format="%.1e", key="mr_delta")
@@ -1108,7 +1110,7 @@ with tab6:
 
     if run_btn:
         with st.spinner("Running screener…"):
-            data    = load_pair(file_y.read(), file_x.read(), label_y, label_x)
+            data    = load_pair(file_y.read(), file_x.read(), label_y, label_x, mult_y=mult_y, mult_x=mult_x)
             results = run_pair(data, delta=mr_delta, Ve=mr_Ve)
 
         raw_res = results["raw"]
@@ -1117,7 +1119,12 @@ with tab6:
 
         # ── Section 1: Stationarity & Gating ─────────────────────────────────
         st.subheader("Stationarity & Cointegration")
-        st.caption(f"Observations: {results['n_obs']} hourly bars")
+        info = results.get("alignment", {})
+        st.caption(
+            f"Observations: {info.get('n_after', results['n_obs'])} daily bars "
+            f"({info.get('freq_y','?')} → daily + {info.get('freq_x','?')} → daily) "
+            f"| {info.get('date_start','?')} – {info.get('date_end','?')}"
+        )
 
         gate_rows = []
         for space_label, r in [("Raw", raw_res), ("Log", log_res)]:
@@ -1273,7 +1280,7 @@ with tab6:
                     "κ (kappa)":     ou_res.get("kappa"),
                     "μ (mu)":        ou_res.get("mu"),
                     "σ_OU":          ou_res.get("ou_std"),
-                    "Half-life (h)": ou_res.get("half_life"),
+                    "Half-life (days)": ou_res.get("half_life"),
                     "LB p@5":        ou_res.get("lb_pval_5"),
                     "LB p@10":       ou_res.get("lb_pval_10"),
                     "JB p":          ou_res.get("jb_pvalue"),
