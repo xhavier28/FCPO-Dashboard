@@ -1,4 +1,4 @@
-from mr_screener.config import KALMAN, THRESHOLDS
+from mr_screener.config import DATA, KALMAN, THRESHOLDS
 from mr_screener.tests.raw import adf_kpss as raw_adf_mod
 from mr_screener.tests.raw import coint_eg as raw_eg_mod
 from mr_screener.tests.raw import johansen as raw_joh_mod
@@ -25,7 +25,9 @@ def autotune_delta(data: dict, candidates=None, Ve: float = None) -> dict:
     """
     if candidates is None:
         candidates = [1e-5, 1e-4, 1e-3]
-    Ve = Ve if Ve is not None else KALMAN["Ve"]
+    Ve           = Ve if Ve is not None else KALMAN["Ve"]
+    freq         = data.get("freq", DATA["freq"])
+    bars_per_day = data.get("bars_per_day", DATA["bars_per_day"])
 
     raw_y = data["raw_y"].values
     raw_x = data["raw_x"].values
@@ -36,8 +38,10 @@ def autotune_delta(data: dict, candidates=None, Ve: float = None) -> dict:
     for d in candidates:
         rk = raw_kalman.run_kalman(raw_y, raw_x, d, Ve)
         lk = log_kalman.run_kalman(log_y, log_x, d, Ve)
-        raw_b = raw_ou.fit_ou(rk["spread_reconstructed"]).get("beta_ar1")
-        log_b = log_ou.fit_ou(lk["spread_reconstructed"]).get("beta_ar1")
+        raw_b = raw_ou.fit_ou(rk["spread_reconstructed"],
+                              freq=freq, bars_per_day=bars_per_day).get("beta_ar1")
+        log_b = log_ou.fit_ou(lk["spread_reconstructed"],
+                              freq=freq, bars_per_day=bars_per_day).get("beta_ar1")
 
         # Only consider valid betas in (0, 1)
         valid = [b for b in [raw_b, log_b] if b is not None and 0.0 < b < 1.0]
@@ -149,8 +153,10 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     Gate: (eg_coint_raw OR eg_coint_log) AND (hurst_tradeable_raw OR hurst_tradeable_log)
     Only runs Kalman + OU if gate passes.
     """
-    delta = delta if delta is not None else KALMAN["delta"]
-    Ve    = Ve    if Ve    is not None else KALMAN["Ve"]
+    delta        = delta if delta is not None else KALMAN["delta"]
+    Ve           = Ve    if Ve    is not None else KALMAN["Ve"]
+    freq         = data.get("freq", DATA["freq"])
+    bars_per_day = data.get("bars_per_day", DATA["bars_per_day"])
 
     raw_y, raw_x = data["raw_y"], data["raw_x"]
     log_y, log_x = data["log_y"], data["log_x"]
@@ -160,7 +166,7 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     raw["adf_y"]    = raw_adf_mod.test_stationarity(raw_y, data["label_y"])
     raw["adf_x"]    = raw_adf_mod.test_stationarity(raw_x, data["label_x"])
     raw["coint_eg"] = raw_eg_mod.test_cointegration_eg(raw_y, raw_x)
-    raw["johansen"] = raw_joh_mod.test_cointegration_johansen(raw_y, raw_x)
+    raw["johansen"] = raw_joh_mod.test_cointegration_johansen(raw_y, raw_x, freq=freq)
 
     # Hurst on EG static spread
     raw_spread_static = (
@@ -175,7 +181,7 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     log["adf_y"]    = log_adf_mod.test_stationarity(log_y, data["label_y"])
     log["adf_x"]    = log_adf_mod.test_stationarity(log_x, data["label_x"])
     log["coint_eg"] = log_eg_mod.test_cointegration_eg(log_y, log_x)
-    log["johansen"] = log_joh_mod.test_cointegration_johansen(log_y, log_x)
+    log["johansen"] = log_joh_mod.test_cointegration_johansen(log_y, log_x, freq=freq)
 
     log_spread_static = (
         log_y.values
@@ -191,10 +197,12 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     # ── Kalman + OU (only if gate passes) ────────────────────────────────────
     if gate_passed:
         raw["kalman"] = raw_kalman.run_kalman(raw_y.values, raw_x.values, delta, Ve)
-        raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread_reconstructed"])
+        raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread_reconstructed"],
+                                      freq=freq, bars_per_day=bars_per_day)
 
         log["kalman"] = log_kalman.run_kalman(log_y.values, log_x.values, delta, Ve)
-        log["ou"]     = log_ou.fit_ou(log["kalman"]["spread_reconstructed"])
+        log["ou"]     = log_ou.fit_ou(log["kalman"]["spread_reconstructed"],
+                                      freq=freq, bars_per_day=bars_per_day)
     else:
         raw["kalman"] = None
         raw["ou"]     = None
@@ -213,4 +221,6 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
         "dates":        data["dates"],
         "p_y_last":     float(data["raw_y"].iloc[-1]),
         "p_x_last":     float(data["raw_x"].iloc[-1]),
+        "freq":         freq,
+        "bars_per_day": bars_per_day,
     }

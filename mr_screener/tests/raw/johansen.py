@@ -3,13 +3,20 @@ import pandas as pd
 from statsmodels.tsa.vector_ar.vecm import coint_johansen
 
 
-def test_cointegration_johansen(y: pd.Series, x: pd.Series) -> dict:
-    """Johansen cointegration test on the [y, x] system."""
+def test_cointegration_johansen(y: pd.Series, x: pd.Series,
+                                freq: str = "hourly") -> dict:
+    """
+    Johansen cointegration test on the [y, x] system.
+
+    k_ar_diff=5 for hourly (absorbs intraday autocorrelation),
+    k_ar_diff=1 for daily.
+    """
     df = pd.concat([y, x], axis=1)
     df.columns = ["y", "x"]
+    k_ar_diff = 5 if freq == "hourly" else 1
 
     try:
-        result = coint_johansen(df.values, det_order=0, k_ar_diff=1)
+        result = coint_johansen(df.values, det_order=0, k_ar_diff=k_ar_diff)
     except np.linalg.LinAlgError as e:
         return {
             "trace_stat":           None,

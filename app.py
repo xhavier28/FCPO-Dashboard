@@ -1150,12 +1150,22 @@ with tab6:
 
         # ── Section 1: Stationarity & Gating ─────────────────────────────────
         st.subheader("Stationarity & Cointegration")
-        info = results.get("alignment", {})
-        st.caption(
-            f"Observations: {info.get('n_after', results['n_obs'])} daily bars "
-            f"({info.get('freq_y','?')} → daily + {info.get('freq_x','?')} → daily) "
-            f"| {info.get('date_start','?')} – {info.get('date_end','?')}"
-        )
+        _info = results.get("alignment") or {}
+        _n     = _info.get("n_after", results["n_obs"])
+        _ndays = _info.get("n_common_days", "?")
+        _avg   = _info.get("avg_bars_day")
+        _avg_s = f"{_avg:.1f}" if isinstance(_avg, (int, float)) else "?"
+        if _info.get("mode") == "intraday_positional":
+            st.caption(
+                f"Observations: {_n} hourly bars across {_ndays} trading days "
+                f"(avg {_avg_s} bars/day, positional match within each day) "
+                f"| {_info.get('date_start','?')} – {_info.get('date_end','?')}"
+            )
+        else:
+            st.caption(
+                f"Observations: {_n} daily bars "
+                f"| {_info.get('date_start','?')} – {_info.get('date_end','?')}"
+            )
 
         gate_rows = []
         for space_label, r in [("Raw", raw_res), ("Log", log_res)]:
@@ -1323,17 +1333,26 @@ with tab6:
             for space_label, ou_res in [("Raw", raw_res["ou"]), ("Log", log_res["ou"])]:
                 if ou_res is None:
                     continue
+                # Format half-life as "X.Xd (Y.Yh)" when both units available
+                _hl_d = ou_res.get("half_life_days") or ou_res.get("half_life")
+                _hl_h = ou_res.get("half_life_hours")
+                if _hl_d is not None and _hl_h is not None:
+                    _hl_str = f"{_hl_d:.1f}d  ({_hl_h:.1f}h)"
+                elif _hl_d is not None:
+                    _hl_str = f"{_hl_d:.1f}d"
+                else:
+                    _hl_str = "—"
                 ou_rows.append({
-                    "Space":            space_label,
-                    "beta_ar1":         ou_res.get("beta_ar1"),
-                    "κ (kappa)":        ou_res.get("kappa"),
-                    "μ (mu)":           ou_res.get("mu"),
-                    "σ_OU":             ou_res.get("ou_std"),
-                    "Half-life (days)": ou_res.get("half_life"),
-                    "LB p@5":           ou_res.get("lb_pval_5"),
-                    "LB p@10":          ou_res.get("lb_pval_10"),
-                    "JB p":             ou_res.get("jb_pvalue"),
-                    "Verdict":          ou_res.get("verdict"),
+                    "Space":       space_label,
+                    "beta_ar1":    ou_res.get("beta_ar1"),
+                    "κ (kappa)":   ou_res.get("kappa"),
+                    "μ (mu)":      ou_res.get("mu"),
+                    "σ_OU":        ou_res.get("ou_std"),
+                    "Half-life":   _hl_str,
+                    "LB p@5":      ou_res.get("lb_pval_5"),
+                    "LB p@10":     ou_res.get("lb_pval_10"),
+                    "JB p":        ou_res.get("jb_pvalue"),
+                    "Verdict":     ou_res.get("verdict"),
                 })
                 if ou_res.get("reject_reason"):
                     ou_reject_notes.append(f"{space_label}: {ou_res['reject_reason']}")
@@ -1374,8 +1393,11 @@ with tab6:
             _p_x    = results.get("p_x_last", 1.0)
 
             def _space_valid(ou):
-                hl = ou.get("half_life")
-                return bool(ou.get("is_valid") and hl is not None and 2.0 <= hl <= 60.0)
+                # Verdict already encodes whether half-life is in range (freq-agnostic)
+                return bool(
+                    ou.get("is_valid") and
+                    ou.get("verdict") in ("tradeable", "borderline")
+                )
 
             _log_ok = _space_valid(_log_ou)
             _raw_ok = _space_valid(_raw_ou)
@@ -1387,25 +1409,39 @@ with tab6:
             else:
                 _sel = "log_fallback"
 
-            best_k     = log_res["kalman"] if _sel in ("log", "log_fallback") else raw_res["kalman"]
-            best_ou    = _log_ou           if _sel in ("log", "log_fallback") else _raw_ou
-            delta_used = best_k["delta_used"]
-            log_beta   = float(best_k["beta_t"][-1])
-            log_alpha  = float(best_k["alpha_t"][-1])
-            half_life  = best_ou.get("half_life")
+            best_k       = log_res["kalman"] if _sel in ("log", "log_fallback") else raw_res["kalman"]
+            best_ou      = _log_ou           if _sel in ("log", "log_fallback") else _raw_ou
+            delta_used   = best_k["delta_used"]
+            log_beta     = float(best_k["beta_t"][-1])
+            log_alpha    = float(best_k["alpha_t"][-1])
+            _hl_d        = best_ou.get("half_life_days") or best_ou.get("half_life")
+            _hl_h        = best_ou.get("half_life_hours")
+            _res_freq    = results.get("freq", "hourly")
 
             # Convert log-space beta → price-space hedge ratio
             # log(y) = β_log·log(x) + α  →  price HR = β_log · (P_y / P_x)
             price_hr = log_beta * (_p_y / _p_x) if _sel in ("log", "log_fallback") else log_beta
 
-            _hl_str  = f"{half_life:.1f}" if half_life else "—"
+            if _hl_d is not None and _hl_h is not None:
+                _hl_str = f"{_hl_d:.1f}d  ({_hl_h:.1f}h)"
+            elif _hl_d is not None:
+                _hl_str = f"{_hl_d:.1f}d"
+            else:
+                _hl_str = "—"
             _space_label = "Log" if _sel in ("log", "log_fallback") else "Raw"
 
             rec_cols = st.columns(4)
             rec_cols[0].metric("Signal Space", _space_label)
             rec_cols[1].metric("Log β (Kalman)", f"{log_beta:.4f}")
             rec_cols[2].metric("Price-space HR", f"{price_hr:.4f}")
-            rec_cols[3].metric("Half-life (days)", _hl_str)
+            rec_cols[3].metric("Half-life", _hl_str)
+
+            _freq_note = (
+                "Signal frequency: hourly — update hedge ratio and z-score "
+                "at each session open or when z-score crosses entry/exit threshold."
+                if _res_freq == "hourly" else
+                "Signal frequency: daily — update hedge ratio at market close."
+            )
 
             if _sel == "log":
                 st.caption(
@@ -1415,6 +1451,7 @@ with tab6:
                     f"Enter when log z-score exceeds ±2σ; exit at 0σ. "
                     f"(Kalman δ={delta_used:.0e}, log prices)"
                 )
+                st.caption(_freq_note)
             elif _sel == "raw":
                 st.caption(
                     f"**Trade instruction:** Long 1 unit {results['label_y']}, "
@@ -1423,6 +1460,7 @@ with tab6:
                     f"Enter when raw z-score exceeds ±2σ; exit at 0σ. "
                     f"(Kalman δ={delta_used:.0e}, raw prices)"
                 )
+                st.caption(_freq_note)
             else:  # log_fallback
                 st.warning(
                     f"INDICATIVE ONLY — OU fit incomplete (half-life unavailable). "
