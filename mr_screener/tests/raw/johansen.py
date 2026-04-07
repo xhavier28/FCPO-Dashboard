@@ -8,7 +8,21 @@ def test_cointegration_johansen(y: pd.Series, x: pd.Series) -> dict:
     df = pd.concat([y, x], axis=1)
     df.columns = ["y", "x"]
 
-    result = coint_johansen(df.values, det_order=0, k_ar_diff=1)
+    try:
+        result = coint_johansen(df.values, det_order=0, k_ar_diff=1)
+    except np.linalg.LinAlgError as e:
+        return {
+            "trace_stat":           None,
+            "trace_crit_95":        None,
+            "trace_significant":    False,
+            "maxeig_stat":          None,
+            "maxeig_crit_95":       None,
+            "maxeig_significant":   False,
+            "cointegrating_vector": None,
+            "verdict":              "not_cointegrated",
+            "error":                f"Singular matrix: {e}",
+            "space":                "raw",
+        }
 
     # Trace test (index 0 = r=0, index 1 = r<=1)
     trace_stat    = result.lr1[0]
