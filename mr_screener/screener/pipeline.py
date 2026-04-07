@@ -211,4 +211,6 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
         "label_x":      data["label_x"],
         "n_obs":        data["n_obs"],
         "dates":        data["dates"],
+        "p_y_last":     float(data["raw_y"].iloc[-1]),
+        "p_x_last":     float(data["raw_x"].iloc[-1]),
     }

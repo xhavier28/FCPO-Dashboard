@@ -1337,6 +1337,8 @@ with tab6:
                 })
                 if ou_res.get("reject_reason"):
                     ou_reject_notes.append(f"{space_label}: {ou_res['reject_reason']}")
+                if ou_res.get("hl_reason"):
+                    ou_reject_notes.append(f"{space_label}: {ou_res['hl_reason']}")
 
             if ou_rows:
                 ou_df     = pd.DataFrame(ou_rows)
@@ -1363,33 +1365,71 @@ with tab6:
             else:
                 st.error("REJECT — OU parameters outside acceptable range.")
 
-            # ── Beta recommendation ───────────────────────────────────────────
+            # ── Recommended Hedge Ratio ───────────────────────────────────────
             st.subheader("Recommended Hedge Ratio")
 
-            # Pick best space: prefer the one whose OU verdict is better
-            _verdict_rank = {"tradeable": 2, "borderline": 1, "reject": 0, None: -1}
             _raw_ou = raw_res.get("ou") or {}
             _log_ou = log_res.get("ou") or {}
-            _raw_rank = _verdict_rank.get(_raw_ou.get("verdict"), -1)
-            _log_rank = _verdict_rank.get(_log_ou.get("verdict"), -1)
-            best_space    = "Raw" if _raw_rank >= _log_rank else "Log"
-            best_k        = raw_res["kalman"] if best_space == "Raw" else log_res["kalman"]
-            best_ou       = _raw_ou if best_space == "Raw" else _log_ou
+            _p_y    = results.get("p_y_last", 1.0)
+            _p_x    = results.get("p_x_last", 1.0)
 
-            current_beta  = float(best_k["beta_t"][-1])
-            current_alpha = float(best_k["alpha_t"][-1])
-            half_life     = best_ou.get("half_life")
-            delta_used    = best_k["delta_used"]
+            def _space_valid(ou):
+                hl = ou.get("half_life")
+                return bool(ou.get("is_valid") and hl is not None and 2.0 <= hl <= 60.0)
+
+            _log_ok = _space_valid(_log_ou)
+            _raw_ok = _space_valid(_raw_ou)
+
+            if _log_ok:
+                _sel = "log"
+            elif _raw_ok:
+                _sel = "raw"
+            else:
+                _sel = "log_fallback"
+
+            best_k     = log_res["kalman"] if _sel in ("log", "log_fallback") else raw_res["kalman"]
+            best_ou    = _log_ou           if _sel in ("log", "log_fallback") else _raw_ou
+            delta_used = best_k["delta_used"]
+            log_beta   = float(best_k["beta_t"][-1])
+            log_alpha  = float(best_k["alpha_t"][-1])
+            half_life  = best_ou.get("half_life")
+
+            # Convert log-space beta → price-space hedge ratio
+            # log(y) = β_log·log(x) + α  →  price HR = β_log · (P_y / P_x)
+            price_hr = log_beta * (_p_y / _p_x) if _sel in ("log", "log_fallback") else log_beta
+
+            _hl_str  = f"{half_life:.1f}" if half_life else "—"
+            _space_label = "Log" if _sel in ("log", "log_fallback") else "Raw"
 
             rec_cols = st.columns(4)
-            rec_cols[0].metric("Space", best_space)
-            rec_cols[1].metric("Current β (hedge ratio)", f"{current_beta:.4f}")
-            rec_cols[2].metric("Current α (intercept)", f"{current_alpha:.2f}")
-            rec_cols[3].metric("Half-life (days)", f"{half_life:.1f}" if half_life else "—")
+            rec_cols[0].metric("Signal Space", _space_label)
+            rec_cols[1].metric("Log β (Kalman)", f"{log_beta:.4f}")
+            rec_cols[2].metric("Price-space HR", f"{price_hr:.4f}")
+            rec_cols[3].metric("Half-life (days)", _hl_str)
 
-            st.caption(
-                f"**Trade instruction:** Long 1 unit {results['label_y']}, "
-                f"Short **{current_beta:.4f}** units {results['label_x']}. "
-                f"Enter when z-score exceeds ±2σ; exit at 0σ. "
-                f"(Kalman delta={delta_used:.0e}, {best_space.lower()} prices)"
-            )
+            if _sel == "log":
+                st.caption(
+                    f"**Trade instruction:** Long 1 unit {results['label_y']}, "
+                    f"Short **{price_hr:.4f}** units {results['label_x']}. "
+                    f"Signal from LOG space (scale-invariant). "
+                    f"Enter when log z-score exceeds ±2σ; exit at 0σ. "
+                    f"(Kalman δ={delta_used:.0e}, log prices)"
+                )
+            elif _sel == "raw":
+                st.caption(
+                    f"**Trade instruction:** Long 1 unit {results['label_y']}, "
+                    f"Short **{log_beta:.4f}** units {results['label_x']}. "
+                    f"Signal from RAW price space. "
+                    f"Enter when raw z-score exceeds ±2σ; exit at 0σ. "
+                    f"(Kalman δ={delta_used:.0e}, raw prices)"
+                )
+            else:  # log_fallback
+                st.warning(
+                    f"INDICATIVE ONLY — OU fit incomplete (half-life unavailable). "
+                    f"Log β={log_beta:.4f}, price-space HR ≈ {price_hr:.4f}. "
+                    f"Do not trade until half-life is confirmed. "
+                    f"Verify the spread_reconstructed bug fix is applied and re-run."
+                )
+
+            if best_ou.get("hl_reason"):
+                st.caption(f"⚠ {best_ou['hl_reason']}")

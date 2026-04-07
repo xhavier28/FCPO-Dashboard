@@ -61,20 +61,30 @@ def fit_ou(spread, dt: float = 1.0) -> dict:
 
     jb_stat, jb_p = jarque_bera(residuals)
 
-    # Verdict
+    # Verdict — tiered half-life
     from mr_screener.config import THRESHOLDS as T
-    hl_ok   = T["half_life_min"] <= half_life <= T["half_life_max"]
-    hl_sweet = T["half_life_sweet_min"] <= half_life <= T["half_life_sweet_max"]
-    lb_ok   = all(p > 0.05 for p in lb_pvals)
+    lb_ok = all(p > 0.05 for p in lb_pvals)
 
-    if hl_sweet and lb_ok:
+    hl_reason = None
+    if half_life < 1.0:
+        verdict   = "reject"
+        hl_reason = (
+            f"Half-life {half_life:.2f}d < 1 day — spread reverts too fast to trade, "
+            "or OU fitted wrong spread (check spread_reconstructed)."
+        )
+    elif half_life < 2.0:
+        verdict   = "borderline"
+        hl_reason = f"Half-life {half_life:.2f}d very short — intraday only, check data frequency."
+    elif half_life <= T["half_life_sweet_max"] and lb_ok:
         verdict = "tradeable"
-    elif hl_ok:
+    elif half_life <= 60.0:
         verdict = "borderline"
     else:
-        verdict = "reject"
+        verdict   = "borderline"
+        hl_reason = f"Half-life {half_life:.1f}d > 60 days — capital locked up too long."
 
     return {
+        "is_valid":   True,
         "beta_ar1":   round(float(beta_ar1), 6),
         "r_squared":  round(float(r_value ** 2), 4),
         "kappa":      round(float(kappa), 6),
@@ -85,7 +95,8 @@ def fit_ou(spread, dt: float = 1.0) -> dict:
         "lb_pval_5":  round(lb_pvals[0], 4),
         "lb_pval_10": round(lb_pvals[1], 4),
         "jb_stat":    round(float(jb_stat), 4),
-        "jb_pvalue":  round(float(jb_p), 4),
-        "verdict":    verdict,
-        "space":      "raw",
+        "jb_pvalue":   round(float(jb_p), 4),
+        "verdict":     verdict,
+        "hl_reason":   hl_reason,
+        "space":       "raw",
     }
