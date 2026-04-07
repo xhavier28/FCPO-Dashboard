@@ -11,6 +11,80 @@ from mr_screener.kalman import raw_kalman, log_kalman
 from mr_screener.ou import raw_ou, log_ou
 
 
+def evaluate_gate(raw: dict, log: dict, alignment_info: dict | None) -> dict:
+    """Classify pair as STRONG / MARGINAL / REJECT and collect warnings."""
+    T = THRESHOLDS
+
+    # --- Cointegration ---
+    eg_strict  = (raw["coint_eg"]["eg_pvalue"] < 0.05
+                  or log["coint_eg"]["eg_pvalue"] < 0.05)
+    eg_loose   = (raw["coint_eg"]["eg_pvalue"] < T["coint_pvalue_loose"]
+                  or log["coint_eg"]["eg_pvalue"] < T["coint_pvalue_loose"])
+
+    joh_strict = (raw["johansen"].get("trace_significant", False)
+                  or log["johansen"].get("trace_significant", False))
+    joh_loose  = (raw["johansen"].get("trace_significant_90", False)
+                  or log["johansen"].get("trace_significant_90", False))
+
+    coint_strict = eg_strict or joh_strict
+    coint_loose  = eg_loose  or joh_loose
+
+    # --- Hurst ---
+    def _hurst(r):
+        return r["hurst"].get("hurst", float("nan"))
+
+    hurst_strict = (_hurst(raw) < 0.50 or _hurst(log) < 0.50)
+    hurst_loose  = (_hurst(raw) < 0.60 or _hurst(log) < 0.60)
+
+    # --- Tier ---
+    if coint_strict and hurst_strict:
+        tier = "STRONG"
+    elif coint_loose:
+        tier = "MARGINAL"
+    else:
+        tier = "REJECT"
+
+    # --- Warnings ---
+    warnings = []
+    raw_adf_ok = (raw["adf_y"]["verdict"] == "I(1)" and raw["adf_x"]["verdict"] == "I(1)")
+    log_adf_ok = (log["adf_y"]["verdict"] == "I(1)" and log["adf_x"]["verdict"] == "I(1)")
+    if not raw_adf_ok and not log_adf_ok:
+        warnings.append(
+            "One or both series may already be stationary — check for roll "
+            "adjustment artifacts or structural breaks."
+        )
+    if not coint_strict and coint_loose:
+        eg_best = min(raw["coint_eg"]["eg_pvalue"], log["coint_eg"]["eg_pvalue"])
+        warnings.append(
+            f"Cointegration marginal — EG p={eg_best:.3f} "
+            f"(passes relaxed 0.20 threshold, not strict 0.05)."
+        )
+    if not hurst_strict and hurst_loose:
+        h_best = min(_hurst(raw), _hurst(log))
+        warnings.append(
+            f"Hurst borderline — {h_best:.3f} "
+            f"(above 0.50 but below 0.60, mild trending tendency)."
+        )
+    if not hurst_loose and tier != "REJECT":
+        h_best = min(_hurst(raw), _hurst(log))
+        warnings.append(
+            f"Hurst elevated — {h_best:.3f} (trending). "
+            f"Cointegration still found; proceed with caution."
+        )
+    n_after = alignment_info.get("n_after", 0) if alignment_info else 0
+    if n_after < 200:
+        warnings.append(
+            f"Only {n_after} bars — results less reliable. "
+            f"Upload more history for stronger confidence."
+        )
+
+    return {
+        "tier":    tier,
+        "warnings": warnings,
+        "proceed": tier in ("STRONG", "MARGINAL"),
+    }
+
+
 def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     """
     Full mean-reversion screening pipeline.
@@ -54,9 +128,8 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     log["hurst"] = log_hurst_mod.hurst_exponent(log_spread_static)
 
     # ── Gate check ────────────────────────────────────────────────────────────
-    eg_pass   = raw["coint_eg"]["is_cointegrated"] or log["coint_eg"]["is_cointegrated"]
-    hurst_pass = raw["hurst"]["tradeable"] or log["hurst"]["tradeable"]
-    gate_passed = eg_pass and hurst_pass
+    gate_info   = evaluate_gate(raw, log, data.get("alignment"))
+    gate_passed = gate_info["proceed"]
 
     # ── Kalman + OU (only if gate passes) ────────────────────────────────────
     if gate_passed:
@@ -72,11 +145,13 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
         log["ou"]     = None
 
     return {
-        "raw":        raw,
-        "log":        log,
-        "gate_passed": gate_passed,
-        "label_y":    data["label_y"],
-        "label_x":    data["label_x"],
-        "n_obs":      data["n_obs"],
-        "dates":      data["dates"],
+        "raw":          raw,
+        "log":          log,
+        "gate_passed":  gate_passed,
+        "gate_tier":    gate_info["tier"],
+        "gate_warnings": gate_info["warnings"],
+        "label_y":      data["label_y"],
+        "label_x":      data["label_x"],
+        "n_obs":        data["n_obs"],
+        "dates":        data["dates"],
     }

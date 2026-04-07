@@ -1178,14 +1178,32 @@ with tab6:
         styled_gate = gate_df.style.applymap(_color_verdict, subset=["Verdict"])
         st.dataframe(styled_gate, use_container_width=True, hide_index=True)
 
-        gate_label = "GATE PASSED — Kalman & OU computed" if results["gate_passed"] else "GATE FAILED — insufficient cointegration or mean-reversion evidence"
-        if results["gate_passed"]:
-            st.success(f"**{gate_label}**")
+        tier     = results.get("gate_tier", "REJECT")
+        warnings = results.get("gate_warnings", [])
+
+        if tier == "STRONG":
+            st.success("**STRONG** — passes all cointegration and mean-reversion criteria.")
+        elif tier == "MARGINAL":
+            st.warning("**MARGINAL** — passes at relaxed thresholds. Kalman & OU shown below — validate before trading.")
+            for w in warnings:
+                st.caption(f"⚠ {w}")
         else:
-            st.error(f"**{gate_label}**")
+            st.error("**REJECT** — insufficient evidence of cointegration or mean reversion.")
+            for w in warnings:
+                st.caption(f"✗ {w}")
+            st.caption("Consider fixing the price multiplier or uploading longer history.")
 
         # ── Sections 2–4 only if gate passed ─────────────────────────────────
         if results["gate_passed"]:
+
+            if tier == "MARGINAL":
+                st.info(
+                    "**[!] Results below are for a MARGINAL pair.** "
+                    "Do not trade without further validation: "
+                    "(1) Verify price multiplier converts both series to comparable units. "
+                    "(2) Check for structural breaks in the price history. "
+                    "(3) Consider ratio-adjusted continuous contract instead of back-adjusted."
+                )
 
             # ── Section 2: Kalman beta(t) chart ──────────────────────────────
             st.subheader("Kalman Beta Over Time")

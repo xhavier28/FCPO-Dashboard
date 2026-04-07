@@ -14,7 +14,9 @@ def test_cointegration_johansen(y: pd.Series, x: pd.Series) -> dict:
         return {
             "trace_stat":           None,
             "trace_crit_95":        None,
+            "trace_crit_90":        None,
             "trace_significant":    False,
+            "trace_significant_90": False,
             "maxeig_stat":          None,
             "maxeig_crit_95":       None,
             "maxeig_significant":   False,
@@ -27,12 +29,14 @@ def test_cointegration_johansen(y: pd.Series, x: pd.Series) -> dict:
     # Trace test (index 0 = r=0, index 1 = r<=1)
     trace_stat    = result.lr1[0]
     trace_crit_95 = result.cvt[0, 1]   # 95% critical value
+    trace_crit_90 = result.cvt[0, 0]   # 90% critical value
 
     # Max-eigenvalue test
     maxeig_stat    = result.lr2[0]
     maxeig_crit_95 = result.cvm[0, 1]
 
-    trace_significant  = bool(trace_stat  > trace_crit_95)
+    trace_significant    = bool(trace_stat > trace_crit_95)
+    trace_significant_90 = bool(trace_stat > trace_crit_90)
     maxeig_significant = bool(maxeig_stat > maxeig_crit_95)
 
     # Cointegrating vector (eigenvector for largest eigenvalue)
@@ -48,7 +52,9 @@ def test_cointegration_johansen(y: pd.Series, x: pd.Series) -> dict:
     return {
         "trace_stat":          round(float(trace_stat), 4),
         "trace_crit_95":       round(float(trace_crit_95), 4),
+        "trace_crit_90":       round(float(trace_crit_90), 4),
         "trace_significant":   trace_significant,
+        "trace_significant_90": trace_significant_90,
         "maxeig_stat":         round(float(maxeig_stat), 4),
         "maxeig_crit_95":      round(float(maxeig_crit_95), 4),
         "maxeig_significant":  maxeig_significant,
