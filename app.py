@@ -1280,7 +1280,7 @@ with tab6:
             st.subheader("Kalman Spread & Z-Score")
 
             for space_label, k_res in [("Raw", raw_res["kalman"]), ("Log", log_res["kalman"])]:
-                spread_arr  = k_res["spread"]
+                spread_arr  = k_res["spread_reconstructed"]
                 spread_mean = np.nanmean(spread_arr)
                 spread_std  = np.nanstd(spread_arr)
                 z_score = (spread_arr - spread_mean) / spread_std if spread_std > 0 else spread_arr * 0
@@ -1362,3 +1362,34 @@ with tab6:
                 st.warning("BORDERLINE — some mean-reversion but half-life or residuals marginal.")
             else:
                 st.error("REJECT — OU parameters outside acceptable range.")
+
+            # ── Beta recommendation ───────────────────────────────────────────
+            st.subheader("Recommended Hedge Ratio")
+
+            # Pick best space: prefer the one whose OU verdict is better
+            _verdict_rank = {"tradeable": 2, "borderline": 1, "reject": 0, None: -1}
+            _raw_ou = raw_res.get("ou") or {}
+            _log_ou = log_res.get("ou") or {}
+            _raw_rank = _verdict_rank.get(_raw_ou.get("verdict"), -1)
+            _log_rank = _verdict_rank.get(_log_ou.get("verdict"), -1)
+            best_space    = "Raw" if _raw_rank >= _log_rank else "Log"
+            best_k        = raw_res["kalman"] if best_space == "Raw" else log_res["kalman"]
+            best_ou       = _raw_ou if best_space == "Raw" else _log_ou
+
+            current_beta  = float(best_k["beta_t"][-1])
+            current_alpha = float(best_k["alpha_t"][-1])
+            half_life     = best_ou.get("half_life")
+            delta_used    = best_k["delta_used"]
+
+            rec_cols = st.columns(4)
+            rec_cols[0].metric("Space", best_space)
+            rec_cols[1].metric("Current β (hedge ratio)", f"{current_beta:.4f}")
+            rec_cols[2].metric("Current α (intercept)", f"{current_alpha:.2f}")
+            rec_cols[3].metric("Half-life (days)", f"{half_life:.1f}" if half_life else "—")
+
+            st.caption(
+                f"**Trade instruction:** Long 1 unit {results['label_y']}, "
+                f"Short **{current_beta:.4f}** units {results['label_x']}. "
+                f"Enter when z-score exceeds ±2σ; exit at 0σ. "
+                f"(Kalman delta={delta_used:.0e}, {best_space.lower()} prices)"
+            )

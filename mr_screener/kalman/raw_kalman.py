@@ -21,12 +21,11 @@ def run_kalman(y, x, delta: float, Ve: float) -> dict:
     theta = np.array([1.0, 0.0])   # [beta, alpha]
     P = np.eye(2)
 
-    beta_t  = np.empty(n)
-    alpha_t = np.empty(n)
-    spread  = np.empty(n)
-    P_trace = np.empty(n)
-
-    spread[0] = 0.0
+    beta_t                = np.empty(n)
+    alpha_t               = np.empty(n)
+    innovations           = np.empty(n)
+    spread_reconstructed  = np.empty(n)
+    P_trace               = np.empty(n)
 
     for t in range(n):
         F = np.array([x_arr[t], 1.0])  # observation vector
@@ -34,10 +33,11 @@ def run_kalman(y, x, delta: float, Ve: float) -> dict:
         # Predict
         P = P + Q
 
-        # Innovation
-        y_hat = float(F @ theta)
-        innov = y_arr[t] - y_hat
-        S = float(F @ P @ F) + Ve
+        # Innovation (uses PRIOR theta — before update)
+        y_hat          = float(F @ theta)
+        innov          = y_arr[t] - y_hat
+        innovations[t] = innov
+        S              = float(F @ P @ F) + Ve
 
         # Kalman gain
         K = P @ F / S
@@ -46,17 +46,18 @@ def run_kalman(y, x, delta: float, Ve: float) -> dict:
         theta = theta + K * innov
         P = P - np.outer(K, F) @ P
 
-        beta_t[t]  = theta[0]
-        alpha_t[t] = theta[1]
-        spread[t]  = y_arr[t] - theta[0] * x_arr[t] - theta[1]
-        P_trace[t] = float(np.trace(P))
+        beta_t[t]               = theta[0]
+        alpha_t[t]              = theta[1]
+        spread_reconstructed[t] = y_arr[t] - theta[0] * x_arr[t] - theta[1]
+        P_trace[t]              = float(np.trace(P))
 
     return {
-        "beta_t":     beta_t,
-        "alpha_t":    alpha_t,
-        "spread":     spread,
-        "P_trace":    P_trace,
-        "delta_used": delta,
-        "Ve_used":    Ve,
-        "space":      "raw",
+        "beta_t":               beta_t,
+        "alpha_t":              alpha_t,
+        "spread":               innovations,           # Kalman residuals (near white noise)
+        "spread_reconstructed": spread_reconstructed,  # y - beta_t*x - alpha_t (tradeable)
+        "P_trace":              P_trace,
+        "delta_used":           delta,
+        "Ve_used":              Ve,
+        "space":                "raw",
     }

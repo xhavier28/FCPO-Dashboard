@@ -36,8 +36,8 @@ def autotune_delta(data: dict, candidates=None, Ve: float = None) -> dict:
     for d in candidates:
         rk = raw_kalman.run_kalman(raw_y, raw_x, d, Ve)
         lk = log_kalman.run_kalman(log_y, log_x, d, Ve)
-        raw_b = raw_ou.fit_ou(rk["spread"]).get("beta_ar1")
-        log_b = log_ou.fit_ou(lk["spread"]).get("beta_ar1")
+        raw_b = raw_ou.fit_ou(rk["spread_reconstructed"]).get("beta_ar1")
+        log_b = log_ou.fit_ou(lk["spread_reconstructed"]).get("beta_ar1")
 
         # Only consider valid betas in (0, 1)
         valid = [b for b in [raw_b, log_b] if b is not None and 0.0 < b < 1.0]
@@ -191,10 +191,10 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     # ── Kalman + OU (only if gate passes) ────────────────────────────────────
     if gate_passed:
         raw["kalman"] = raw_kalman.run_kalman(raw_y.values, raw_x.values, delta, Ve)
-        raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread"])
+        raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread_reconstructed"])
 
         log["kalman"] = log_kalman.run_kalman(log_y.values, log_x.values, delta, Ve)
-        log["ou"]     = log_ou.fit_ou(log["kalman"]["spread"])
+        log["ou"]     = log_ou.fit_ou(log["kalman"]["spread_reconstructed"])
     else:
         raw["kalman"] = None
         raw["ou"]     = None
