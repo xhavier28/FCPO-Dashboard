@@ -11,6 +11,63 @@ from mr_screener.kalman import raw_kalman, log_kalman
 from mr_screener.ou import raw_ou, log_ou
 
 
+def autotune_delta(data: dict, candidates=None, Ve: float = None) -> dict:
+    """
+    Grid-search over Kalman delta values and pick the one whose spread
+    beta_ar1 is closest to 0.50 (balanced mean-reversion speed).
+
+    Returns:
+        {
+            "delta":  best delta (float),
+            "reason": human-readable explanation (str),
+            "rows":   list of dicts with per-delta diagnostics,
+        }
+    """
+    if candidates is None:
+        candidates = [1e-5, 1e-4, 1e-3]
+    Ve = Ve if Ve is not None else KALMAN["Ve"]
+
+    raw_y = data["raw_y"].values
+    raw_x = data["raw_x"].values
+    log_y = data["log_y"].values
+    log_x = data["log_x"].values
+
+    rows = []
+    for d in candidates:
+        rk = raw_kalman.run_kalman(raw_y, raw_x, d, Ve)
+        lk = log_kalman.run_kalman(log_y, log_x, d, Ve)
+        raw_b = raw_ou.fit_ou(rk["spread"]).get("beta_ar1")
+        log_b = log_ou.fit_ou(lk["spread"]).get("beta_ar1")
+
+        # Only consider valid betas in (0, 1)
+        valid = [b for b in [raw_b, log_b] if b is not None and 0.0 < b < 1.0]
+        best_b = min(valid, key=lambda b: abs(b - 0.5)) if valid else None
+        dist   = abs(best_b - 0.5) if best_b is not None else float("inf")
+
+        rows.append({
+            "delta":        d,
+            "beta_ar1_raw": raw_b,
+            "beta_ar1_log": log_b,
+            "best_beta":    best_b,
+            "dist_from_05": dist,
+        })
+
+    best_row   = min(rows, key=lambda r: r["dist_from_05"])
+    best_delta = best_row["delta"]
+    cands_str  = ", ".join(f"{c:.0e}" for c in candidates)
+    reason = (
+        f"delta={best_delta:.0e} selected — "
+        f"beta_ar1={best_row['best_beta']:.4f} "
+        f"(closest to 0.50 across [{cands_str}])"
+        if best_row["best_beta"] is not None
+        else f"No valid beta_ar1 found across [{cands_str}]; defaulting to 1e-4"
+    )
+    if best_row["best_beta"] is None:
+        best_delta = 1e-4
+
+    return {"delta": best_delta, "reason": reason, "rows": rows}
+
+
 def evaluate_gate(raw: dict, log: dict, alignment_info: dict | None) -> dict:
     """Classify pair as STRONG / MARGINAL / REJECT and collect warnings."""
     T = THRESHOLDS

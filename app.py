@@ -7,7 +7,7 @@ import plotly.colors
 from plotly.subplots import make_subplots
 from FCPO_analysis import build_spread_table, load_combined_dataset
 from mr_screener.data.loader import load_pair
-from mr_screener.screener.pipeline import run_pair
+from mr_screener.screener.pipeline import run_pair, autotune_delta
 
 SPOT_DIR = "Raw Data"
 YEAR_COLORS = {
@@ -1103,15 +1103,46 @@ with tab6:
         mult_x  = st.number_input("Price multiplier B", value=1.0, step=0.5, min_value=0.01, key="mr_mult_x")
 
     with st.expander("Advanced settings"):
-        mr_delta = st.number_input("Kalman delta", value=1e-4, format="%.1e", key="mr_delta")
-        mr_Ve    = st.number_input("Kalman Ve",    value=0.001, format="%.4f", key="mr_Ve")
+        mr_auto_tune = st.checkbox(
+            "Auto-tune delta",
+            value=False,
+            key="mr_auto_tune",
+            help="Runs Kalman at [1e-5, 1e-4, 1e-3] and picks the delta giving beta_ar1 closest to 0.50",
+        )
+        mr_delta = st.number_input(
+            "Kalman delta — how fast the hedge ratio adapts (higher = faster)",
+            value=1e-4, format="%.1e", key="mr_delta",
+            disabled=mr_auto_tune,
+            help="Try 1e-3 (fast adaptation), 1e-4 (default), 1e-5 (slow / very smooth beta)",
+        )
+        mr_Ve = st.number_input("Kalman Ve", value=0.001, format="%.4f", key="mr_Ve")
 
     run_btn = st.button("Run Screener", disabled=(file_y is None or file_x is None), key="mr_run")
 
     if run_btn:
         with st.spinner("Running screener…"):
-            data    = load_pair(file_y.read(), file_x.read(), label_y, label_x, mult_y=mult_y, mult_x=mult_x)
-            results = run_pair(data, delta=mr_delta, Ve=mr_Ve)
+            data = load_pair(file_y.read(), file_x.read(), label_y, label_x, mult_y=mult_y, mult_x=mult_x)
+            if mr_auto_tune:
+                tune_result  = autotune_delta(data, Ve=mr_Ve)
+                chosen_delta = tune_result["delta"]
+            else:
+                tune_result  = None
+                chosen_delta = mr_delta
+            results = run_pair(data, delta=chosen_delta, Ve=mr_Ve)
+
+        if tune_result:
+            st.info(f"**Auto-tune:** {tune_result['reason']}")
+            tune_rows = [
+                {
+                    "Delta":        f"{r['delta']:.0e}",
+                    "beta_ar1 Raw": f"{r['beta_ar1_raw']:.4f}" if r["beta_ar1_raw"] is not None else "—",
+                    "beta_ar1 Log": f"{r['beta_ar1_log']:.4f}" if r["beta_ar1_log"] is not None else "—",
+                    "Dist from 0.5": f"{r['dist_from_05']:.4f}" if r["dist_from_05"] != float('inf') else "—",
+                    "Selected":     "✓" if r["delta"] == chosen_delta else "",
+                }
+                for r in tune_result["rows"]
+            ]
+            st.dataframe(pd.DataFrame(tune_rows), use_container_width=True, hide_index=True)
 
         raw_res = results["raw"]
         log_res = results["log"]
@@ -1228,17 +1259,15 @@ with tab6:
                 font=dict(color=DARK_TEXT),
                 xaxis=dict(gridcolor=DARK_GRID),
                 yaxis=dict(
-                    title="β raw",
+                    title=dict(text="β raw", font=dict(color="#00b4d8")),
                     gridcolor=DARK_GRID,
-                    titlefont=dict(color="#00b4d8"),
                     tickfont=dict(color="#00b4d8"),
                 ),
                 yaxis2=dict(
-                    title="β log",
+                    title=dict(text="β log", font=dict(color="#f4a261")),
                     overlaying="y",
                     side="right",
                     gridcolor=DARK_GRID,
-                    titlefont=dict(color="#f4a261"),
                     tickfont=dict(color="#f4a261"),
                 ),
                 legend=dict(bgcolor=DARK_PLOT, bordercolor=DARK_GRID),
@@ -1290,25 +1319,31 @@ with tab6:
             st.subheader("Ornstein-Uhlenbeck Parameters")
 
             ou_rows = []
+            ou_reject_notes = []
             for space_label, ou_res in [("Raw", raw_res["ou"]), ("Log", log_res["ou"])]:
                 if ou_res is None:
                     continue
                 ou_rows.append({
-                    "Space":         space_label,
-                    "κ (kappa)":     ou_res.get("kappa"),
-                    "μ (mu)":        ou_res.get("mu"),
-                    "σ_OU":          ou_res.get("ou_std"),
+                    "Space":            space_label,
+                    "beta_ar1":         ou_res.get("beta_ar1"),
+                    "κ (kappa)":        ou_res.get("kappa"),
+                    "μ (mu)":           ou_res.get("mu"),
+                    "σ_OU":             ou_res.get("ou_std"),
                     "Half-life (days)": ou_res.get("half_life"),
-                    "LB p@5":        ou_res.get("lb_pval_5"),
-                    "LB p@10":       ou_res.get("lb_pval_10"),
-                    "JB p":          ou_res.get("jb_pvalue"),
-                    "Verdict":       ou_res.get("verdict"),
+                    "LB p@5":           ou_res.get("lb_pval_5"),
+                    "LB p@10":          ou_res.get("lb_pval_10"),
+                    "JB p":             ou_res.get("jb_pvalue"),
+                    "Verdict":          ou_res.get("verdict"),
                 })
+                if ou_res.get("reject_reason"):
+                    ou_reject_notes.append(f"{space_label}: {ou_res['reject_reason']}")
 
             if ou_rows:
                 ou_df     = pd.DataFrame(ou_rows)
                 ou_styled = ou_df.style.applymap(_color_verdict, subset=["Verdict"])
                 st.dataframe(ou_styled, use_container_width=True, hide_index=True)
+                for note in ou_reject_notes:
+                    st.caption(f"✗ {note}")
 
         # ── Section 5: Final verdict ──────────────────────────────────────────
         st.subheader("Final Verdict")

@@ -32,10 +32,20 @@ def fit_ou(spread, dt: float = 1.0) -> dict:
     # Validate AR(1) beta
     if not (0.0 < beta_ar1 < 1.0):
         return {
-            "beta_ar1": round(float(beta_ar1), 6),
-            "verdict":  "reject",
-            "reason":   f"beta_ar1={beta_ar1:.4f} outside (0,1) — not mean-reverting",
-            "space":    "raw",
+            "is_valid":   False,
+            "beta_ar1":   round(float(beta_ar1), 6),
+            "kappa":      None,
+            "mu":         None,
+            "ou_std":     None,
+            "half_life":  None,
+            "verdict":    "reject",
+            "reject_reason": (
+                f"beta_ar1={beta_ar1:.4f} outside (0,1). "
+                + ("Spread has unit root — not mean reverting."
+                   if beta_ar1 >= 1 else
+                   "Spread is oscillating or negatively autocorrelated.")
+            ),
+            "space":      "raw",
         }
 
     # OU parameters
