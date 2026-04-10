@@ -168,6 +168,8 @@ def load_pair(
     label_x: str,
     mult_y: float = 1.0,
     mult_x: float = 1.0,
+    apply_fx: bool = False,
+    fx_table_bytes=None,
 ) -> dict:
     """Load two CSV files, align intraday positionally, return data dict."""
 
@@ -184,6 +186,17 @@ def load_pair(
 
     raw_y = _read(bytes_y) * mult_y
     raw_x = _read(bytes_x) * mult_x
+
+    # FX conversion (Asset B only, optional)
+    from mr_screener.data.fx_convert import run_fx_pipeline
+    fx = run_fx_pipeline(
+        y=raw_y, x=raw_x,
+        label_y=label_y, label_x=label_x,
+        apply_fx=apply_fx,
+        rate_table_source=fx_table_bytes,
+    )
+    raw_y = fx["y"]
+    raw_x = fx["x"]
 
     # Detect bar frequency from raw series (before alignment)
     _freq_raw = detect_freq(raw_y)
@@ -224,4 +237,5 @@ def load_pair(
         "daily_x":      daily_x,
         "n_daily":      n_daily,
         "same_day_mask": same_day_mask,
+        "fx":           fx,
     }

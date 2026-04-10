@@ -1102,6 +1102,15 @@ with tab6:
         file_x  = st.file_uploader("Upload Series B CSV", type="csv", key="mr_file_x")
         mult_x  = st.number_input("Price multiplier B", value=1.0, step=0.5, min_value=0.01, key="mr_mult_x")
 
+    apply_fx = st.checkbox("Apply FX conversion to Asset B", value=False, key="mr_apply_fx")
+    fx_table_file = None
+    if apply_fx:
+        fx_table_file = st.file_uploader(
+            "Upload FX rate table (CSV)",
+            type="csv", key="mr_fx_table",
+            help="Format: month,rate  /  2022-01,4.19",
+        )
+
     with st.expander("Advanced settings"):
         mr_auto_tune = st.checkbox(
             "Auto-tune delta",
@@ -1121,7 +1130,12 @@ with tab6:
 
     if run_btn:
         with st.spinner("Running screener…"):
-            data = load_pair(file_y.read(), file_x.read(), label_y, label_x, mult_y=mult_y, mult_x=mult_x)
+            data = load_pair(
+                file_y.read(), file_x.read(), label_y, label_x,
+                mult_y=mult_y, mult_x=mult_x,
+                apply_fx=apply_fx,
+                fx_table_bytes=fx_table_file.read() if fx_table_file else None,
+            )
             if mr_auto_tune:
                 tune_result  = autotune_delta(data, Ve=mr_Ve)
                 chosen_delta = tune_result["delta"]
@@ -1144,9 +1158,94 @@ with tab6:
             ]
             st.dataframe(pd.DataFrame(tune_rows), use_container_width=True, hide_index=True)
 
+        # ── Early-return: insufficient data ──────────────────────────────────
+        if results.get("gate_tier") == "REJECT" and "raw" not in results:
+            q = results.get("quality", {})
+            sf = q.get("sufficiency", {})
+            st.error(
+                f"**INSUFFICIENT DATA** — not enough clean bars after break exclusions. "
+                f"Daily bars available: {sf.get('n_daily', '?')}. "
+                f"Upload longer history and re-run."
+            )
+            if q:
+                br = q.get("break_report", {})
+                st.caption(
+                    f"Breaks excluded: {br.get('total', 0)}  |  "
+                    f"Overall: {q.get('overall','?').upper()}"
+                )
+            st.stop()
+
         raw_res = results["raw"]
         log_res = results["log"]
         dates   = results["dates"]
+
+        # ── FX info block ─────────────────────────────────────────────────────
+        fx = data.get("fx") or {}
+        if fx.get("fx_applied"):
+            log = fx["conversion_log"]
+            missing = log["n_missing_months"]
+            missing_str = (
+                "- Missing: 0 months"
+                if missing == 0
+                else f"- Missing: {missing} month(s) → fallback {log['fallback_rate']:.4f} used\n"
+                     + "  " + " / ".join(log["missing_months"])
+            )
+            st.info(
+                f"**FX conversion applied to Asset B**\n"
+                f"- Table months: {log['n_table_months']}\n"
+                f"- Rate range: {log['rates_min']:.4f} – {log['rates_max']:.4f}"
+                f"  (mean {log['rates_mean']:.4f})\n"
+                + missing_str
+            )
+
+        # ── Quality expander ──────────────────────────────────────────────────
+        if "quality" in results:
+            q  = results["quality"]
+            br = q["break_report"]
+            sf = q["sufficiency"]
+            with st.expander(
+                f"Data Quality  \u2022  {q['overall'].upper()}  \u2022  "
+                f"{br['total']} break(s) excluded  \u2022  "
+                f"{sf['n_daily']} clean daily bars",
+                expanded=(q["overall"] != "good"),
+            ):
+                st.markdown("**Structural Breaks**")
+                if br["total"] == 0:
+                    st.success("No structural breaks detected")
+                else:
+                    rows = []
+                    for p in br["periods"]:
+                        rows.append({
+                            "Date start": str(p.get("date_start", p["bar_start"]))[:10],
+                            "Date end":   str(p.get("date_end",   p["bar_end"]))[:10],
+                            "Bars":       p["n_bars"],
+                            "Peak |z|":   f"{p['peak_z']:.2f}" if p["peak_z"] else "manual",
+                        })
+                    st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True)
+                    st.caption(
+                        f"Mode: {br['mode']} — "
+                        f"{br['auto_detected']} auto + {br['manual']} manual periods"
+                    )
+
+                st.markdown("**Data Sufficiency**")
+                srows = []
+                for test, s in sf["tests"].items():
+                    icon = {"good": "\u2705", "marginal": "\u26a0\ufe0f", "blocked": "\U0001f6ab"}[s["status"]]
+                    srows.append({
+                        "Test":   test,
+                        "Status": f"{icon} {s['status']}",
+                        "Have":   s["n"],
+                        "Min":    s["min"],
+                        "Rec":    s["rec"],
+                    })
+                st.dataframe(pd.DataFrame(srows), hide_index=True, use_container_width=True)
+
+                w = q["windows"]
+                st.caption(
+                    f"Adaptive windows — cointegration: {w['cointegration']}d "
+                    f"({w['n_rolling_coint_points']} pts)  |  "
+                    f"hurst: {w['hurst']}d ({w['n_rolling_hurst_points']} pts)"
+                )
 
         # ── Section 1: Stationarity & Gating ─────────────────────────────────
         st.subheader("Stationarity & Cointegration")
