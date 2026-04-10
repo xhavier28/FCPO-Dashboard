@@ -1,3 +1,4 @@
+import numpy as np
 from mr_screener.config import DATA, KALMAN, THRESHOLDS
 from mr_screener.tests.raw import adf_kpss as raw_adf_mod
 from mr_screener.tests.raw import coint_eg as raw_eg_mod
@@ -9,6 +10,15 @@ from mr_screener.tests.log import johansen as log_joh_mod
 from mr_screener.tests.log import hurst as log_hurst_mod
 from mr_screener.kalman import raw_kalman, log_kalman
 from mr_screener.ou import raw_ou, log_ou
+
+
+def check_price_scale(y, x, label_y, label_x):
+    """Warn if the two series have very different price magnitudes."""
+    ratio = np.median(y) / np.median(x)
+    print(f"  Price scale check: {label_y} median={np.median(y):.2f}, "
+          f"{label_x} median={np.median(x):.2f}, ratio={ratio:.3f}")
+    if ratio > 10 or ratio < 0.1:
+        print(f"  [WARN] Ratio {ratio:.1f} — cointegration tests likely to fail")
 
 
 def autotune_delta(data: dict, candidates=None, Ve: float = None) -> dict:
@@ -161,31 +171,44 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     raw_y, raw_x = data["raw_y"], data["raw_x"]
     log_y, log_x = data["log_y"], data["log_x"]
 
+    # Use daily series for gating tests (removes overnight-gap bias);
+    # fall back to intraday-aligned series if daily unavailable
+    _daily_y = data.get("daily_y")
+    _daily_x = data.get("daily_x")
+    _y = _daily_y if _daily_y is not None else raw_y
+    _x = _daily_x if _daily_x is not None else raw_x
+    _log_y = np.log(_y)
+    _log_x = np.log(_x)
+
+    check_price_scale(_y.values, _x.values, data["label_y"], data["label_x"])
+
+    same_day_mask = data.get("same_day_mask")
+
     # ── Raw space tests ───────────────────────────────────────────────────────
     raw = {}
-    raw["adf_y"]    = raw_adf_mod.test_stationarity(raw_y, data["label_y"])
-    raw["adf_x"]    = raw_adf_mod.test_stationarity(raw_x, data["label_x"])
-    raw["coint_eg"] = raw_eg_mod.test_cointegration_eg(raw_y, raw_x)
-    raw["johansen"] = raw_joh_mod.test_cointegration_johansen(raw_y, raw_x, freq=freq)
+    raw["adf_y"]    = raw_adf_mod.test_stationarity(_y, data["label_y"])
+    raw["adf_x"]    = raw_adf_mod.test_stationarity(_x, data["label_x"])
+    raw["coint_eg"] = raw_eg_mod.test_cointegration_eg(_y, _x)
+    raw["johansen"] = raw_joh_mod.test_cointegration_johansen(_y, _x, freq=freq)
 
     # Hurst on EG static spread
     raw_spread_static = (
-        raw_y.values
-        - raw["coint_eg"]["beta_static"] * raw_x.values
+        _y.values
+        - raw["coint_eg"]["beta_static"] * _x.values
         - raw["coint_eg"]["alpha_static"]
     )
     raw["hurst"] = raw_hurst_mod.hurst_exponent(raw_spread_static)
 
     # ── Log space tests ───────────────────────────────────────────────────────
     log = {}
-    log["adf_y"]    = log_adf_mod.test_stationarity(log_y, data["label_y"])
-    log["adf_x"]    = log_adf_mod.test_stationarity(log_x, data["label_x"])
-    log["coint_eg"] = log_eg_mod.test_cointegration_eg(log_y, log_x)
-    log["johansen"] = log_joh_mod.test_cointegration_johansen(log_y, log_x, freq=freq)
+    log["adf_y"]    = log_adf_mod.test_stationarity(_log_y, data["label_y"])
+    log["adf_x"]    = log_adf_mod.test_stationarity(_log_x, data["label_x"])
+    log["coint_eg"] = log_eg_mod.test_cointegration_eg(_log_y, _log_x)
+    log["johansen"] = log_joh_mod.test_cointegration_johansen(_log_y, _log_x, freq=freq)
 
     log_spread_static = (
-        log_y.values
-        - log["coint_eg"]["beta_static"] * log_x.values
+        _log_y.values
+        - log["coint_eg"]["beta_static"] * _log_x.values
         - log["coint_eg"]["alpha_static"]
     )
     log["hurst"] = log_hurst_mod.hurst_exponent(log_spread_static)
@@ -196,13 +219,16 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
 
     # ── Kalman + OU (only if gate passes) ────────────────────────────────────
     if gate_passed:
+        # Kalman runs on intraday-aligned data (raw_y/raw_x)
         raw["kalman"] = raw_kalman.run_kalman(raw_y.values, raw_x.values, delta, Ve)
         raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread_reconstructed"],
-                                      freq=freq, bars_per_day=bars_per_day)
+                                      freq=freq, bars_per_day=bars_per_day,
+                                      same_day_mask=same_day_mask)
 
         log["kalman"] = log_kalman.run_kalman(log_y.values, log_x.values, delta, Ve)
         log["ou"]     = log_ou.fit_ou(log["kalman"]["spread_reconstructed"],
-                                      freq=freq, bars_per_day=bars_per_day)
+                                      freq=freq, bars_per_day=bars_per_day,
+                                      same_day_mask=same_day_mask)
     else:
         raw["kalman"] = None
         raw["ou"]     = None

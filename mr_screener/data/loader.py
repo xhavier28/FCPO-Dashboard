@@ -4,6 +4,35 @@ import pandas as pd
 from mr_screener.config import ALIGNMENT, DATA
 
 
+def prepare_daily(series_y, series_x, label_y="Y", label_x="X", min_bars=50):
+    """Last traded price per calendar day, inner joined. For ADF/EG/Johansen/Hurst."""
+    series_y.index = pd.to_datetime(series_y.index)
+    series_x.index = pd.to_datetime(series_x.index)
+
+    y_daily = series_y.resample("1D").last().dropna()
+    x_daily = series_x.resample("1D").last().dropna()
+    y_daily.index = y_daily.index.normalize()
+    x_daily.index = x_daily.index.normalize()
+
+    common = y_daily.index.intersection(x_daily.index)
+    y_out  = y_daily.loc[common]
+    x_out  = x_daily.loc[common]
+
+    mask  = (y_out > 0) & (x_out > 0) & y_out.notna() & x_out.notna()
+    y_out = y_out[mask]
+    x_out = x_out[mask]
+
+    n = len(y_out)
+    print(f"  [DAILY] {label_y} vs {label_x}: {n} daily bars")
+    if n < 100:
+        print(f"  [WARN]  Only {n} bars — tests need 100+ for reliability")
+    if n < min_bars:
+        raise ValueError(
+            f"Only {n} common daily bars. Upload longer history."
+        )
+    return y_out, x_out, n
+
+
 def detect_freq(series: pd.Series) -> str:
     """Infer bar frequency from a time-indexed series."""
     if len(series) < 2:
@@ -83,10 +112,18 @@ def align_any(
     y_out = pd.Series(y_vals, index=ts_idx)
     x_out = pd.Series(x_vals, index=ts_idx)
 
+    # Build same_day_mask before NaN filter:
+    # True = bar t and bar t-1 are from the same day (safe for AR(1) regression)
+    same_day_mask_full = []
+    for n_bars in bars_per_day:
+        same_day_mask_full.extend([False] + [True] * (n_bars - 1))
+    same_day_mask_full = np.array(same_day_mask_full, dtype=bool)
+
     # Drop NaN and zero
-    mask  = y_out.notna() & x_out.notna() & (y_out > 0) & (x_out > 0)
-    y_out = y_out[mask]
-    x_out = x_out[mask]
+    nan_mask = y_out.notna() & x_out.notna() & (y_out > 0) & (x_out > 0)
+    y_out = y_out[nan_mask]
+    x_out = x_out[nan_mask]
+    same_day_mask_out = same_day_mask_full[nan_mask.values]
 
     n = len(y_out)
 
@@ -121,7 +158,7 @@ def align_any(
         "max_bars_day":  max_bars,
         "date_start":    str(y_out.index[0].date()) if len(y_out) else "?",
         "date_end":      str(y_out.index[-1].date()) if len(y_out) else "?",
-    }
+    }, same_day_mask_out
 
 
 def load_pair(
@@ -152,7 +189,9 @@ def load_pair(
     _freq_raw = detect_freq(raw_y)
     freq = "hourly" if _freq_raw in ("1H", "4H", "tick/1m") else "daily"
 
-    aligned_y, aligned_x, info = align_any(raw_y, raw_x, label_y, label_x)
+    aligned_y, aligned_x, info, same_day_mask = align_any(
+        raw_y, raw_x, label_y, label_x
+    )
 
     # Empirical bars per day from alignment; fall back to config
     bars_per_day = info.get("avg_bars_day") or DATA["bars_per_day"]
@@ -160,16 +199,29 @@ def load_pair(
     log_y = np.log(aligned_y)
     log_x = np.log(aligned_x)
 
+    # Daily aligned versions (for gating tests: ADF, EG, Johansen, Hurst)
+    try:
+        daily_y, daily_x, n_daily = prepare_daily(
+            raw_y.copy(), raw_x.copy(), label_y, label_x
+        )
+    except ValueError as e:
+        daily_y, daily_x, n_daily = None, None, 0
+        print(f"  [WARN] Daily alignment failed: {e}")
+
     return {
-        "raw_y":       aligned_y,
-        "raw_x":       aligned_x,
-        "log_y":       log_y,
-        "log_x":       log_x,
-        "dates":       aligned_y.index,
-        "label_y":     label_y,
-        "label_x":     label_x,
-        "n_obs":       info["n_after"],
-        "freq":        freq,
+        "raw_y":        aligned_y,
+        "raw_x":        aligned_x,
+        "log_y":        log_y,
+        "log_x":        log_x,
+        "dates":        aligned_y.index,
+        "label_y":      label_y,
+        "label_x":      label_x,
+        "n_obs":        info["n_after"],
+        "freq":         freq,
         "bars_per_day": bars_per_day,
-        "alignment":   info,
+        "alignment":    info,
+        "daily_y":      daily_y,
+        "daily_x":      daily_x,
+        "n_daily":      n_daily,
+        "same_day_mask": same_day_mask,
     }

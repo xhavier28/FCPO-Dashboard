@@ -5,7 +5,8 @@ from statsmodels.stats.diagnostic import acorr_ljungbox
 
 
 def fit_ou(spread, dt: float = 1.0,
-           freq: str = "hourly", bars_per_day: float = 5.5) -> dict:
+           freq: str = "hourly", bars_per_day: float = 5.5,
+           same_day_mask=None) -> dict:
     """
     Fit Ornstein-Uhlenbeck process to a spread via AR(1) regression.
 
@@ -29,8 +30,22 @@ def fit_ou(spread, dt: float = 1.0,
             "space":   "raw",
         }
 
+    # Autocorrelation diagnostic — confirms spread has memory (not innovations)
+    autocorr_lag1 = pd.Series(s).autocorr(lag=1)
+    if abs(autocorr_lag1) < 0.05:
+        print(f"  [WARN] Spread autocorr lag1 = {autocorr_lag1:.4f} — near zero")
+        print(f"  [WARN] Likely receiving INNOVATIONS not spread_reconstructed.")
+    else:
+        print(f"  [OK]   Spread autocorr lag1 = {autocorr_lag1:.4f} — memory confirmed")
+
     S_t  = s[:-1]
     S_t1 = s[1:]
+
+    if same_day_mask is not None:
+        mask = same_day_mask[1:]   # align: mask[t] = True means bars t,t-1 are same day
+        S_t  = S_t[mask]
+        S_t1 = S_t1[mask]
+        print(f"  [OU] {mask.sum()} intraday pairs used, {(~mask).sum()} overnight skipped")
 
     slope, intercept, r_value, p_value, std_err = linregress(S_t, S_t1)
     beta_ar1  = slope
