@@ -245,12 +245,20 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
         _y_intra = quality["y_intra_clean"]
         _x_intra = quality["x_intra_clean"]
         raw["kalman"] = raw_kalman.run_kalman(_y_intra.values, _x_intra.values, delta, Ve)
+        assert "spread_reconstructed" in raw["kalman"], (
+            "spread_reconstructed missing from kalman_raw output. "
+            "Fix kalman/raw_kalman.py first."
+        )
         raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread_reconstructed"],
                                       freq=freq, bars_per_day=bars_per_day,
                                       same_day_mask=same_day_mask)
 
         log["kalman"] = log_kalman.run_kalman(
             np.log(_y_intra).values, np.log(_x_intra).values, delta, Ve
+        )
+        assert "spread_reconstructed" in log["kalman"], (
+            "spread_reconstructed missing from kalman_log output. "
+            "Fix kalman/log_kalman.py first."
         )
         log["ou"]     = log_ou.fit_ou(log["kalman"]["spread_reconstructed"],
                                       freq=freq, bars_per_day=bars_per_day,

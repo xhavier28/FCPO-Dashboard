@@ -31,12 +31,17 @@ def fit_ou(spread, dt: float = 1.0,
         }
 
     # Autocorrelation diagnostic — confirms spread has memory (not innovations)
-    autocorr_lag1 = pd.Series(s).autocorr(lag=1)
-    if abs(autocorr_lag1) < 0.05:
-        print(f"  [WARN] Spread autocorr lag1 = {autocorr_lag1:.4f} — near zero")
-        print(f"  [WARN] Likely receiving INNOVATIONS not spread_reconstructed.")
+    autocorr_lag1 = float(pd.Series(s).autocorr(lag=1))
+    if abs(autocorr_lag1) < 0.10:
+        print(f"\n  [OU BUG DETECTED] spread autocorr lag1 = {autocorr_lag1:.4f}")
+        print(f"  [OU BUG DETECTED] This is near zero — receiving INNOVATIONS")
+        print(f"  [OU BUG DETECTED] not spread_reconstructed.")
+        print(f"  [OU BUG DETECTED] Check that kalman output uses key")
+        print(f"  [OU BUG DETECTED] 'spread_reconstructed' not 'spread'.")
+        print(f"  [OU BUG DETECTED] Half-life result will be wrong.")
     else:
-        print(f"  [OK]   Spread autocorr lag1 = {autocorr_lag1:.4f} — memory confirmed")
+        print(f"  [OU OK] spread autocorr lag1 = {autocorr_lag1:.4f}"
+              f" — memory confirmed, spread_reconstructed received correctly")
 
     S_t  = s[:-1]
     S_t1 = s[1:]
