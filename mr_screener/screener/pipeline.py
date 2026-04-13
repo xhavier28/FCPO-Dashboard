@@ -1,5 +1,6 @@
 import numpy as np
-from mr_screener.config import DATA, KALMAN, THRESHOLDS
+from mr_screener.config import DATA, KALMAN, THRESHOLDS, STRUCTURAL_BREAKS
+from mr_screener.data.quality import run_quality_check
 from mr_screener.tests.raw import adf_kpss as raw_adf_mod
 from mr_screener.tests.raw import coint_eg as raw_eg_mod
 from mr_screener.tests.raw import johansen as raw_joh_mod
@@ -169,20 +170,41 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
     bars_per_day = data.get("bars_per_day", DATA["bars_per_day"])
 
     raw_y, raw_x = data["raw_y"], data["raw_x"]
-    log_y, log_x = data["log_y"], data["log_x"]
 
-    # Use daily series for gating tests (removes overnight-gap bias);
-    # fall back to intraday-aligned series if daily unavailable
-    _daily_y = data.get("daily_y")
-    _daily_x = data.get("daily_x")
-    _y = _daily_y if _daily_y is not None else raw_y
-    _x = _daily_x if _daily_x is not None else raw_x
+    # ── Quality check ─────────────────────────────────────────────────────────
+    quality = run_quality_check(
+        y_daily      = data["daily_y"] if data.get("daily_y") is not None else raw_y,
+        x_daily      = data["daily_x"] if data.get("daily_x") is not None else raw_x,
+        y_intraday   = raw_y,
+        x_intraday   = raw_x,
+        label_y      = data["label_y"],
+        label_x      = data["label_x"],
+        bars_per_day = bars_per_day,
+        break_config   = STRUCTURAL_BREAKS,
+        manual_periods = STRUCTURAL_BREAKS.get("manual_periods", []),
+        same_day_mask  = data.get("same_day_mask"),
+        fx_was_applied = bool(data.get("fx", {}).get("fx_applied", False)),
+    )
+
+    if not quality["proceed"]:
+        return {
+            "gate_passed":   False,
+            "gate_tier":     "REJECT",
+            "gate_warnings": ["Insufficient clean data after break exclusions"],
+            "quality":       quality,
+            "label_y":       data["label_y"],
+            "label_x":       data["label_x"],
+            "n_obs":         data["n_obs"],
+            "dates":         data["dates"],
+        }
+
+    # Use quality-cleaned series for all downstream tests
+    _y     = quality["y_daily_clean"]
+    _x     = quality["x_daily_clean"]
     _log_y = np.log(_y)
     _log_x = np.log(_x)
 
-    check_price_scale(_y.values, _x.values, data["label_y"], data["label_x"])
-
-    same_day_mask = data.get("same_day_mask")
+    same_day_mask = quality.get("same_day_mask_clean")
 
     # ── Raw space tests ───────────────────────────────────────────────────────
     raw = {}
@@ -219,13 +241,17 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
 
     # ── Kalman + OU (only if gate passes) ────────────────────────────────────
     if gate_passed:
-        # Kalman runs on intraday-aligned data (raw_y/raw_x)
-        raw["kalman"] = raw_kalman.run_kalman(raw_y.values, raw_x.values, delta, Ve)
+        # Kalman runs on quality-cleaned intraday data
+        _y_intra = quality["y_intra_clean"]
+        _x_intra = quality["x_intra_clean"]
+        raw["kalman"] = raw_kalman.run_kalman(_y_intra.values, _x_intra.values, delta, Ve)
         raw["ou"]     = raw_ou.fit_ou(raw["kalman"]["spread_reconstructed"],
                                       freq=freq, bars_per_day=bars_per_day,
                                       same_day_mask=same_day_mask)
 
-        log["kalman"] = log_kalman.run_kalman(log_y.values, log_x.values, delta, Ve)
+        log["kalman"] = log_kalman.run_kalman(
+            np.log(_y_intra).values, np.log(_x_intra).values, delta, Ve
+        )
         log["ou"]     = log_ou.fit_ou(log["kalman"]["spread_reconstructed"],
                                       freq=freq, bars_per_day=bars_per_day,
                                       same_day_mask=same_day_mask)
@@ -241,6 +267,7 @@ def run_pair(data: dict, delta: float = None, Ve: float = None) -> dict:
         "gate_passed":  gate_passed,
         "gate_tier":    gate_info["tier"],
         "gate_warnings": gate_info["warnings"],
+        "quality":      quality,
         "label_y":      data["label_y"],
         "label_x":      data["label_x"],
         "n_obs":        data["n_obs"],
