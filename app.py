@@ -94,7 +94,7 @@ def load_contracts():
                 continue
             df_c = pd.read_csv(path)
             df_c["date"] = pd.to_datetime(
-                df_c["Timestamp (UTC)"], infer_datetime_format=True
+                df_c["Timestamp (UTC)"]
             ).dt.normalize()
             series = df_c.set_index("date")["Close"]
             contracts[(year, m)] = series[~series.index.duplicated(keep="last")]

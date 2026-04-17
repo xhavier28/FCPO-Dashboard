@@ -47,3 +47,15 @@ THRESHOLDS = {
 }
 
 KALMAN = {"delta": 1e-4, "Ve": 0.001}
+
+STRUCTURAL_BREAKS = {
+    "window":         30,    # rolling window for z-score
+    "threshold":      3.5,   # |z| level flagging a break
+    "extend_bars":    30,    # bars to exclude after break point
+    "min_gap":        20,    # min bars between separate breaks
+    "mode":           "auto",
+                             # "auto"        = exclude all detected
+                             # "manual_only" = only manual_periods
+                             # "none"        = detect but exclude nothing
+    "manual_periods": [],    # list of ("YYYY-MM-DD", "YYYY-MM-DD")
+}

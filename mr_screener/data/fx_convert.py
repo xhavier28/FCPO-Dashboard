@@ -58,7 +58,7 @@ def load_rate_table(source) -> pd.DataFrame:
     df = df.set_index("month")[["rate"]].sort_index()
 
     print(f"  [FX TABLE] Loaded {len(df)} monthly rates: "
-          f"{df.index[0]} → {df.index[-1]}  "
+          f"{df.index[0]} -> {df.index[-1]}  "
           f"range [{df['rate'].min():.4f}, {df['rate'].max():.4f}]")
 
     return df
@@ -93,7 +93,7 @@ def apply_fx_conversion(
 
     if missing_months:
         n_missing = len(missing_months)
-        print(f"  [FX WARN] {n_missing} month(s) in {label_x} not in rate table → "
+        print(f"  [FX WARN] {n_missing} month(s) in {label_x} not in rate table -> "
               f"fallback {fallback_rate:.4f} used:")
         for m in missing_months:
             print(f"           {m}")
