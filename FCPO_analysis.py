@@ -25,7 +25,17 @@ warnings.filterwarnings("ignore")
 # CONSTANTS
 # ──────────────────────────────────────────────────────────────────────────────
 
-DATA_PATH      = "Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv"
+def _find_spot_csv(spot_dir="Raw Data"):
+    candidates = [
+        f for f in os.listdir(spot_dir)
+        if f.lower().endswith(".csv") and f.lower().startswith("myx_dly_fcpo")
+    ]
+    if not candidates:
+        raise FileNotFoundError(f"No MYX_DLY_FCPO*.csv found in {spot_dir}/")
+    candidates.sort(key=lambda f: os.path.getmtime(f"{spot_dir}/{f}"), reverse=True)
+    return f"{spot_dir}/{candidates[0]}"
+
+DATA_PATH = _find_spot_csv()
 DAILY_TERM_PATH = "Raw Data/Daily Term/fcpo_daily_term_structure.xlsx"
 TERM_DIR       = "Raw Data/Term Structure"
 SD_DIR         = "Raw Data/Stock and Production"
@@ -50,8 +60,11 @@ def load_spot_prices():
     Returns DataFrame with columns: date, year, month, doy, open, high, low, close, volume.
     """
     df = pd.read_csv(DATA_PATH)
-    df["datetime"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur")
-    df["date"]     = df["datetime"].dt.date
+    sample = str(df["time"].iloc[0])
+    if sample.replace(".", "").isdigit():
+        df["date"] = pd.to_datetime(df["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur").dt.date
+    else:
+        df["date"] = pd.to_datetime(df["time"]).dt.date
     df = df.sort_values("time").groupby("date", as_index=False).last()
     df["date"]  = pd.to_datetime(df["date"])
     df["year"]  = df["date"].dt.year
@@ -175,8 +188,11 @@ def load_combined_dataset():
 
     # ── Spot OHLCV ───────────────────────────────────────────────────────────
     df_spot = pd.read_csv(DATA_PATH)
-    df_spot["datetime"] = pd.to_datetime(df_spot["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur")
-    df_spot["date"]     = pd.to_datetime(df_spot["datetime"].dt.date)
+    sample = str(df_spot["time"].iloc[0])
+    if sample.replace(".", "").isdigit():
+        df_spot["date"] = pd.to_datetime(pd.to_datetime(df_spot["time"], unit="s", utc=True).dt.tz_convert("Asia/Kuala_Lumpur").dt.date)
+    else:
+        df_spot["date"] = pd.to_datetime(df_spot["time"])
     df_spot = df_spot.sort_values("time").groupby("date", as_index=False).last()
     df_spot = df_spot[df_spot["date"].dt.year >= 2020].set_index("date")
     df_spot = df_spot[["open", "high", "low", "close", "Volume"]].rename(columns={"Volume": "volume"})
