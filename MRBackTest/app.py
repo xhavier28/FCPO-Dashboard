@@ -92,7 +92,7 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.caption("FCPO vs SOY Mean Reversion")
+    st.caption("Asset A vs Asset B")
     st.caption("Daily WF1 → 15-min WF2")
 
 
@@ -171,16 +171,25 @@ def _plot_spread_z(spread, z_score, trades, dates, title: str) -> go.Figure:
 
 
 def _rate_table_has_nan(df: pd.DataFrame) -> bool:
-    return df["USDMYR_Rate"].isna().any()
+    return df["USDMYR_Rate"].isna().any() or (df["USDMYR_Rate"] == 0).any()
 
 
 def _rate_table_to_csv_bytes(df: pd.DataFrame) -> bytes:
-    return df.to_csv(index=False).encode()
+    out = df.rename(columns={"Month": "month", "USDMYR_Rate": "usdmyr_rate"})
+    return out.to_csv(index=False).encode()
 
 
 def _rate_table_from_csv_bytes(b: bytes) -> pd.DataFrame:
-    df = pd.read_csv(io.BytesIO(b))
+    raw = pd.read_csv(io.BytesIO(b))
+    raw.columns = [c.strip().lower() for c in raw.columns]
+    # Accept: month/Month + rate/usdmyr_rate/USDMYR_Rate
+    month_col = next((c for c in raw.columns if "month" in c), None)
+    rate_col  = next((c for c in raw.columns if "rate" in c), None)
+    if not month_col or not rate_col:
+        raise ValueError(f"CSV must have month and rate columns. Got: {list(raw.columns)}")
+    df = raw[[month_col, rate_col]].copy()
     df.columns = ["Month", "USDMYR_Rate"]
+    df["USDMYR_Rate"] = pd.to_numeric(df["USDMYR_Rate"], errors="coerce")
     return df
 
 
@@ -197,140 +206,160 @@ def page_config():
 
     with col1:
         st.markdown("**WF1 — Daily Data**")
-        f_wf1_y = st.file_uploader("Asset A: FCPO Daily CSV", type="csv", key="up_wf1_y")
-        f_wf1_x = st.file_uploader("Asset B: SOY Daily CSV",  type="csv", key="up_wf1_x")
+        f_wf1_y = st.file_uploader("Asset A — Daily CSV", type="csv", key="up_wf1_y")
+        f_wf1_x = st.file_uploader("Asset B — Daily CSV", type="csv", key="up_wf1_x")
 
         if f_wf1_y:
             st.session_state.wf1_bytes_y = f_wf1_y.read()
-            st.success(f"FCPO: {f_wf1_y.name}")
+            st.success(f"Asset A: {f_wf1_y.name}")
         if f_wf1_x:
             st.session_state.wf1_bytes_x = f_wf1_x.read()
-            st.success(f"SOY: {f_wf1_x.name}")
+            st.success(f"Asset B: {f_wf1_x.name}")
 
     with col2:
         st.markdown("**WF2 — 15-min Data**")
-        f_wf2_y = st.file_uploader("Asset A: FCPO 15-min CSV", type="csv", key="up_wf2_y")
-        f_wf2_x = st.file_uploader("Asset B: SOY 15-min CSV",  type="csv", key="up_wf2_x")
+        f_wf2_y = st.file_uploader("Asset A — 15-min CSV", type="csv", key="up_wf2_y")
+        f_wf2_x = st.file_uploader("Asset B — 15-min CSV", type="csv", key="up_wf2_x")
 
         if f_wf2_y:
             st.session_state.wf2_bytes_y = f_wf2_y.read()
-            st.success(f"FCPO 15m: {f_wf2_y.name}")
+            st.success(f"Asset A (15m): {f_wf2_y.name}")
         if f_wf2_x:
             st.session_state.wf2_bytes_x = f_wf2_x.read()
-            st.success(f"SOY 15m: {f_wf2_x.name}")
+            st.success(f"Asset B (15m): {f_wf2_x.name}")
 
     # ── Section 2: Params ──────────────────────────────────────────────────
     st.subheader("2. Trade Parameters")
     col3, col4, col5, col6 = st.columns(4)
 
     with col3:
-        mult_y = st.number_input("Price multiplier A (FCPO)", value=1.0, min_value=0.001,
-                                 format="%.4f", help="Multiplied to FCPO close before analysis")
+        mult_y = st.number_input("Price multiplier A", value=1.0, min_value=0.001,
+                                 format="%.4f", help="Applied to Asset A close before analysis")
     with col4:
-        mult_x = st.number_input("Price multiplier B (SOY)",  value=1.0, min_value=0.001,
-                                 format="%.4f", help="Multiplied to SOY close (cents/bushel) before FX")
+        mult_x = st.number_input("Price multiplier B", value=1.0, min_value=0.001,
+                                 format="%.4f", help="Applied to Asset B close before FX conversion")
     with col5:
         lot_size = st.number_input("Lot size (lots per trade)", value=1.0, min_value=0.01,
                                    format="%.2f")
     with col6:
-        roundtrip_cost = st.number_input("Round-trip cost (MYR/trade)", value=100.0,
+        roundtrip_cost = st.number_input("Round-trip cost (per trade)", value=100.0,
                                           min_value=0.0, format="%.2f")
 
-    # ── Section 3: Monthly FX rate table (WF1) ────────────────────────────
+    # ── Section 3: Monthly USDMYR Rates ────────────────────────────────────
     wf1_ready = (st.session_state.wf1_bytes_y is not None and
                  st.session_state.wf1_bytes_x is not None)
 
     if wf1_ready:
-        st.subheader("3. Monthly USDMYR Rate Table (WF1)")
+        st.subheader("3. USDMYR Monthly Rates")
         st.caption(
-            "SOY conversion: close × 0.01 × 2204.62 × USDMYR_rate. "
-            "Enter one rate per month in the table below."
+            "Asset B will be multiplied bar-by-bar by its calendar-month USDMYR rate. "
+            "The table is auto-generated from the uploaded date range — fill every row before running."
         )
 
-        # Build empty table if not yet built
+        # Build empty table immediately once both CSVs are available
         if st.session_state.rate_table_df is None:
             try:
                 from shared.fx_converter import build_empty_rate_table
                 from engine.wf1 import _load_csv, _parse_price_series
-                df_y = _load_csv(st.session_state.wf1_bytes_y)
-                raw_y = _parse_price_series(df_y, "FCPO")
-                df_x = _load_csv(st.session_state.wf1_bytes_x)
-                raw_x = _parse_price_series(df_x, "SOY")
-                common = raw_y.index.intersection(raw_x.index)
-                dates  = pd.Series(common)
-                st.session_state.rate_table_df = build_empty_rate_table(dates)
+                df_y  = _load_csv(st.session_state.wf1_bytes_y)
+                raw_y = _parse_price_series(df_y, "Asset A")
+                df_x  = _load_csv(st.session_state.wf1_bytes_x)
+                raw_x = _parse_price_series(df_x, "Asset B")
+                all_dates = raw_y.index.union(raw_x.index)
+                st.session_state.rate_table_df = build_empty_rate_table(pd.Series(all_dates))
             except Exception as e:
                 st.error(f"Could not parse CSV dates: {e}")
 
         if st.session_state.rate_table_df is not None:
-            # Import / export buttons
-            cexp, cimp = st.columns(2)
+            # Export / Import buttons
+            cexp, cimp = st.columns([1, 2])
             with cexp:
                 st.download_button(
-                    "Export rate table CSV",
+                    "⬇ Export rates CSV",
                     data=_rate_table_to_csv_bytes(st.session_state.rate_table_df),
                     file_name="usdmyr_rates.csv",
                     mime="text/csv",
+                    use_container_width=True,
                 )
             with cimp:
-                imported = st.file_uploader("Import rate table CSV", type="csv", key="up_rates")
+                imported = st.file_uploader(
+                    "⬆ Import rates CSV", type="csv", key="up_rates",
+                    label_visibility="collapsed",
+                )
                 if imported:
                     try:
                         st.session_state.rate_table_df = _rate_table_from_csv_bytes(imported.read())
                         st.success("Rate table imported.")
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Import failed: {e}")
 
-            # Editable table
+            # Scrollable editable table (max 380px height for long date ranges)
+            n_rows = len(st.session_state.rate_table_df)
+            tbl_height = min(380, max(120, n_rows * 36 + 40))
+
             edited_df = st.data_editor(
                 st.session_state.rate_table_df,
                 use_container_width=True,
                 num_rows="fixed",
+                height=tbl_height,
                 key="rate_editor",
                 column_config={
-                    "Month":       st.column_config.TextColumn("Month (YYYY-MM)", disabled=True),
+                    "Month": st.column_config.TextColumn(
+                        "Month (YYYY-MM)", disabled=True, width="small"
+                    ),
                     "USDMYR_Rate": st.column_config.NumberColumn(
-                        "USDMYR Rate", min_value=0.1, max_value=20.0, format="%.4f"
+                        "USDMYR Rate", min_value=0.1, max_value=20.0,
+                        format="%.4f", width="medium",
                     ),
                 },
             )
-            # Sync back
             st.session_state.rate_table_df = edited_df
 
-            n_missing = edited_df["USDMYR_Rate"].isna().sum()
+            n_missing = edited_df["USDMYR_Rate"].isna().sum() + (edited_df["USDMYR_Rate"] == 0).sum()
             if n_missing > 0:
-                st.warning(f"{n_missing} month(s) still missing a rate — fill all rows before running WF1.")
+                st.warning(f"{n_missing} month(s) missing a rate — fill all rows before running WF1.")
 
-        # ── Section 4: WF2 inherited rate display ─────────────────────────
+        # ── Section 4: WF2 inherited rates (shown once WF2 CSVs uploaded) ─
         wf2_ready = (st.session_state.wf2_bytes_y is not None and
                      st.session_state.wf2_bytes_x is not None)
 
         if wf2_ready and st.session_state.rate_table_df is not None:
-            st.subheader("4. WF2 Inherited Rate Table (read-only)")
-            st.info(
-                "WF2 reuses the WF1 monthly rate table. "
-                "Months outside the WF1 date range will use the mean fallback rate."
-            )
+            st.subheader("4. WF2 Inherited Rates")
             try:
-                from shared.fx_converter import build_empty_rate_table
+                from shared.fx_converter import rate_table_from_editor, build_empty_rate_table
                 from engine.wf2 import _load_csv as _load2, _parse_intraday
-                df_y2  = _load2(st.session_state.wf2_bytes_y)
-                raw_y2 = _parse_intraday(df_y2, "FCPO_15m")
-                wf2_months_needed = build_empty_rate_table(pd.Series(raw_y2.index))
-                st.dataframe(wf2_months_needed, use_container_width=True)
 
-                from shared.fx_converter import rate_table_from_editor
+                df_y2  = _load2(st.session_state.wf2_bytes_y)
+                raw_y2 = _parse_intraday(df_y2, "Asset A")
+                wf2_months = build_empty_rate_table(pd.Series(raw_y2.index))
+
                 rt = rate_table_from_editor(edited_df)
-                have   = set(rt.index)
-                need   = set(pd.to_datetime(wf2_months_needed["Month"].astype(str) + "-01").dt.to_period("M"))
-                missing_wf2 = need - have
-                if missing_wf2:
-                    st.warning(
-                        f"WF2 months not covered by WF1 rates "
-                        f"(fallback will apply): {sorted(str(m) for m in missing_wf2)}"
-                    )
+
+                lines = []
+                any_missing = False
+                for _, row in wf2_months.iterrows():
+                    m_str = row["Month"]
+                    try:
+                        m_period = pd.Period(m_str, freq="M")
+                        if m_period in rt.index:
+                            rate = float(rt.loc[m_period, "rate"])
+                            lines.append(f"✅ {m_str} = {rate:.4f}")
+                        else:
+                            lines.append(f"❌ {m_str} — **not found in WF1 rate table**")
+                            any_missing = True
+                    except Exception:
+                        lines.append(f"⚠ {m_str} — could not look up")
+                        any_missing = True
+
+                msg = "WF2 FX rate(s) inherited from WF1 table:\n\n" + "\n\n".join(lines)
+                if any_missing:
+                    st.error(msg + "\n\nAdd the missing month(s) to the WF1 rate table above.")
+                else:
+                    st.info(msg)
+
             except Exception as e:
-                st.caption(f"(WF2 month preview error: {e})")
+                st.caption(f"(WF2 rate preview error: {e})")
 
     # ── Run WF1 button ─────────────────────────────────────────────────────
     st.markdown("---")
@@ -349,7 +378,6 @@ def page_config():
         st.info(f"To run WF1: {' + '.join(reasons)}.")
 
     if st.button("Run WF1 Pipeline", disabled=not can_run_wf1, type="primary"):
-        # Store params in session state so re-runs can access them
         st.session_state.lot_size       = lot_size
         st.session_state.roundtrip_cost = roundtrip_cost
         st.session_state.mult_y         = mult_y
@@ -374,6 +402,39 @@ def page_config():
             and wf2_ready_files
             and rate_ok
         )
+
+        # WF2 inherited rate summary directly above the Run button
+        if wf2_ready_files and st.session_state.rate_table_df is not None:
+            try:
+                from shared.fx_converter import rate_table_from_editor, build_empty_rate_table
+                from engine.wf2 import _load_csv as _load2, _parse_intraday
+
+                df_y2  = _load2(st.session_state.wf2_bytes_y)
+                raw_y2 = _parse_intraday(df_y2, "Asset A")
+                wf2_months = build_empty_rate_table(pd.Series(raw_y2.index))
+                rt = rate_table_from_editor(st.session_state.rate_table_df)
+
+                lines, any_missing = [], False
+                for _, row in wf2_months.iterrows():
+                    m_str = row["Month"]
+                    try:
+                        m_period = pd.Period(m_str, freq="M")
+                        if m_period in rt.index:
+                            rate = float(rt.loc[m_period, "rate"])
+                            lines.append(f"{m_str} = {rate:.4f}")
+                        else:
+                            lines.append(f"{m_str} — NOT IN TABLE")
+                            any_missing = True
+                    except Exception:
+                        any_missing = True
+
+                summary = "WF2 FX rate inherited from WF1 table: " + "  |  ".join(lines)
+                if any_missing:
+                    st.error(summary + "\nWF2 month not found in WF1 rate table — please add it above.")
+                else:
+                    st.info(summary)
+            except Exception:
+                pass
 
         if st.button("Run WF2 Pipeline", disabled=not can_run_wf2, type="primary"):
             _run_wf2(lot_size=lot_size, roundtrip_cost=roundtrip_cost,
@@ -682,8 +743,8 @@ def page_wf1():
     gate_result = gating.get("gate_result", "BLOCKED")
 
     test_rows = [
-        ("ADF/KPSS — FCPO is I(1)", gating.get("adf_y", {}).get("verdict",""), "adf_y"),
-        ("ADF/KPSS — SOY is I(1)",  gating.get("adf_x", {}).get("verdict",""), "adf_x"),
+        ("ADF/KPSS — Asset A is I(1)", gating.get("adf_y", {}).get("verdict",""), "adf_y"),
+        ("ADF/KPSS — Asset B is I(1)", gating.get("adf_x", {}).get("verdict",""), "adf_x"),
         ("Engle-Granger Coint",
          f"p={gating.get('eg', {}).get('eg_pvalue','?')}", "eg"),
         ("Johansen Coint",

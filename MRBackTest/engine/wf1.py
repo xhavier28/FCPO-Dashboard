@@ -23,7 +23,7 @@ from shared.kalman import run_kalman
 from shared.ou import fit_ou
 from shared.structural_break import detect_breaks, breaks_to_dicts, apply_exclusions, check_fx_applied
 from shared.fx_converter import (
-    build_empty_rate_table, apply_fx_conversion, apply_soy_conversion, rate_table_from_editor,
+    build_empty_rate_table, apply_fx_conversion, rate_table_from_editor,
 )
 from tests.adf_kpss import test_stationarity
 from tests.coint_eg import test_cointegration_eg
@@ -89,19 +89,17 @@ def load_and_prep_wf1(
     rate_table_df: pd.DataFrame,
     mult_y: float = 1.0,
     mult_x: float = 1.0,
-    is_soy_x: bool = True,
 ) -> dict:
     """
-    Load WF1 daily CSVs, apply multipliers, FX-convert X (SOY) to MYR.
+    Load WF1 daily CSVs, apply multipliers, FX-convert Asset B to base currency.
 
     Parameters
     ----------
-    bytes_y        : CSV bytes for Asset A (FCPO)
-    bytes_x        : CSV bytes for Asset B (SOY)
-    rate_table_df  : st.data_editor output with columns [Month, USDMYR_Rate]
-    mult_y         : price multiplier for Y (default 1.0)
-    mult_x         : price multiplier for X (default 1.0)
-    is_soy_x       : if True, apply SOY → MYR formula; else plain FX
+    bytes_y       : CSV bytes for Asset A
+    bytes_x       : CSV bytes for Asset B
+    rate_table_df : st.data_editor output with columns [Month, USDMYR_Rate]
+    mult_y        : price multiplier for Asset A (default 1.0)
+    mult_x        : price multiplier for Asset B (default 1.0)
 
     Returns
     -------
@@ -110,8 +108,8 @@ def load_and_prep_wf1(
     df_y = _load_csv(bytes_y)
     df_x = _load_csv(bytes_x)
 
-    raw_y = _parse_price_series(df_y, "FCPO")
-    raw_x = _parse_price_series(df_x, "SOY")
+    raw_y = _parse_price_series(df_y, "Asset A")
+    raw_x = _parse_price_series(df_x, "Asset B")
 
     # Apply multipliers
     raw_y = raw_y * mult_y
@@ -125,11 +123,8 @@ def load_and_prep_wf1(
     # Build rate table from editor
     rate_table = rate_table_from_editor(rate_table_df)
 
-    # FX conversion
-    if is_soy_x:
-        x_conv, fx_log = apply_soy_conversion(x, rate_table, label_x="SOY")
-    else:
-        x_conv, fx_log = apply_fx_conversion(x, rate_table, label_x="Asset B")
+    # FX conversion (generic bar-by-bar multiplication by monthly rate)
+    x_conv, fx_log = apply_fx_conversion(x, rate_table, label_x="Asset B")
 
     # FX guard
     fx_guard = check_fx_applied(y.values, x_conv.values, fx_was_applied=True)
@@ -221,8 +216,8 @@ def run_gating_tests(y_train: pd.Series, x_train: pd.Series) -> dict:
     results = {}
 
     # 1+2: Unit root tests
-    results["adf_y"] = test_stationarity(y_train, "FCPO")
-    results["adf_x"] = test_stationarity(x_train, "SOY")
+    results["adf_y"] = test_stationarity(y_train, "Asset A")
+    results["adf_x"] = test_stationarity(x_train, "Asset B")
 
     # 3: Engle-Granger
     results["eg"] = test_cointegration_eg(y_train, x_train)

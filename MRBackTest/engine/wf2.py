@@ -13,7 +13,7 @@ import pandas as pd
 
 from shared.kalman import run_kalman
 from shared.ou import fit_ou
-from shared.fx_converter import apply_soy_conversion, apply_fx_conversion, rate_table_from_editor
+from shared.fx_converter import apply_fx_conversion, rate_table_from_editor
 from shared.structural_break import check_fx_applied
 from engine.signal import run_signal_engine
 
@@ -69,18 +69,17 @@ def load_and_prep_wf2(
     rate_table_df: pd.DataFrame,
     mult_y: float = 1.0,
     mult_x: float = 1.0,
-    is_soy_x: bool = True,
 ) -> dict:
     """
-    Load WF2 15-min CSVs, apply multipliers, FX-convert X → MYR.
+    Load WF2 15-min CSVs, apply multipliers, FX-convert Asset B.
 
     Returns dict with: y, x, date_range, n_bars, fx_log, warnings
     """
     df_y = _load_csv(bytes_y)
     df_x = _load_csv(bytes_x)
 
-    raw_y = _parse_intraday(df_y, "FCPO_15m")
-    raw_x = _parse_intraday(df_x, "SOY_15m")
+    raw_y = _parse_intraday(df_y, "Asset A")
+    raw_x = _parse_intraday(df_x, "Asset B")
 
     raw_y = raw_y * mult_y
     raw_x = raw_x * mult_x
@@ -91,11 +90,7 @@ def load_and_prep_wf2(
     x = raw_x.loc[common]
 
     rate_table = rate_table_from_editor(rate_table_df)
-
-    if is_soy_x:
-        x_conv, fx_log = apply_soy_conversion(x, rate_table, label_x="SOY_15m")
-    else:
-        x_conv, fx_log = apply_fx_conversion(x, rate_table, label_x="Asset B_15m")
+    x_conv, fx_log = apply_fx_conversion(x, rate_table, label_x="Asset B")
 
     fx_guard = check_fx_applied(y.values, x_conv.values, fx_was_applied=True)
 
@@ -287,13 +282,12 @@ def compute_tt_settings(
     """
     Compute TT Auto Spreader configuration values.
 
-    Lot ratio: round(HR × (25 / 27.22)) displayed as "X FCPO : Y SOY"
+    Lot ratio: round(HR × (25 / 27.22)) displayed as "X A : 1 B"
     HR = median beta_t from the Kalman filter.
     """
     beta_arr = kalman_result.get("beta_t", np.array([1.0]))
     hr       = float(np.nanmedian(beta_arr))
 
-    # Lot ratio (25 MT FCPO contract : SOY contract size 27.22 MT)
     raw_ratio  = hr * (25.0 / 27.22)
     lot_ratio  = max(1, round(raw_ratio))
 
@@ -305,7 +299,7 @@ def compute_tt_settings(
         "hedge_ratio":       round(hr, 4),
         "lot_ratio_raw":     round(raw_ratio, 3),
         "lot_ratio":         lot_ratio,
-        "lot_ratio_display": f"{lot_ratio} FCPO : 1 SOY",
+        "lot_ratio_display": f"{lot_ratio} A : 1 B",
         "half_life_bars":    half_life_bars,
         "half_life_hours":   half_life_hours,
         "ou_std_log":        ou_std,
@@ -317,6 +311,6 @@ def compute_tt_settings(
         "lookback_wf2":      wf2_locked_params.get("lookback"),
         "stop_z":            FIXED_STOP_Z,
         "lot_size":          lot_size,
-        "last_fcpo":         round(last_fcpo_price, 2),
-        "last_soy_myr":      round(last_soy_price, 2),
+        "last_price_a":      round(last_fcpo_price, 2),
+        "last_price_b":      round(last_soy_price, 2),
     }
