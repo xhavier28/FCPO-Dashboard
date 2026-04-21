@@ -34,3 +34,6 @@ Thumbs.db
 
 # Unrelated project files
 tictactoe.html
+
+# SQLite runtime state
+*.db
