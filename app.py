@@ -1933,7 +1933,8 @@ with tab8:
     )
 
     # ── SharePoint / TT live curve ────────────────────────────────────────────
-    sp_data = read_all()
+    _tt_xlsx = str(Path(__file__).parent / "FCPO_Curve_Input.xlsx")
+    sp_data = read_all(_tt_xlsx)
     sp_gaps = compute_gaps(sp_data)
     _sp_m1_ok = sp_data is not None and sp_data["outrights"].get(1) is not None
     if not _sp_m1_ok:
@@ -2194,7 +2195,7 @@ with tab8:
     st.markdown("---")
     st.subheader("Panel 5 — TT Listed Contract Gaps")
     if sp_gaps:
-        _lut = get_last_update_time()
+        _lut = get_last_update_time(_tt_xlsx)
         if _lut:
             st.caption(f"File last updated: {_lut.strftime('%d %b %Y %H:%M')}")
 
