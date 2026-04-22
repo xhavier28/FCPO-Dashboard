@@ -114,11 +114,10 @@ def build_regression_dataset(mpob_df, contracts_dict, r_annual=0.03, capacity=3_
         return df
 
     # Filter: remove extreme utilisation and implausible s values.
-    # s_implied is in the same unit system as fair_spread_value (roughly 12x monthly MYR/t).
-    # Negative s is valid — backwardation markets give large negative values.
-    # Cap at ±2000 to exclude only crisis outliers (e.g. Russia-Ukraine Feb 2022 at -8812).
+    # s_implied is monthly MYR/t. Negative = backwardation (valid).
+    # Normal range: -300 to +150. Cap at ±500 to exclude only extreme outlier months.
     df = df[(df['utilisation'] > 0.30) & (df['utilisation'] < 0.98)]
-    df = df[(df['s_implied'] > -2000) & (df['s_implied'] < 2000)]
+    df = df[(df['s_implied'] > -500) & (df['s_implied'] < 150)]
     return df.reset_index(drop=True)
 
 

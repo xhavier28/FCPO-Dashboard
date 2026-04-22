@@ -128,22 +128,25 @@ def build_butterfly_history(contracts_dict, front_offset, mid_offset, back_offse
 def fair_spread_value(F_near, r_annual, s_myr_per_tonne, c_annual, dt=1/12):
     """
     Fair value of calendar spread in MYR/tonne.
-    Formula: F_near * (exp((r_annual/12 + s_myr_per_tonne/F_near - c_annual/12) * dt) - 1)
+    s_myr_per_tonne is monthly storage cost in MYR/t (same unit as implied_s_backsolve).
+    exponent = r/12 + s/F_near - c/12  (all monthly rates, no extra dt multiply)
     """
-    exponent = (r_annual / 12 + s_myr_per_tonne / F_near - c_annual / 12) * dt
+    exponent = r_annual / 12 + s_myr_per_tonne / F_near - c_annual / 12
     return F_near * (math.exp(exponent) - 1)
 
 
 def implied_s_backsolve(F_near, F_far, r_annual=0.03, dt=1/12):
     """
-    Back-solves implied storage cost from M1/M2 prices.
-    Returns dict with s_implied_rate, s_implied_myr, c_implied.
+    Back-solves implied monthly storage cost from M1/M2 prices.
+    Returns s_implied_myr in MYR/t/month — same unit used by fair_spread_value.
+    Negative values are valid: backwardation = convenience yield > storage + financing.
+    Derivation: F_far = F_near * exp(r/12 + s/F_near - c/12)
+                s_myr = (log(F_far/F_near) - r*dt) * F_near
     """
     if F_near <= 0 or F_far <= 0:
         return {'s_implied_rate': 0.0, 's_implied_myr': 0.0, 'c_implied': 0.0}
-    s_implied_rate = (1 / dt) * math.log(F_far / F_near) - r_annual / 12
-    s_implied_myr  = s_implied_rate * F_near
-    # Negative values are valid: backwardation implies convenience yield > storage + financing
+    s_implied_myr  = (math.log(F_far / F_near) - r_annual * dt) * F_near
+    s_implied_rate = s_implied_myr / (F_near * dt)
     return {
         's_implied_rate': s_implied_rate,
         's_implied_myr':  s_implied_myr,
@@ -154,11 +157,12 @@ def implied_s_backsolve(F_near, F_far, r_annual=0.03, dt=1/12):
 def implied_c(F_near, F_far, s_myr, r_annual=0.03, dt=1/12):
     """
     Returns convenience yield annualised (e.g. 0.04 = 4%).
-    c_monthly = r_annual/12 + s_myr/F_near - (1/dt)*ln(F_far/F_near)
+    s_myr is monthly storage cost in MYR/t (same unit as implied_s_backsolve).
+    c_monthly = r/12 + s/F_near - log(F_far/F_near)
     """
     if F_near <= 0 or F_far <= 0:
         return 0.0
-    c_monthly = r_annual / 12 + s_myr / F_near - (1 / dt) * math.log(F_far / F_near)
+    c_monthly = r_annual / 12 + s_myr / F_near - math.log(F_far / F_near)
     return c_monthly * 12
 
 
