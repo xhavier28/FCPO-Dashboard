@@ -317,25 +317,21 @@ def get_s_mpob(current_stocks, regression_result, capacity=3_750_000):
     return {'utilisation': util, 's_mpob_myr': s_myr, 'regime': regime}
 
 
-def producer_s_composite(tank_util_pct, buyer_lifting, discount_pressure,
+def producer_s_composite(rel_pos, buyer_lifting, discount_pressure,
                           production_outlook, F_M1):
     """
     Returns dict: s_current, s_forward, conviction_bonus, signal, interpretation.
+    rel_pos: float 0.0–1.0, relative position of current tanks within hist_low–hist_high range.
     """
-    util = tank_util_pct / 100.0
-
-    # Base S from utilisation curve (linear interpolation between breakpoints)
-    def _base_s(u):
-        if u < 0.50:
-            return 8.0 + (u / 0.50) * (12.0 - 8.0)
-        elif u < 0.70:
-            return 12.0 + ((u - 0.50) / 0.20) * (18.0 - 12.0)
-        elif u < 0.85:
-            return 18.0 + ((u - 0.70) / 0.15) * (25.0 - 18.0)
-        else:
-            return 25.0 + ((u - 0.85) / 0.15) * (32.0 - 25.0)
-
-    base = _base_s(util)
+    # Base S from relative position breakpoints
+    if rel_pos < 0.25:
+        base = 9.0
+    elif rel_pos < 0.50:
+        base = 13.0
+    elif rel_pos < 0.75:
+        base = 19.0
+    else:
+        base = 26.0
 
     # Adjustments for current S
     lifting_adj = {'rushing': -5, 'on_time': 0, 'slight_delay': 5, 'major_delay': 12}
@@ -367,7 +363,7 @@ def producer_s_composite(tank_util_pct, buyer_lifting, discount_pressure,
         signal = 'NEUTRAL'
 
     interpretation = (
-        f"Tank {tank_util_pct:.0f}% full. "
+        f"Relative position: {rel_pos*100:.0f}th percentile of range. "
         f"Buyer lifting: {buyer_lifting.replace('_',' ')}. "
         f"Discount: {discount_pressure}. "
         f"Production: {production_outlook}."

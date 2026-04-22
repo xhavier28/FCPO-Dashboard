@@ -1807,12 +1807,22 @@ with tab7:
                 recent_prod = pd.DataFrame()
 
         with st.form("producer_form", clear_on_submit=False):
+            _col_min, _col_cur, _col_max = st.columns(3)
+            _hist_low  = _col_min.number_input("Historical low (%)",  min_value=0, max_value=100, value=35, step=1, key="t7_hist_low")
+            _current   = _col_cur.number_input("Current (%)",         min_value=0, max_value=100, value=65, step=1, key="t7_tank_util")
+            _hist_high = _col_max.number_input("Historical high (%)", min_value=0, max_value=100, value=88, step=1, key="t7_hist_high")
+
+            _rel_pos = (_current - _hist_low) / (_hist_high - _hist_low) if _hist_high != _hist_low else 0.5
+            _rel_label = (
+                'very tight'  if _rel_pos > 0.75 else
+                'tightening'  if _rel_pos > 0.50 else
+                'comfortable' if _rel_pos > 0.25 else
+                'very loose'
+            )
+            st.caption(f"Relative position: {_rel_pos*100:.0f}th percentile of their range  ({_rel_label})")
+
             _pf_col1, _pf_col2 = st.columns(2)
             with _pf_col1:
-                _tank_util = st.slider(
-                    "Tank utilisation (%)", min_value=0, max_value=100, value=65,
-                    key="t7_tank_util",
-                )
                 _buyer_lifting = st.selectbox(
                     "Buyer lifting pace",
                     options=['rushing', 'on_time', 'slight_delay', 'major_delay'],
@@ -1824,16 +1834,16 @@ with tab7:
                     options=['none', 'small', 'large', 'distress'],
                     index=0, key="t7_discount_pressure",
                 )
-                _production_outlook = st.selectbox(
-                    "Production outlook (next month)",
-                    options=['light', 'normal', 'heavy'],
-                    index=1, key="t7_production_outlook",
-                )
+            _production_outlook = st.selectbox(
+                "Production outlook (next month)",
+                options=['light', 'normal', 'heavy'],
+                index=1, key="t7_production_outlook",
+            )
             _submit_prod = st.form_submit_button("Compute & Log")
 
         if _submit_prod:
             _prod_res = producer_s_composite(
-                _tank_util, _buyer_lifting, _discount_pressure,
+                _rel_pos, _buyer_lifting, _discount_pressure,
                 _production_outlook, _F_M1_t7,
             )
             # Push computed values into session state so forward curve picks them up
@@ -1842,7 +1852,10 @@ with tab7:
 
             _log_row = {
                 'timestamp':          datetime.datetime.now().isoformat(),
-                'tank_util_pct':      _tank_util,
+                'hist_low_pct':       _hist_low,
+                'current_pct':        _current,
+                'hist_high_pct':      _hist_high,
+                'rel_pos':            round(_rel_pos, 4),
                 'buyer_lifting':      _buyer_lifting,
                 'discount_pressure':  _discount_pressure,
                 'production_outlook': _production_outlook,
