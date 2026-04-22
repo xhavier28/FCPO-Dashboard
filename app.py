@@ -1932,6 +1932,24 @@ with tab8:
         "butterfly = F_mid − 0.5·(F_front + F_back)."
     )
 
+    # ── SharePoint / TT live curve ────────────────────────────────────────────
+    sp_data = read_all()
+    sp_gaps = compute_gaps(sp_data)
+    _sp_m1_ok = sp_data is not None and sp_data["outrights"].get(1) is not None
+    if not _sp_m1_ok:
+        st.warning(
+            "No live prices — paste M1–M12 outrights into **FCPO_Curve_Input.xlsx** "
+            "(sheet: *Curve Input*, column C, rows 7–18)."
+        )
+    else:
+        _sp_filled_a = sum(1 for v in sp_data["outrights"].values() if v)
+        _sp_filled_b = sum(1 for v in sp_data["spreads"].values() if v)
+        _sp_filled_c = sum(1 for v in sp_data["butterflies"].values() if v)
+        st.success(
+            f"Live prices loaded — Outrights: {_sp_filled_a}/12 · "
+            f"Spreads: {_sp_filled_b}/11 · Butterflies: {_sp_filled_c}/10"
+        )
+
     _r8 = st.session_state.get('r_annual', 0.03)
     _contracts_t8 = load_contracts()
 
@@ -1952,7 +1970,10 @@ with tab8:
 
     # ── Get current curve ─────────────────────────────────────────────────────
     _today_t8  = datetime.date.today()
-    _curve_t8  = get_active_curve(_contracts_t8, _today_t8)
+    if _sp_m1_ok:
+        _curve_t8 = sp_data["outrights"]
+    else:
+        _curve_t8 = get_active_curve(_contracts_t8, _today_t8)
     F_M1 = _curve_t8.get(1) or 4000.0
     F_M2 = _curve_t8.get(2) or 4000.0
 
@@ -2169,56 +2190,62 @@ with tab8:
         _fig_bfly.update_yaxes(title_text='Z-score', row=2, col=1)
         st.plotly_chart(_fig_bfly, use_container_width=True)
 
-    # ── TT Gap analysis (SharePoint) ──────────────────────────────────────────
+    # ── Panel 5: TT Listed Contract Gaps (SharePoint) ─────────────────────────
     st.markdown("---")
-    st.subheader("TT Listed Contract Gaps (SharePoint)")
-    _tt_data = get_sharepoint_data()
-    if _tt_data is None:
-        st.info(
-            "SharePoint file not connected. Update `SHAREPOINT_FILE` in `fcpo_tt_reader.py` "
-            "to enable TT gap analysis."
-        )
-    else:
-        _tt_gaps = compute_gaps(_tt_data)
-        if _tt_gaps:
-            _tt_lut = get_last_update_time()
-            if _tt_lut:
-                st.caption(f"File last updated: {_tt_lut.strftime('%d %b %Y %H:%M')}")
+    st.subheader("Panel 5 — TT Listed Contract Gaps")
+    if sp_gaps:
+        _lut = get_last_update_time()
+        if _lut:
+            st.caption(f"File last updated: {_lut.strftime('%d %b %Y %H:%M')}")
 
+        _p5_left, _p5_right = st.columns(2)
+
+        with _p5_left:
             st.markdown("**Calendar Spread Gaps**")
             _sg_rows = []
-            for (n, f), v in _tt_gaps['spread_gaps'].items():
+            for (n, f), v in sp_gaps['spread_gaps'].items():
                 _sg_rows.append({
-                    'Pair':       f"M{n}/M{f}",
-                    'Listed':     f"{v['listed']:+.1f}",
-                    'Calculated': f"{v['calculated']:+.1f}",
-                    'Gap':        f"{v['gap']:+.1f}",
-                    'Signal':     v['signal'],
+                    'Pair':   f"M{n}/M{f}",
+                    'Listed': f"{v['listed']:+.1f}",
+                    'Calc':   f"{v['calculated']:+.1f}",
+                    'Gap':    f"{v['gap']:+.1f}",
+                    'Signal': v['signal'],
                 })
             if _sg_rows:
                 _sg_df = pd.DataFrame(_sg_rows)
-                def _style_signal(val):
+                def _style_spread_gap(val):
                     if val == 'RICH':  return 'background-color: #4a1a1a; color: #ff7f7f'
                     if val == 'CHEAP': return 'background-color: #1a4a1a; color: #7fff7f'
                     return ''
                 st.dataframe(
-                    _sg_df.style.applymap(_style_signal, subset=['Signal']),
+                    _sg_df.style.applymap(_style_spread_gap, subset=['Signal']),
                     use_container_width=True, hide_index=True,
                 )
+            else:
+                st.info("No spread gaps — fill listed spread prices in column C rows 24–34.")
 
+        with _p5_right:
             st.markdown("**Butterfly Gaps**")
             _bg_rows = []
-            for (fr, mi, bk), v in _tt_gaps['butterfly_gaps'].items():
+            for (fr, mi, bk), v in sp_gaps['butterfly_gaps'].items():
                 _bg_rows.append({
-                    'Triplet':    f"M{fr}/M{mi}/M{bk}",
-                    'Listed':     f"{v['listed']:+.1f}",
-                    'Calculated': f"{v['calculated']:+.1f}",
-                    'Gap':        f"{v['gap']:+.1f}",
-                    'Signal':     v['signal'],
+                    'Butterfly': f"M{fr}/M{mi}/M{bk}",
+                    'Listed':    f"{v['listed']:+.1f}",
+                    'Calc':      f"{v['calculated']:+.1f}",
+                    'Gap':       f"{v['gap']:+.1f}",
+                    'Signal':    v['signal'],
                 })
             if _bg_rows:
                 _bg_df = pd.DataFrame(_bg_rows)
+                def _style_bfly_gap(val):
+                    if val == 'RICH':  return 'background-color: #4a1a1a; color: #ff7f7f'
+                    if val == 'CHEAP': return 'background-color: #1a4a1a; color: #7fff7f'
+                    return ''
                 st.dataframe(
-                    _bg_df.style.applymap(_style_signal, subset=['Signal']),
+                    _bg_df.style.applymap(_style_bfly_gap, subset=['Signal']),
                     use_container_width=True, hide_index=True,
                 )
+            else:
+                st.info("No butterfly gaps — fill listed butterfly prices in column C rows 39–48.")
+    else:
+        st.info("Paste outright prices (M1–M12) into FCPO_Curve_Input.xlsx to enable gap analysis.")
