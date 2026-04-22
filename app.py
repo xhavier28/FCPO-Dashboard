@@ -1879,6 +1879,9 @@ with tab7:
                     _writer.writeheader()
                 _writer.writerow(_log_row)
 
+            # Re-run immediately so the top panel reads the new session state values
+            st.rerun()
+
             _pr1, _pr2, _pr3 = st.columns(3)
             _pr1.metric("S current (M1/M2)", f"{_prod_res['s_current']:.1f} MYR/t")
             _pr2.metric("S forward (M2/M3)", f"{_prod_res['s_forward']:.1f} MYR/t")
