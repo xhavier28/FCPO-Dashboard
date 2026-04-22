@@ -1628,15 +1628,17 @@ with tab6:
 
 # ── Tab 7: S Calculator ───────────────────────────────────────────────────────
 with tab7:
-    st.header("Storage Cost (S) Calculator")
+    st.header("Storage Cost (S) — Three Source Comparison")
     st.caption(
         "Three-source storage cost model: MPOB regression, seasonal baseline, and producer intelligence. "
-        "S drives fair-value calendar spreads. Higher S → higher fair-value spread (backwardation expected)."
+        "S drives fair-value calendar spreads. Higher S = higher fair-value spread (backwardation expected)."
     )
+
+    _r7 = st.session_state.get('r_annual', 0.03)
 
     # Load model once
     try:
-        _s_model = get_s_regression_model()
+        _s_model    = get_s_regression_model()
         _s_reg      = _s_model['regression']
         _s_seasonal = _s_model['seasonal']
         _s_seas_tbl = _s_model['seasonal_table']
@@ -1648,12 +1650,73 @@ with tab7:
         _s_model_ok = False
 
     if _s_model_ok:
-        # ── Model diagnostics ─────────────────────────────────────────────────
+        # ── Pre-load all three S sources ──────────────────────────────────────
+        _mpob_df_t7 = load_mpob_data()
+        if not _mpob_df_t7.empty:
+            _latest_stocks_t7 = float(_mpob_df_t7['mpob_stocks'].iloc[-1])
+            _latest_date_t7   = _mpob_df_t7['date'].iloc[-1]
+        else:
+            _latest_stocks_t7 = 1_800_000.0
+            _latest_date_t7   = pd.Timestamp.today()
+
+        # 1. S Implied — from live M1/M2 curve
+        _contracts_t7  = load_contracts()
+        _today_t7      = datetime.date.today()
+        _curve_t7      = get_active_curve(_contracts_t7, _today_t7)
+        _F_M1_t7       = float(_curve_t7.get(1) or 4000.0)
+        _F_M2_t7       = float(_curve_t7.get(2) or 4000.0)
+        _s_implied_t7  = implied_s_backsolve(_F_M1_t7, _F_M2_t7, r_annual=_r7)['s_implied_myr']
+
+        # 2. S MPOB — from regression on latest stocks
+        _s_mpob_top    = get_s_mpob(_latest_stocks_t7, _s_reg, _s_capacity)
+        _s_mpob_t7     = _s_mpob_top['s_mpob_myr']
+        _regime_t7     = _s_mpob_top['regime']
+
+        # 3. S Producer — from most recent log entry (fallback to MPOB)
+        _log_path      = Path("producer_log.csv")
+        _s_producer_t7 = _s_mpob_t7
+        _s_forward_t7  = _s_mpob_t7
+        if _log_path.exists():
+            try:
+                _log_df_t7 = pd.read_csv(_log_path)
+                if not _log_df_t7.empty:
+                    _last_t7       = _log_df_t7.sort_values('timestamp', ascending=False).iloc[0]
+                    _s_producer_t7 = float(_last_t7.get('s_current', _s_mpob_t7))
+                    _s_forward_t7  = float(_last_t7.get('s_forward',  _s_mpob_t7))
+            except Exception:
+                pass
+
+        # ── TOP: Three large metric cards ─────────────────────────────────────
+        _tc1, _tc2, _tc3 = st.columns(3)
+        _tc1.metric("S Implied (market)",    f"{_s_implied_t7:.1f} MYR/t",
+                    help="Back-solved from M1/M2 futures prices")
+        _tc2.metric("S MPOB (official)",     f"{_s_mpob_t7:.1f} MYR/t",
+                    delta=f"{_s_mpob_t7 - _s_implied_t7:+.1f} vs implied",
+                    help=f"Regime: {_regime_t7}")
+        _tc3.metric("S Producer (physical)", f"{_s_producer_t7:.1f} MYR/t",
+                    delta=f"{_s_producer_t7 - _s_implied_t7:+.1f} vs implied",
+                    help="From producer intelligence form")
+
+        st.markdown("---")
+
+        _gc1, _gc2, _gc3 = st.columns(3)
+        _gc1.metric("Gap 1 — Implied vs MPOB",    f"{_s_implied_t7 - _s_mpob_t7:+.1f} MYR/t")
+        _gc2.metric("Gap 2 — MPOB vs Producer",   f"{_s_mpob_t7 - _s_producer_t7:+.1f} MYR/t")
+        _alpha_gap_t7 = _s_implied_t7 - _s_producer_t7
+        _gc3.metric(
+            "Gap 3 — YOUR ALPHA (Implied vs Producer)",
+            f"{_alpha_gap_t7:+.1f} MYR/t",
+            delta="BUY SPREAD" if _alpha_gap_t7 < -8 else "SELL SPREAD" if _alpha_gap_t7 > 8 else "NEUTRAL",
+        )
+
+        st.markdown("---")
+
+        # ── Model Diagnostics (collapsed) ─────────────────────────────────────
         with st.expander("Model Diagnostics", expanded=False):
             _diag_cols = st.columns(4)
-            _diag_cols[0].metric("Best model",   _s_reg['best_model'].title())
-            _diag_cols[1].metric("R²",           f"{_s_reg['best_r2']:.3f}")
-            _diag_cols[2].metric("Observations", _s_reg['n_observations'])
+            _diag_cols[0].metric("Best model",    _s_reg['best_model'].title())
+            _diag_cols[1].metric("R²",            f"{_s_reg['best_r2']:.3f}")
+            _diag_cols[2].metric("Observations",  _s_reg['n_observations'])
             _diag_cols[3].metric("Capacity est.", f"{_s_capacity/1e6:.2f}M t")
             if _s_reg.get('warning'):
                 st.warning(_s_reg['warning'])
@@ -1662,15 +1725,12 @@ with tab7:
                 f"S observed: {_s_reg['s_range_observed'][0]:.1f}–{_s_reg['s_range_observed'][1]:.1f} MYR/t  |  "
                 f"Seasonal OLS R²: {_s_seasonal['r2']:.3f}"
             )
-
-            # Regression scatter (util vs s_implied)
             if not _s_reg_df.empty:
                 _u_range = np.linspace(
                     float(_s_reg_df['utilisation'].min()),
                     float(_s_reg_df['utilisation'].max()), 80
                 )
                 _s_fit = [_s_reg['util_to_s_function'](u) for u in _u_range]
-
                 _fig_reg = go.Figure()
                 _fig_reg.add_trace(go.Scatter(
                     x=_s_reg_df['utilisation'], y=_s_reg_df['s_implied'],
@@ -1693,62 +1753,50 @@ with tab7:
                 )
                 st.plotly_chart(_fig_reg, use_container_width=True)
 
-        # ── Seasonal S table ─────────────────────────────────────────────────
+        # ── Seasonal S table (collapsed) ──────────────────────────────────────
         with st.expander("Seasonal S Table (by month)", expanded=False):
             _seas_rows = []
             for _m in range(1, 13):
                 _entry = _s_seas_tbl.get(_m, {})
                 _seas_rows.append({
-                    'Month':      _entry.get('month_name', MONTH_ABBRS[_m - 1]),
-                    'Util mean':  f"{_entry.get('util_mean', 0):.3f}",
-                    'Util P25':   f"{_entry.get('util_p25', 0):.3f}",
-                    'Util P75':   f"{_entry.get('util_p75', 0):.3f}",
-                    'S mean':     f"{_entry.get('s_mean', 0):.1f}",
-                    'S P25':      f"{_entry.get('s_low', 0):.1f}",
-                    'S P75':      f"{_entry.get('s_high', 0):.1f}",
-                    'N years':    _entry.get('n_years', 0),
+                    'Month':     _entry.get('month_name', MONTH_ABBRS[_m - 1]),
+                    'Util mean': f"{_entry.get('util_mean', 0):.3f}",
+                    'Util P25':  f"{_entry.get('util_p25', 0):.3f}",
+                    'Util P75':  f"{_entry.get('util_p75', 0):.3f}",
+                    'S mean':    f"{_entry.get('s_mean', 0):.1f}",
+                    'S P25':     f"{_entry.get('s_low', 0):.1f}",
+                    'S P75':     f"{_entry.get('s_high', 0):.1f}",
+                    'N years':   _entry.get('n_years', 0),
                 })
-            _seas_df = pd.DataFrame(_seas_rows).set_index('Month')
-            st.dataframe(_seas_df, use_container_width=True)
+            st.dataframe(pd.DataFrame(_seas_rows).set_index('Month'), use_container_width=True)
 
         st.markdown("---")
 
-        # ── Current MPOB S ────────────────────────────────────────────────────
+        # ── MPOB stocks input ─────────────────────────────────────────────────
         st.subheader("MPOB-Based S (Current)")
-        _mpob_df = load_mpob_data()
-        if not _mpob_df.empty:
-            _latest_stocks = float(_mpob_df['mpob_stocks'].iloc[-1])
-            _latest_date   = _mpob_df['date'].iloc[-1]
-        else:
-            _latest_stocks = 1_800_000.0
-            _latest_date   = pd.Timestamp.today()
-
         _t7c1, _t7c2 = st.columns([2, 3])
         with _t7c1:
             _current_stocks_input = st.number_input(
                 "Current MPOB stocks (tonnes)",
                 min_value=100_000, max_value=5_000_000,
-                value=int(_latest_stocks),
+                value=int(_latest_stocks_t7),
                 step=10_000,
                 key="t7_mpob_stocks",
             )
         with _t7c2:
-            st.caption(f"Last MPOB data point: {_latest_date.strftime('%b %Y')} — {_latest_stocks:,.0f} t")
+            st.caption(f"Last MPOB data point: {_latest_date_t7.strftime('%b %Y')} — {_latest_stocks_t7:,.0f} t")
 
         _s_mpob_res = get_s_mpob(_current_stocks_input, _s_reg, _s_capacity)
         _m7c1, _m7c2, _m7c3 = st.columns(3)
-        _m7c1.metric("Utilisation",   f"{_s_mpob_res['utilisation']:.1%}")
-        _m7c2.metric("S (MPOB)",      f"{_s_mpob_res['s_mpob_myr']:.1f} MYR/t")
-        _m7c3.metric("Regime",        _s_mpob_res['regime'])
+        _m7c1.metric("Utilisation", f"{_s_mpob_res['utilisation']:.1%}")
+        _m7c2.metric("S (MPOB)",    f"{_s_mpob_res['s_mpob_myr']:.1f} MYR/t")
+        _m7c3.metric("Regime",      _s_mpob_res['regime'])
 
         st.markdown("---")
 
         # ── Producer Intelligence form ────────────────────────────────────────
         st.subheader("Producer Intelligence")
         recent_prod = pd.DataFrame()
-
-        # Load recent producer log entries
-        _log_path = Path("producer_log.csv")
         if _log_path.exists():
             try:
                 recent_prod = pd.read_csv(_log_path)
@@ -1768,37 +1816,30 @@ with tab7:
                 _buyer_lifting = st.selectbox(
                     "Buyer lifting pace",
                     options=['rushing', 'on_time', 'slight_delay', 'major_delay'],
-                    index=1,
-                    key="t7_buyer_lifting",
+                    index=1, key="t7_buyer_lifting",
                 )
             with _pf_col2:
                 _discount_pressure = st.selectbox(
                     "Discount pressure",
                     options=['none', 'small', 'large', 'distress'],
-                    index=0,
-                    key="t7_discount_pressure",
+                    index=0, key="t7_discount_pressure",
                 )
                 _production_outlook = st.selectbox(
                     "Production outlook (next month)",
                     options=['light', 'normal', 'heavy'],
-                    index=1,
-                    key="t7_production_outlook",
+                    index=1, key="t7_production_outlook",
                 )
             _submit_prod = st.form_submit_button("Compute & Log")
 
         if _submit_prod:
-            # Get current F_M1 from contracts
-            _contracts_t7 = load_contracts()
-            _today_t7     = datetime.date.today()
-            _curve_t7     = get_active_curve(_contracts_t7, _today_t7)
-            _F_M1_t7      = _curve_t7.get(1) or 4000.0
-
             _prod_res = producer_s_composite(
                 _tank_util, _buyer_lifting, _discount_pressure,
                 _production_outlook, _F_M1_t7,
             )
+            # Push computed values into session state so forward curve picks them up
+            st.session_state['t7_s_prod_cur'] = float(max(5.0, min(50.0, _prod_res['s_current'])))
+            st.session_state['t7_s_prod_fwd'] = float(max(5.0, min(50.0, _prod_res['s_forward'])))
 
-            # Log to CSV
             _log_row = {
                 'timestamp':          datetime.datetime.now().isoformat(),
                 'tank_util_pct':      _tank_util,
@@ -1817,7 +1858,6 @@ with tab7:
                     _writer.writeheader()
                 _writer.writerow(_log_row)
 
-            # Display
             _pr1, _pr2, _pr3 = st.columns(3)
             _pr1.metric("S current (M1/M2)", f"{_prod_res['s_current']:.1f} MYR/t")
             _pr2.metric("S forward (M2/M3)", f"{_prod_res['s_forward']:.1f} MYR/t")
@@ -1825,13 +1865,11 @@ with tab7:
             _sig_colour = (
                 'error'   if 'DISTRESS' in _prod_res['signal'] else
                 'warning' if 'BEARISH'  in _prod_res['signal'] else
-                'success' if 'BULLISH'  in _prod_res['signal'] else
-                'info'
+                'success' if 'BULLISH'  in _prod_res['signal'] else 'info'
             )
             getattr(st, _sig_colour)(f"**{_prod_res['signal']}**")
             st.caption(_prod_res['interpretation'])
 
-        # Show recent log
         if not recent_prod.empty:
             st.subheader("Recent Producer Log (last 10 entries)")
             st.dataframe(recent_prod.drop(columns=['timestamp'], errors='ignore'), use_container_width=True)
@@ -1840,6 +1878,13 @@ with tab7:
 
         # ── Forward S Curve ───────────────────────────────────────────────────
         st.subheader("Forward S Curve")
+
+        # Default override boxes to log-derived values (only on first load)
+        if 't7_s_prod_cur' not in st.session_state:
+            st.session_state['t7_s_prod_cur'] = float(max(5.0, min(50.0, _s_producer_t7)))
+        if 't7_s_prod_fwd' not in st.session_state:
+            st.session_state['t7_s_prod_fwd'] = float(max(5.0, min(50.0, _s_forward_t7)))
+
         _fwd_col1, _fwd_col2 = st.columns(2)
         with _fwd_col1:
             _enso_factor = st.number_input(
@@ -1850,12 +1895,14 @@ with tab7:
         with _fwd_col2:
             _s_producer_current_input = st.number_input(
                 "S producer current (MYR/t) — from form above",
-                min_value=5.0, max_value=50.0, value=float(_s_mpob_res['s_mpob_myr']),
+                min_value=5.0, max_value=50.0,
+                value=st.session_state['t7_s_prod_cur'],
                 step=0.5, key="t7_s_prod_cur",
             )
             _s_producer_forward_input = st.number_input(
                 "S producer forward (MYR/t)",
-                min_value=5.0, max_value=50.0, value=float(_s_mpob_res['s_mpob_myr']),
+                min_value=5.0, max_value=50.0,
+                value=st.session_state['t7_s_prod_fwd'],
                 step=0.5, key="t7_s_prod_fwd",
             )
 
