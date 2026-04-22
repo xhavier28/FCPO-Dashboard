@@ -1,2 +1,7 @@
 timestamp,tank_util_pct,buyer_lifting,discount_pressure,production_outlook,F_M1,s_current,s_forward,signal
 2026-04-18T09:54:32.277162,75,major_delay,large,heavy,4700.0,42.33,28.33,BEARISH — rising stocks expected
+2026-04-22T12:07:45.142701,65,major_delay,large,heavy,4700.0,38.5,24.5,BEARISH — rising stocks expected
+2026-04-22T12:36:29.735641,65,on_time,none,normal,4700.0,16.5,16.5,NEUTRAL
+2026-04-22T13:08:36.689971,65,on_time,none,normal,4700.0,16.5,16.5,NEUTRAL
+2026-04-22T13:08:54.734258,65,on_time,large,normal,4700.0,26.5,16.5,NEUTRAL
+2026-04-22T13:18:49.597528,35,40,88,0.0943,on_time,none,normal,4700.0,9.0,9.0,NEUTRAL

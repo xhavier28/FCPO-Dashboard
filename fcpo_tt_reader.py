@@ -10,7 +10,7 @@ from pathlib import Path
 from datetime import datetime
 
 # ── UPDATE THIS PATH ──────────────────────────────────────────────────────────
-SHAREPOINT_FILE = r"Z:\YourSharePointFolder\FCPO_Curve_Input.xlsx"
+SHAREPOINT_FILE = "FCPO_Curve_Input.xlsx"
 
 CURVE_SHEET    = "Curve Input"
 PRICE_COL      = 3       # column C in all three zones

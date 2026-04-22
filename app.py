@@ -1672,19 +1672,23 @@ with tab7:
         _s_mpob_t7     = _s_mpob_top['s_mpob_myr']
         _regime_t7     = _s_mpob_top['regime']
 
-        # 3. S Producer — from most recent log entry (fallback to MPOB)
+        # 3. S Producer — session state is authoritative (set on form submit).
+        #    Fall back to last log entry, then to MPOB if neither exists.
         _log_path      = Path("producer_log.csv")
-        _s_producer_t7 = _s_mpob_t7
-        _s_forward_t7  = _s_mpob_t7
-        if _log_path.exists():
-            try:
-                _log_df_t7 = pd.read_csv(_log_path)
-                if not _log_df_t7.empty:
-                    _last_t7       = _log_df_t7.sort_values('timestamp', ascending=False).iloc[0]
-                    _s_producer_t7 = float(_last_t7.get('s_current', _s_mpob_t7))
-                    _s_forward_t7  = float(_last_t7.get('s_forward',  _s_mpob_t7))
-            except Exception:
-                pass
+        _s_producer_t7 = st.session_state.get('s_producer_current', None)
+        _s_forward_t7  = st.session_state.get('s_producer_forward',  None)
+        if _s_producer_t7 is None:
+            _s_producer_t7 = _s_mpob_t7
+            _s_forward_t7  = _s_mpob_t7
+            if _log_path.exists():
+                try:
+                    _log_df_t7 = pd.read_csv(_log_path)
+                    if not _log_df_t7.empty:
+                        _last_t7       = _log_df_t7.sort_values('timestamp', ascending=False).iloc[0]
+                        _s_producer_t7 = float(_last_t7.get('s_current', _s_mpob_t7))
+                        _s_forward_t7  = float(_last_t7.get('s_forward',  _s_mpob_t7))
+                except Exception:
+                    pass
 
         # ── TOP: Three large metric cards ─────────────────────────────────────
         _tc1, _tc2, _tc3 = st.columns(3)
@@ -1846,7 +1850,11 @@ with tab7:
                 _rel_pos, _buyer_lifting, _discount_pressure,
                 _production_outlook, _F_M1_t7,
             )
-            # Push computed values into session state so forward curve picks them up
+            # Push to session state — top panel reads these on next rerun
+            st.session_state['s_producer_current']       = _prod_res['s_current']
+            st.session_state['s_producer_forward']        = _prod_res['s_forward']
+            st.session_state['producer_conviction_bonus'] = _prod_res['conviction_bonus']
+            # Also update forward curve override inputs
             st.session_state['t7_s_prod_cur'] = float(max(5.0, min(50.0, _prod_res['s_current'])))
             st.session_state['t7_s_prod_fwd'] = float(max(5.0, min(50.0, _prod_res['s_forward'])))
 
