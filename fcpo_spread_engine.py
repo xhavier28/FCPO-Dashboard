@@ -143,7 +143,7 @@ def implied_s_backsolve(F_near, F_far, r_annual=0.03, dt=1/12):
         return {'s_implied_rate': 0.0, 's_implied_myr': 0.0, 'c_implied': 0.0}
     s_implied_rate = (1 / dt) * math.log(F_far / F_near) - r_annual / 12
     s_implied_myr  = s_implied_rate * F_near
-    s_implied_myr  = max(0.0, s_implied_myr)
+    # Negative values are valid: backwardation implies convenience yield > storage + financing
     return {
         's_implied_rate': s_implied_rate,
         's_implied_myr':  s_implied_myr,

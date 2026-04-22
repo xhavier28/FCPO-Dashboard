@@ -76,11 +76,10 @@ def build_regression_dataset(mpob_df, contracts_dict, r_annual=0.03, capacity=3_
         stocks = float(row['mpob_stocks'])
         util = stocks / capacity
 
-        # Find last trading day's M1 and M2 prices for this month
-        # Use end-of-month approximation: last day of the month
-        fm = _front_month(date.replace(day=28))  # use late-month date to get correct front month
-        # Actually: for MPOB monthly closing stock (reported at month end),
-        # use the last available date in that month
+        # MPOB date is month-start (e.g. 2023-01-01) but represents end-of-month stocks.
+        # Use the last calendar day of that month for both front-month calc and price lookup.
+        eom = (date + pd.offsets.MonthEnd(0))
+        fm = _front_month(eom)
         m1_ym = fm
         m2_ym = _add_months(fm, 1)
 
@@ -89,9 +88,9 @@ def build_regression_dataset(mpob_df, contracts_dict, r_annual=0.03, capacity=3_
         if s1 is None or s2 is None:
             continue
 
-        # Get last available price in or before this date
-        s1_avail = s1[s1.index <= date]
-        s2_avail = s2[s2.index <= date]
+        # Get last available price on or before end of this month
+        s1_avail = s1[s1.index <= eom]
+        s2_avail = s2[s2.index <= eom]
         if s1_avail.empty or s2_avail.empty:
             continue
 
@@ -114,9 +113,12 @@ def build_regression_dataset(mpob_df, contracts_dict, r_annual=0.03, capacity=3_
     if df.empty:
         return df
 
-    # Filter
+    # Filter: remove extreme utilisation and implausible s values.
+    # s_implied is in the same unit system as fair_spread_value (roughly 12x monthly MYR/t).
+    # Negative s is valid — backwardation markets give large negative values.
+    # Cap at ±2000 to exclude only crisis outliers (e.g. Russia-Ukraine Feb 2022 at -8812).
     df = df[(df['utilisation'] > 0.30) & (df['utilisation'] < 0.98)]
-    df = df[(df['s_implied'] > 5) & (df['s_implied'] < 40)]
+    df = df[(df['s_implied'] > -2000) & (df['s_implied'] < 2000)]
     return df.reset_index(drop=True)
 
 
