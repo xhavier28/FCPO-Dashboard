@@ -2584,7 +2584,7 @@ with tab8:
     st.markdown("---")
     st.subheader("Panel 5 — TT Listed Contract Gaps")
     if sp_gaps:
-        _lut = get_last_update_time(_tt_xlsx)
+        _lut = get_last_update_time(_tt_xlsx_sh)
         if _lut:
             st.caption(f"File last updated: {_lut.strftime('%d %b %Y %H:%M')}")
 
