@@ -407,7 +407,8 @@ def build_forward_s_curve(current_month, seasonal_table, current_mpob_stocks,
                            capacity, s_producer_current, s_producer_forward,
                            enso_factor=1.0):
     """
-    Returns dict {pair_label: {s_value, source, confidence, trade_role}}.
+    Returns dict {pair_label: {s_value, source, confidence, trade_role,
+                                seasonal_mean, gap_vs_seasonal}}.
     Pairs: M1/M2 through M11/M12.
     """
     current_util = current_mpob_stocks / capacity
@@ -416,8 +417,16 @@ def build_forward_s_curve(current_month, seasonal_table, current_mpob_stocks,
     for offset in range(1, 12):  # M1/M2=1, M2/M3=2, ... M11/M12=11
         pair_label = f"M{offset}/M{offset+1}"
 
-        # Determine target month for seasonal lookup
-        target_month = ((current_month - 1 + offset) % 12) + 1
+        # Near and far month for seasonal lookup (both sides of the spread)
+        near_month   = ((current_month - 1 + offset - 1) % 12) + 1
+        far_month    = ((current_month - 1 + offset)     % 12) + 1
+        target_month = far_month  # kept for back-compat with seasonal logic below
+
+        # Seasonal mean: average of near and far month baselines
+        near_s_mean = seasonal_table.get(near_month, {}).get('s_mean', None)
+        far_s_mean  = seasonal_table.get(far_month,  {}).get('s_mean', None)
+        valid_means = [x for x in (near_s_mean, far_s_mean) if x is not None]
+        pair_seasonal_mean = round(sum(valid_means) / len(valid_means), 1) if valid_means else None
 
         if offset == 1:
             s_val = s_producer_current
@@ -469,11 +478,18 @@ def build_forward_s_curve(current_month, seasonal_table, current_mpob_stocks,
             confidence = 'VERY LOW'
             trade_role = 'Regime context only'
 
+        gap_vs_seasonal = (
+            round(round(s_val, 2) - pair_seasonal_mean, 1)
+            if pair_seasonal_mean is not None else None
+        )
+
         result[pair_label] = {
-            's_value':    round(s_val, 2),
-            'source':     source,
-            'confidence': confidence,
-            'trade_role': trade_role,
+            's_value':          round(s_val, 2),
+            'source':           source,
+            'confidence':       confidence,
+            'trade_role':       trade_role,
+            'seasonal_mean':    pair_seasonal_mean,
+            'gap_vs_seasonal':  gap_vs_seasonal,
         }
 
     return result

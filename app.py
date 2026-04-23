@@ -2078,19 +2078,32 @@ with tab7:
 
         _fwd_rows = []
         for _pair, _info in _fwd_curve.items():
+            _seas_m  = _info.get('seasonal_mean')
+            _gap_m   = _info.get('gap_vs_seasonal')
             _fwd_rows.append({
-                'Pair':       _pair,
-                'S value':    f"{_info['s_value']:.1f}",
-                'Source':     _info['source'],
-                'Confidence': _info['confidence'],
-                'Trade role': _info['trade_role'],
+                'Pair':             _pair,
+                'S value':          f"{_info['s_value']:.1f}",
+                'Source':           _info['source'],
+                'Seasonal mean':    f"{_seas_m:.1f}" if _seas_m is not None else '—',
+                'Gap vs seasonal':  f"{_gap_m:+.1f}" if _gap_m is not None else '—',
+                'Trade role':       _info['trade_role'],
             })
         _fwd_df = pd.DataFrame(_fwd_rows)
 
         def _style_fwd(row):
             styles = [''] * len(row)
-            conf_idx = _fwd_df.columns.get_loc('Confidence')
-            styles[conf_idx] = _colour_confidence(row['Confidence'])
+            gap_idx = _fwd_df.columns.get_loc('Gap vs seasonal')
+            raw_gap = row['Gap vs seasonal']
+            try:
+                g = float(raw_gap)
+                if g > 3:
+                    styles[gap_idx] = 'background-color: #4a1a1a; color: #ef5350'
+                elif g < -3:
+                    styles[gap_idx] = 'background-color: #1a4a1a; color: #66bb6a'
+                else:
+                    styles[gap_idx] = 'color: #fafafa'
+            except (ValueError, TypeError):
+                pass
             return styles
 
         st.dataframe(
