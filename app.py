@@ -1662,6 +1662,7 @@ with tab7:
         # 1. S Implied — from live M1/M2 curve
         _contracts_t7  = load_contracts()
         _today_t7      = datetime.date.today()
+        _current_month_t7 = _today_t7.month
         _curve_t7      = get_active_curve(_contracts_t7, _today_t7)
         _F_M1_t7       = float(_curve_t7.get(1) or 4000.0)
         _F_M2_t7       = float(_curve_t7.get(2) or 4000.0)
@@ -1712,6 +1713,131 @@ with tab7:
             f"{_alpha_gap_t7:+.1f} MYR/t",
             delta="BUY SPREAD" if _alpha_gap_t7 < -8 else "SELL SPREAD" if _alpha_gap_t7 > 8 else "NEUTRAL",
         )
+
+        st.markdown("---")
+
+        # ── S Seasonality — Current Year vs Historical ─────────────────────────
+        st.subheader("S Seasonality — Current Year vs Historical")
+        st.caption(
+            "Compares this year's implied S trajectory against historical average and last year. "
+            "Red bars = running above historical norm (tighter than usual). "
+            "Green bars = running below historical norm (looser than usual)."
+        )
+
+        if not _s_reg_df.empty:
+            _seas_df = _s_reg_df.copy()
+            _seas_df['month'] = pd.to_datetime(_seas_df['date']).dt.month
+            _seas_df['year']  = pd.to_datetime(_seas_df['date']).dt.year
+
+            _cy = datetime.date.today().year
+            _ly = _cy - 1
+
+            _hist_seas = (
+                _seas_df[_seas_df['year'] < _ly]
+                .groupby('month')['s_implied']
+                .agg(s_mean='mean', s_min='min', s_max='max')
+                .reset_index()
+            )
+            _ly_seas = (
+                _seas_df[_seas_df['year'] == _ly]
+                .groupby('month')['s_implied'].mean()
+                .reset_index()
+            )
+            _ly_seas.columns = ['month', 's_last_year']
+            _cy_seas = (
+                _seas_df[_seas_df['year'] == _cy]
+                .groupby('month')['s_implied'].mean()
+                .reset_index()
+            )
+            _cy_seas.columns = ['month', 's_current_year']
+
+            _seasonal = (
+                _hist_seas
+                .merge(_ly_seas, on='month', how='left')
+                .merge(_cy_seas, on='month', how='left')
+            )
+            _seasonal['gap_vs_hist'] = _seasonal['s_current_year'] - _seasonal['s_mean']
+            _month_labels = ['Jan','Feb','Mar','Apr','May','Jun',
+                             'Jul','Aug','Sep','Oct','Nov','Dec']
+            _seasonal['month_label'] = _seasonal['month'].apply(lambda x: _month_labels[x - 1])
+
+            # Line chart
+            _fig_seas = go.Figure()
+            _fig_seas.add_trace(go.Scatter(
+                x=_seasonal['month_label'].tolist() + _seasonal['month_label'].tolist()[::-1],
+                y=_seasonal['s_max'].tolist() + _seasonal['s_min'].tolist()[::-1],
+                fill='toself', fillcolor='rgba(150,150,150,0.15)',
+                line=dict(width=0), name='Historical range', showlegend=True,
+            ))
+            _fig_seas.add_trace(go.Scatter(
+                x=_seasonal['month_label'], y=_seasonal['s_mean'],
+                line=dict(color='#888888', width=1.5, dash='dot'),
+                name='Historical mean',
+            ))
+            _fig_seas.add_trace(go.Scatter(
+                x=_seasonal['month_label'], y=_seasonal['s_last_year'],
+                line=dict(color='#4fc3f7', width=1.5),
+                name=str(_ly),
+            ))
+            _fig_seas.add_trace(go.Scatter(
+                x=_seasonal['month_label'], y=_seasonal['s_current_year'],
+                line=dict(color='#ff6b35', width=2.5),
+                mode='lines+markers', name=str(_cy),
+            ))
+            _fig_seas.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+                font_color=DARK_TEXT,
+                xaxis=dict(gridcolor=DARK_GRID),
+                yaxis=dict(gridcolor=DARK_GRID, title='S implied (MYR/t)'),
+                height=320, margin=dict(l=40, r=20, t=30, b=30),
+                legend=dict(orientation='h', y=1.02, font=dict(color=DARK_TEXT)),
+            )
+            st.plotly_chart(_fig_seas, use_container_width=True)
+
+            # Gap bar chart
+            _fig_gap = go.Figure()
+            _fig_gap.add_trace(go.Bar(
+                x=_seasonal['month_label'],
+                y=_seasonal['gap_vs_hist'],
+                marker_color=[
+                    '#ef5350' if v > 0 else '#66bb6a'
+                    for v in _seasonal['gap_vs_hist'].fillna(0)
+                ],
+                name='Gap vs historical mean',
+            ))
+            _fig_gap.add_hline(y=0, line_color='#888888', line_dash='dot', line_width=1)
+            _fig_gap.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+                font_color=DARK_TEXT,
+                xaxis=dict(gridcolor=DARK_GRID),
+                yaxis=dict(gridcolor=DARK_GRID, title='Gap vs hist mean (MYR/t)'),
+                height=200, margin=dict(l=40, r=20, t=10, b=30),
+            )
+            st.plotly_chart(_fig_gap, use_container_width=True)
+
+            # One-line summary
+            _cy_valid = _seasonal[_seasonal['s_current_year'].notna()]
+            if not _cy_valid.empty:
+                _latest_gap = _cy_valid['gap_vs_hist'].iloc[-1]
+                _trend      = _cy_valid['gap_vs_hist'].diff().iloc[-1]
+                if _latest_gap > 3 and _trend > 0:
+                    _seas_msg = (f"Current year S running +{_latest_gap:.1f} MYR/t above historical "
+                                 f"average and gap is widening — accelerating tightness signal.")
+                elif _latest_gap > 3 and _trend <= 0:
+                    _seas_msg = (f"Current year S running +{_latest_gap:.1f} MYR/t above historical "
+                                 f"average but gap is narrowing — tightness easing.")
+                elif _latest_gap < -3 and _trend < 0:
+                    _seas_msg = (f"Current year S running {_latest_gap:.1f} MYR/t below historical "
+                                 f"average and gap is widening — accelerating looseness.")
+                elif _latest_gap < -3 and _trend >= 0:
+                    _seas_msg = (f"Current year S running {_latest_gap:.1f} MYR/t below historical "
+                                 f"average but gap is narrowing — conditions normalising.")
+                else:
+                    _seas_msg = (f"Current year S tracking close to historical average "
+                                 f"({_latest_gap:+.1f} MYR/t). No strong seasonal deviation.")
+                st.caption(_seas_msg)
+        else:
+            st.info("Regression dataset empty — seasonality chart unavailable.")
 
         st.markdown("---")
 
@@ -1848,12 +1974,13 @@ with tab7:
         if _submit_prod:
             _prod_res = producer_s_composite(
                 _rel_pos, _buyer_lifting, _discount_pressure,
-                _production_outlook, _F_M1_t7,
+                _production_outlook, _s_seas_tbl, _current_month_t7,
             )
             # Push to session state — top panel reads these on next rerun
             st.session_state['s_producer_current']       = _prod_res['s_current']
             st.session_state['s_producer_forward']        = _prod_res['s_forward']
             st.session_state['producer_conviction_bonus'] = _prod_res['conviction_bonus']
+            st.session_state['s_producer_rel_pos']        = _rel_pos
             # Also update forward curve override inputs
             st.session_state['t7_s_prod_cur'] = float(max(5.0, min(50.0, _prod_res['s_current'])))
             st.session_state['t7_s_prod_fwd'] = float(max(5.0, min(50.0, _prod_res['s_forward'])))
@@ -1882,17 +2009,20 @@ with tab7:
             # Re-run immediately so the top panel reads the new session state values
             st.rerun()
 
-            _pr1, _pr2, _pr3 = st.columns(3)
-            _pr1.metric("S current (M1/M2)", f"{_prod_res['s_current']:.1f} MYR/t")
-            _pr2.metric("S forward (M2/M3)", f"{_prod_res['s_forward']:.1f} MYR/t")
-            _pr3.metric("Conviction bonus",  str(_prod_res['conviction_bonus']))
-            _sig_colour = (
-                'error'   if 'DISTRESS' in _prod_res['signal'] else
-                'warning' if 'BEARISH'  in _prod_res['signal'] else
-                'success' if 'BULLISH'  in _prod_res['signal'] else 'info'
-            )
-            getattr(st, _sig_colour)(f"**{_prod_res['signal']}**")
-            st.caption(_prod_res['interpretation'])
+        # Monthly context caption — always visible, updates after each submit
+        _cm_data    = _s_seas_tbl.get(_current_month_t7, {})
+        _cm_s_mean  = _cm_data.get('s_mean', 15.0)
+        _cm_s_low   = _cm_data.get('s_low',  8.0)
+        _cm_s_high  = _cm_data.get('s_high', 28.0)
+        _cm_rel_pos = st.session_state.get('s_producer_rel_pos', _rel_pos)
+        _cm_s_est   = st.session_state.get('s_producer_current', _s_producer_t7)
+        st.caption(
+            f"This month's S range (from MPOB history): "
+            f"{_cm_s_low:.1f} – {_cm_s_high:.1f} MYR/t  ·  "
+            f"Historical mean: {_cm_s_mean:.1f} MYR/t  ·  "
+            f"Your producer at {_cm_rel_pos*100:.0f}th percentile → "
+            f"S estimate: {_cm_s_est:.1f} MYR/t"
+        )
 
         if not recent_prod.empty:
             st.subheader("Recent Producer Log (last 10 entries)")

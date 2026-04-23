@@ -317,39 +317,59 @@ def get_s_mpob(current_stocks, regression_result, capacity=3_750_000):
 
 
 def producer_s_composite(rel_pos, buyer_lifting, discount_pressure,
-                          production_outlook, F_M1):
+                         production_outlook, seasonal_table, current_month):
     """
-    Returns dict: s_current, s_forward, conviction_bonus, signal, interpretation.
-    rel_pos: float 0.0–1.0, relative position of current tanks within hist_low–hist_high range.
+    Returns dict: s_current, s_forward, s_monthly_mean/low/high, rel_pos,
+                  conviction_bonus, signal, interpretation.
+    rel_pos: float 0-1 (relative position within contact's historical range)
+    seasonal_table: dict from build_seasonal_s_table() — has s_mean, s_low, s_high per month
+    current_month: int 1-12
     """
-    # Base S from relative position breakpoints
-    if rel_pos < 0.25:
-        base = 9.0
-    elif rel_pos < 0.50:
-        base = 13.0
-    elif rel_pos < 0.75:
-        base = 19.0
-    else:
-        base = 26.0
+    # Step 1: Get this month's S baseline from MPOB history
+    month_data = seasonal_table.get(current_month, {})
+    s_mean  = month_data.get('s_mean', 15.0)  # fallback if no data
+    s_low   = month_data.get('s_low',  8.0)
+    s_high  = month_data.get('s_high', 28.0)
+    s_range = s_high - s_low
 
-    # Adjustments for current S
-    lifting_adj = {'rushing': -5, 'on_time': 0, 'slight_delay': 5, 'major_delay': 12}
-    discount_adj = {'none': 0, 'small': 3, 'large': 10, 'distress': 20}
-    production_adj = {'light': -5, 'normal': 0, 'heavy': 8}
+    # Step 2: Place producer within monthly range using relative position
+    s_base = s_low + rel_pos * s_range
 
-    s_current = base + lifting_adj.get(buyer_lifting, 0) + discount_adj.get(discount_pressure, 0)
-    s_forward = base + production_adj.get(production_outlook, 0)
+    # Step 3: Qualitative adjustments as % of monthly range (not fixed MYR)
+    lifting_adj = {
+        'rushing':      -0.20,   # -20% of range
+        'on_time':       0.00,
+        'slight_delay': +0.15,   # +15% of range
+        'major_delay':  +0.35,   # +35% of range
+    }.get(buyer_lifting, 0.0) * s_range
+
+    discount_adj = {
+        'none':      0.00,
+        'small':    +0.10,   # +10% of range
+        'large':    +0.30,   # +30% of range
+        'distress': +0.60,   # +60% of range — distress is severe
+    }.get(discount_pressure, 0.0) * s_range
+
+    # Step 4: S current (front month)
+    s_current = max(s_low, min(s_high * 1.2, s_base + lifting_adj + discount_adj))
+
+    # Step 5: S forward (back month) — production outlook shifts from mean
+    production_adj = {
+        'light':  -0.25 * s_range,  # supply tightening → lower future storage
+        'normal':  0.0,
+        'heavy':  +0.30 * s_range,  # supply coming → stocks build → higher future S
+    }.get(production_outlook, 0.0)
+
+    s_forward = max(s_low, min(s_high * 1.2, s_mean + production_adj))
 
     # Conviction bonus
     conviction_bonus = 0
-    if buyer_lifting == 'major_delay':
-        conviction_bonus += 2
-    if buyer_lifting == 'rushing':
-        conviction_bonus += 2
-    if discount_pressure == 'distress':
-        conviction_bonus += 3
-    if production_outlook == 'heavy':
-        conviction_bonus += 2  # for back month
+    if discount_pressure == 'distress':   conviction_bonus += 3
+    if buyer_lifting == 'major_delay':    conviction_bonus += 2
+    if buyer_lifting == 'rushing':        conviction_bonus += 2
+    if production_outlook == 'heavy':     conviction_bonus += 2
+    if rel_pos > 0.75:                    conviction_bonus += 1
+    if rel_pos < 0.25:                    conviction_bonus += 1
 
     # Signal
     if discount_pressure == 'distress':
@@ -361,16 +381,22 @@ def producer_s_composite(rel_pos, buyer_lifting, discount_pressure,
     else:
         signal = 'NEUTRAL'
 
+    month_name = MONTH_ABBRS[current_month - 1]
     interpretation = (
         f"Relative position: {rel_pos*100:.0f}th percentile of range. "
-        f"Buyer lifting: {buyer_lifting.replace('_',' ')}. "
+        f"Buyer lifting: {buyer_lifting.replace('_', ' ')}. "
         f"Discount: {discount_pressure}. "
-        f"Production: {production_outlook}."
+        f"Production: {production_outlook}. "
+        f"{month_name} S range (MPOB): {s_low:.1f}–{s_high:.1f} MYR/t."
     )
 
     return {
-        's_current':        max(5.0, s_current),
-        's_forward':        max(5.0, s_forward),
+        's_current':        round(s_current, 1),
+        's_forward':        round(s_forward, 1),
+        's_monthly_mean':   round(s_mean, 1),
+        's_monthly_low':    round(s_low, 1),
+        's_monthly_high':   round(s_high, 1),
+        'rel_pos':          round(rel_pos, 3),
         'conviction_bonus': conviction_bonus,
         'signal':           signal,
         'interpretation':   interpretation,
