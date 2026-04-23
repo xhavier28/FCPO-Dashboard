@@ -741,6 +741,92 @@ with st.sidebar:
 
 df = load_data(SPOT_DIR)
 
+# ── Shared S computation — runs every rerun, propagates to both tabs ──────────
+_r_sh       = st.session_state.get('r_annual', 0.03)
+_contracts_sh = load_contracts()
+_today_sh   = datetime.date.today()
+_tt_xlsx_sh = str(Path(__file__).parent / "FCPO_Curve_Input.xlsx")
+
+# 1. S Implied (avg) — 22-day trailing average M1/M2 from Term Structure CSVs
+try:
+    _fm_sh   = front_month(_today_sh)
+    _fm2_sh  = add_months(_fm_sh, 1)
+    _s1_sh   = _contracts_sh.get(_fm_sh)
+    _s2_sh   = _contracts_sh.get(_fm2_sh)
+    if _s1_sh is not None and _s2_sh is not None:
+        _F_M1_avg = float(_s1_sh.dropna().tail(22).mean())
+        _F_M2_avg = float(_s2_sh.dropna().tail(22).mean())
+        if _F_M1_avg > 0 and _F_M2_avg > 0:
+            _s_implied_avg = implied_s_backsolve(_F_M1_avg, _F_M2_avg, _r_sh)['s_implied_myr']
+        else:
+            _s_implied_avg = _F_M1_avg = _F_M2_avg = None
+    else:
+        _s_implied_avg = _F_M1_avg = _F_M2_avg = None
+except Exception:
+    _s_implied_avg = _F_M1_avg = _F_M2_avg = None
+
+st.session_state['s_implied_avg'] = _s_implied_avg
+st.session_state['F_M1_avg']      = _F_M1_avg
+st.session_state['F_M2_avg']      = _F_M2_avg
+
+# 2. S Implied (live) — from SharePoint Excel
+try:
+    _sp_sh     = read_all(_tt_xlsx_sh)
+    _curve_sh  = _sp_sh["outrights"] if _sp_sh else get_active_curve(_contracts_sh, _today_sh)
+    _F_M1_live = _curve_sh.get(1) if _curve_sh else None
+    _F_M2_live = _curve_sh.get(2) if _curve_sh else None
+    if _F_M1_live and _F_M2_live and _F_M1_live > 0:
+        _s_implied_live = implied_s_backsolve(_F_M1_live, _F_M2_live, _r_sh)['s_implied_myr']
+    else:
+        _s_implied_live = None
+except Exception:
+    _sp_sh = _curve_sh = _F_M1_live = _F_M2_live = _s_implied_live = None
+
+st.session_state['s_implied_live'] = _s_implied_live
+st.session_state['F_M1_live']      = _F_M1_live
+st.session_state['F_M2_live']      = _F_M2_live
+st.session_state['sp_data_shared'] = _sp_sh
+st.session_state['current_curve']  = _curve_sh
+
+# 3. S MPOB — regression on MPOB stocks (use widget value from previous run if set)
+try:
+    _model_sh   = get_s_regression_model()
+    _mpob_df_sh = load_mpob_data()
+    _latest_stk = float(_mpob_df_sh['mpob_stocks'].iloc[-1]) if not _mpob_df_sh.empty else 1_800_000.0
+    _stk_input  = float(st.session_state.get('t7_mpob_stocks', _latest_stk))
+    _s_mpob_sh  = get_s_mpob(_stk_input, _model_sh['regression'], _model_sh['capacity'])
+    st.session_state['s_mpob']  = _s_mpob_sh['s_mpob_myr']
+    st.session_state['regime']  = _s_mpob_sh['regime']
+except Exception:
+    if 's_mpob' not in st.session_state:
+        st.session_state['s_mpob']  = 15.0
+        st.session_state['regime']  = 'UNKNOWN'
+
+# 4. S Producer — only initialise if not yet set by producer form
+if 's_producer_current' not in st.session_state:
+    _s_prod_init = st.session_state.get('s_mpob', 15.0)
+    _log_sh = Path("producer_log.csv")
+    if _log_sh.exists():
+        try:
+            _log_df_sh = pd.read_csv(_log_sh)
+            if not _log_df_sh.empty:
+                _last_sh = _log_df_sh.sort_values('timestamp', ascending=False).iloc[0]
+                _s_prod_init = float(_last_sh.get('s_current', _s_prod_init))
+                st.session_state['s_producer_forward'] = float(_last_sh.get('s_forward', _s_prod_init))
+        except Exception:
+            pass
+    st.session_state['s_producer_current']       = _s_prod_init
+    st.session_state.setdefault('s_producer_forward',        _s_prod_init)
+    st.session_state.setdefault('producer_conviction_bonus', 0)
+
+# 5. Convenience yield — prefer live prices, fall back to avg
+_F_c = _F_M1_live or _F_M1_avg
+_G_c = _F_M2_live or _F_M2_avg
+if _F_c and _G_c:
+    st.session_state['c_current'] = implied_c(_F_c, _G_c, st.session_state['s_mpob'], _r_sh)
+else:
+    st.session_state.setdefault('c_current', 0.0)
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "Year-over-Year", "Term Structure", "Event Log",
     "Supply & Demand", "Mean Reversion", "Pair Screener",
@@ -1650,7 +1736,17 @@ with tab7:
         _s_model_ok = False
 
     if _s_model_ok:
-        # ── Pre-load all three S sources ──────────────────────────────────────
+        # ── Pull all three S sources from shared session state ─────────────────
+        _s_implied_avg  = st.session_state.get('s_implied_avg')
+        _s_implied_live = st.session_state.get('s_implied_live')
+        _s_mpob_t7      = st.session_state.get('s_mpob', 15.0)
+        _regime_t7      = st.session_state.get('regime', 'UNKNOWN')
+        _s_producer_t7  = st.session_state.get('s_producer_current', _s_mpob_t7)
+        _s_forward_t7   = st.session_state.get('s_producer_forward',  _s_mpob_t7)
+        _current_month_t7 = _today_sh.month
+        _log_path       = Path("producer_log.csv")
+
+        # Still need MPOB data for the detail section below
         _mpob_df_t7 = load_mpob_data()
         if not _mpob_df_t7.empty:
             _latest_stocks_t7 = float(_mpob_df_t7['mpob_stocks'].iloc[-1])
@@ -1659,55 +1755,45 @@ with tab7:
             _latest_stocks_t7 = 1_800_000.0
             _latest_date_t7   = pd.Timestamp.today()
 
-        # 1. S Implied — from live M1/M2 curve
-        _contracts_t7  = load_contracts()
-        _today_t7      = datetime.date.today()
-        _current_month_t7 = _today_t7.month
-        _curve_t7      = get_active_curve(_contracts_t7, _today_t7)
-        _F_M1_t7       = float(_curve_t7.get(1) or 4000.0)
-        _F_M2_t7       = float(_curve_t7.get(2) or 4000.0)
-        _s_implied_t7  = implied_s_backsolve(_F_M1_t7, _F_M2_t7, r_annual=_r7)['s_implied_myr']
+        # Reference F_M1 for producer log (prefer live, fall back to avg)
+        _F_M1_t7 = st.session_state.get('F_M1_live') or st.session_state.get('F_M1_avg') or 4000.0
 
-        # 2. S MPOB — from regression on latest stocks
-        _s_mpob_top    = get_s_mpob(_latest_stocks_t7, _s_reg, _s_capacity)
-        _s_mpob_t7     = _s_mpob_top['s_mpob_myr']
-        _regime_t7     = _s_mpob_top['regime']
-
-        # 3. S Producer — session state is authoritative (set on form submit).
-        #    Fall back to last log entry, then to MPOB if neither exists.
-        _log_path      = Path("producer_log.csv")
-        _s_producer_t7 = st.session_state.get('s_producer_current', None)
-        _s_forward_t7  = st.session_state.get('s_producer_forward',  None)
-        if _s_producer_t7 is None:
-            _s_producer_t7 = _s_mpob_t7
-            _s_forward_t7  = _s_mpob_t7
-            if _log_path.exists():
-                try:
-                    _log_df_t7 = pd.read_csv(_log_path)
-                    if not _log_df_t7.empty:
-                        _last_t7       = _log_df_t7.sort_values('timestamp', ascending=False).iloc[0]
-                        _s_producer_t7 = float(_last_t7.get('s_current', _s_mpob_t7))
-                        _s_forward_t7  = float(_last_t7.get('s_forward',  _s_mpob_t7))
-                except Exception:
-                    pass
-
-        # ── TOP: Three large metric cards ─────────────────────────────────────
+        # ── TOP: Three-source comparison ───────────────────────────────────────
         _tc1, _tc2, _tc3 = st.columns(3)
-        _tc1.metric("S Implied (market)",    f"{_s_implied_t7:.1f} MYR/t",
-                    help="Back-solved from M1/M2 futures prices")
-        _tc2.metric("S MPOB (official)",     f"{_s_mpob_t7:.1f} MYR/t",
-                    delta=f"{_s_mpob_t7 - _s_implied_t7:+.1f} vs implied",
-                    help=f"Regime: {_regime_t7}")
-        _tc3.metric("S Producer (physical)", f"{_s_producer_t7:.1f} MYR/t",
-                    delta=f"{_s_producer_t7 - _s_implied_t7:+.1f} vs implied",
-                    help="From producer intelligence form")
+        with _tc1:
+            st.metric(
+                "S Implied — monthly avg",
+                f"{_s_implied_avg:.1f} MYR/t" if _s_implied_avg is not None else "—",
+                help="Back-solved from 22-day average M1/M2 prices (Term Structure CSVs)",
+            )
+            if _s_implied_live is not None and _s_implied_avg is not None:
+                _live_dir = '↑ above' if _s_implied_live > _s_implied_avg else '↓ below'
+                st.caption(f"Live (Excel): {_s_implied_live:.1f} MYR/t — "
+                           f"{_live_dir} monthly avg by {abs(_s_implied_live - _s_implied_avg):.1f}")
+            elif _s_implied_live is not None:
+                st.caption(f"Live (Excel): {_s_implied_live:.1f} MYR/t")
+        with _tc2:
+            st.metric(
+                "S MPOB — official",
+                f"{_s_mpob_t7:.1f} MYR/t",
+                delta=f"{_s_mpob_t7 - _s_implied_avg:+.1f} vs implied avg" if _s_implied_avg is not None else None,
+                help=f"Regime: {_regime_t7}",
+            )
+        with _tc3:
+            st.metric(
+                "S Producer — physical",
+                f"{_s_producer_t7:.1f} MYR/t",
+                delta=f"{_s_producer_t7 - _s_implied_avg:+.1f} vs implied avg" if _s_implied_avg is not None else None,
+                help="From producer intelligence form — updates when you click Compute & Log",
+            )
 
         st.markdown("---")
 
+        _ref_s = _s_implied_avg if _s_implied_avg is not None else _s_mpob_t7
         _gc1, _gc2, _gc3 = st.columns(3)
-        _gc1.metric("Gap 1 — Implied vs MPOB",    f"{_s_implied_t7 - _s_mpob_t7:+.1f} MYR/t")
-        _gc2.metric("Gap 2 — MPOB vs Producer",   f"{_s_mpob_t7 - _s_producer_t7:+.1f} MYR/t")
-        _alpha_gap_t7 = _s_implied_t7 - _s_producer_t7
+        _gc1.metric("Gap 1 — Implied vs MPOB",  f"{_ref_s - _s_mpob_t7:+.1f} MYR/t")
+        _gc2.metric("Gap 2 — MPOB vs Producer", f"{_s_mpob_t7 - _s_producer_t7:+.1f} MYR/t")
+        _alpha_gap_t7 = _ref_s - _s_producer_t7
         _gc3.metric(
             "Gap 3 — YOUR ALPHA (Implied vs Producer)",
             f"{_alpha_gap_t7:+.1f} MYR/t",
@@ -1936,40 +2022,39 @@ with tab7:
             except Exception:
                 recent_prod = pd.DataFrame()
 
-        with st.form("producer_form", clear_on_submit=False):
-            _col_min, _col_cur, _col_max = st.columns(3)
-            _hist_low  = _col_min.number_input("Historical low (%)",  min_value=0, max_value=100, value=35, step=1, key="t7_hist_low")
-            _current   = _col_cur.number_input("Current (%)",         min_value=0, max_value=100, value=65, step=1, key="t7_tank_util")
-            _hist_high = _col_max.number_input("Historical high (%)", min_value=0, max_value=100, value=88, step=1, key="t7_hist_high")
+        _col_min, _col_cur, _col_max = st.columns(3)
+        _hist_low  = _col_min.number_input("Historical low (%)",  min_value=0, max_value=100, value=35, step=1, key="t7_hist_low")
+        _current   = _col_cur.number_input("Current (%)",         min_value=0, max_value=100, value=65, step=1, key="t7_tank_util")
+        _hist_high = _col_max.number_input("Historical high (%)", min_value=0, max_value=100, value=88, step=1, key="t7_hist_high")
 
-            _rel_pos = (_current - _hist_low) / (_hist_high - _hist_low) if _hist_high != _hist_low else 0.5
-            _rel_label = (
-                'very tight'  if _rel_pos > 0.75 else
-                'tightening'  if _rel_pos > 0.50 else
-                'comfortable' if _rel_pos > 0.25 else
-                'very loose'
-            )
-            st.caption(f"Relative position: {_rel_pos*100:.0f}th percentile of their range  ({_rel_label})")
+        _rel_pos = (_current - _hist_low) / (_hist_high - _hist_low) if _hist_high != _hist_low else 0.5
+        _rel_label = (
+            'very tight'  if _rel_pos > 0.75 else
+            'tightening'  if _rel_pos > 0.50 else
+            'comfortable' if _rel_pos > 0.25 else
+            'very loose'
+        )
+        st.caption(f"Relative position: {_rel_pos*100:.0f}th percentile of their range  ({_rel_label})")
 
-            _pf_col1, _pf_col2 = st.columns(2)
-            with _pf_col1:
-                _buyer_lifting = st.selectbox(
-                    "Buyer lifting pace",
-                    options=['rushing', 'on_time', 'slight_delay', 'major_delay'],
-                    index=1, key="t7_buyer_lifting",
-                )
-            with _pf_col2:
-                _discount_pressure = st.selectbox(
-                    "Discount pressure",
-                    options=['none', 'small', 'large', 'distress'],
-                    index=0, key="t7_discount_pressure",
-                )
-            _production_outlook = st.selectbox(
-                "Production outlook (next month)",
-                options=['light', 'normal', 'heavy'],
-                index=1, key="t7_production_outlook",
+        _pf_col1, _pf_col2 = st.columns(2)
+        with _pf_col1:
+            _buyer_lifting = st.selectbox(
+                "Buyer lifting pace",
+                options=['rushing', 'on_time', 'slight_delay', 'major_delay'],
+                index=1, key="t7_buyer_lifting",
             )
-            _submit_prod = st.form_submit_button("Compute & Log")
+        with _pf_col2:
+            _discount_pressure = st.selectbox(
+                "Discount pressure",
+                options=['none', 'small', 'large', 'distress'],
+                index=0, key="t7_discount_pressure",
+            )
+        _production_outlook = st.selectbox(
+            "Production outlook (next month)",
+            options=['light', 'normal', 'heavy'],
+            index=1, key="t7_production_outlook",
+        )
+        _submit_prod = st.button("Compute & Log", key="t7_compute_btn")
 
         if _submit_prod:
             _prod_res = producer_s_composite(
@@ -2146,10 +2231,9 @@ with tab8:
         "butterfly = F_mid − 0.5·(F_front + F_back)."
     )
 
-    # ── SharePoint / TT live curve ────────────────────────────────────────────
-    _tt_xlsx = str(Path(__file__).parent / "FCPO_Curve_Input.xlsx")
-    sp_data = read_all(_tt_xlsx)
-    sp_gaps = compute_gaps(sp_data)
+    # ── SharePoint / TT live curve — reuse shared block result ───────────────
+    sp_data   = st.session_state.get('sp_data_shared')
+    sp_gaps   = compute_gaps(sp_data)
     _sp_m1_ok = sp_data is not None and sp_data["outrights"].get(1) is not None
     if not _sp_m1_ok:
         st.warning(
@@ -2183,52 +2267,36 @@ with tab8:
             min_value=5.0, max_value=50.0, value=12.0, step=0.5, key="t8_s_input",
         )
 
-    # ── Get current curve ─────────────────────────────────────────────────────
-    _today_t8  = datetime.date.today()
-    if _sp_m1_ok:
-        _curve_t8 = sp_data["outrights"]
-    else:
-        _curve_t8 = get_active_curve(_contracts_t8, _today_t8)
-    F_M1 = _curve_t8.get(1) or 4000.0
-    F_M2 = _curve_t8.get(2) or 4000.0
+    # ── Get current curve — reuse shared block result ─────────────────────────
+    _today_t8 = _today_sh
+    _curve_t8 = st.session_state.get('current_curve') or get_active_curve(_contracts_t8, _today_t8)
+    F_M1 = float(_curve_t8.get(1) or 4000.0)
+    F_M2 = float(_curve_t8.get(2) or 4000.0)
 
-    # Current spread and fair value
-    _s_implied_res = implied_s_backsolve(F_M1, F_M2, r_annual=_r8)
-    s_implied      = _s_implied_res['s_implied_myr']
-    c_current      = implied_c(F_M1, F_M2, _s_input_t8, r_annual=_r8)
-    _fv_current    = fair_spread_value(F_M1, _r8, _s_input_t8, c_current)
+    # S values from shared session state
+    s_implied_live = st.session_state.get('s_implied_live')
+    s_implied_avg  = st.session_state.get('s_implied_avg')
+    s_mpob         = st.session_state.get('s_mpob', _s_input_t8)
+    s_producer     = st.session_state.get('s_producer_current', _s_input_t8)
+    s_forward      = st.session_state.get('s_producer_forward',  _s_input_t8)
 
-    # Try to get MPOB-based S
-    try:
-        _s_model_t8  = get_s_regression_model()
-        _mpob_df_t8  = load_mpob_data()
-        _cap_t8      = _s_model_t8['capacity']
-        _stocks_t8   = float(_mpob_df_t8['mpob_stocks'].iloc[-1]) if not _mpob_df_t8.empty else 1_800_000.0
-        _s_mpob_t8   = get_s_mpob(_stocks_t8, _s_model_t8['regression'], _cap_t8)
-        s_mpob       = _s_mpob_t8['s_mpob_myr']
-    except Exception:
-        s_mpob = _s_input_t8
-
-    # For producer S: use latest log entry if available
-    _log_path_t8 = Path("producer_log.csv")
-    s_producer = _s_input_t8
-    producer_conviction_bonus = 0
-    s_forward = _s_input_t8
-    if _log_path_t8.exists():
-        try:
-            _log_t8 = pd.read_csv(_log_path_t8)
-            if not _log_t8.empty:
-                _last_row = _log_t8.sort_values('timestamp', ascending=False).iloc[0]
-                s_producer = float(_last_row.get('s_current', _s_input_t8))
-                s_forward  = float(_last_row.get('s_forward', _s_input_t8))
-        except Exception:
-            pass
+    # For fair value calc use live S implied if available, else MPOB
+    _s_for_fv = s_implied_live if s_implied_live is not None else s_mpob
+    c_current = implied_c(F_M1, F_M2, _s_input_t8, r_annual=_r8)
+    _fv_current = fair_spread_value(F_M1, _r8, _s_input_t8, c_current)
 
     # ── Current curve metrics ─────────────────────────────────────────────────
     _c8r1, _c8r2, _c8r3, _c8r4 = st.columns(4)
     _c8r1.metric("M1 price",        f"MYR {F_M1:,.0f}")
     _c8r2.metric("M2 price",        f"MYR {F_M2:,.0f}")
-    _c8r3.metric("S implied (M1/M2)", f"{s_implied:.1f} MYR/t")
+    with _c8r3:
+        st.metric(
+            "S Implied (live)",
+            f"{s_implied_live:.1f} MYR/t" if s_implied_live is not None else "No Excel data",
+            help="Real-time: back-solved from current prices in FCPO_Curve_Input.xlsx",
+        )
+        if s_implied_avg is not None:
+            st.caption(f"Monthly avg (CSV): {s_implied_avg:.1f} MYR/t")
     _c8r4.metric("c (conv. yield)",  f"{c_current:.1%}")
 
     _c8r5, _c8r6, _c8r7, _c8r8 = st.columns(4)
@@ -2237,8 +2305,9 @@ with tab8:
     _c8r7.metric("S MPOB",              f"{s_mpob:.1f} MYR/t")
     _c8r8.metric("S Producer",          f"{s_producer:.1f} MYR/t")
 
-    # Three-source gap analysis
-    _gaps = three_source_gaps(s_implied, s_mpob, s_producer)
+    # Three-source gap analysis — use live S if available, else avg
+    _s_implied_for_gaps = s_implied_live if s_implied_live is not None else (s_implied_avg or s_mpob)
+    _gaps = three_source_gaps(_s_implied_for_gaps, s_mpob, s_producer)
     with st.expander("Three-Source Gap Analysis", expanded=True):
         _gc1, _gc2, _gc3 = st.columns(3)
         _gc1.metric("Gap1: Implied − MPOB",    f"{_gaps['gap1']:+.1f}", help="Market vs MPOB")
