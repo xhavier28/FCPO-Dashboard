@@ -2241,6 +2241,112 @@ with tab8:
 
     st.markdown("---")
 
+    # ── Implied S Term Structure ───────────────────────────────────────────────
+    st.subheader("Implied S Term Structure")
+    st.caption(
+        "Implied storage cost back-solved from each consecutive tenor pair, "
+        "overlaid against the MPOB seasonal average. "
+        "Red markers = pair pricing above seasonal norm (market sees tightness). "
+        "Green markers = pair pricing below seasonal norm (market sees looseness)."
+    )
+
+    try:
+        _seas_tbl_t8 = _s_model_t8['seasonal_table']
+    except Exception:
+        _seas_tbl_t8 = {}
+
+    _implied_s_curve  = {}
+    _seasonal_s_curve = {}
+
+    for _i in range(1, 12):
+        _near_p = _curve_t8.get(_i)
+        _far_p  = _curve_t8.get(_i + 1)
+        if _near_p and _far_p and _near_p > 0 and _far_p > 0:
+            _res = implied_s_backsolve(_near_p, _far_p, _r8)
+            _implied_s_curve[f"M{_i}/M{_i+1}"] = _res['s_implied_myr']
+
+        _near_month = ((_today_t8.month - 1 + _i - 1) % 12) + 1
+        _far_month  = ((_today_t8.month - 1 + _i)     % 12) + 1
+        _near_seas  = _seas_tbl_t8.get(_near_month, {}).get('s_mean', 15.0)
+        _far_seas   = _seas_tbl_t8.get(_far_month,  {}).get('s_mean', 15.0)
+        _seasonal_s_curve[f"M{_i}/M{_i+1}"] = (_near_seas + _far_seas) / 2
+
+    if _implied_s_curve:
+        _st_pairs        = list(_implied_s_curve.keys())
+        _st_implied_vals = [_implied_s_curve[p] for p in _st_pairs]
+        _st_seas_vals    = [_seasonal_s_curve.get(p, 15.0) for p in _st_pairs]
+        _st_gap_vals     = [_implied_s_curve[p] - _seasonal_s_curve.get(p, 15.0) for p in _st_pairs]
+
+        _fig_s_term = go.Figure()
+
+        # Shaded gap between implied and seasonal
+        _fig_s_term.add_trace(go.Scatter(
+            x=_st_pairs + _st_pairs[::-1],
+            y=_st_implied_vals + _st_seas_vals[::-1],
+            fill='toself', fillcolor='rgba(239,83,80,0.12)',
+            line=dict(width=0), name='Gap vs seasonal', showlegend=True,
+        ))
+        # Seasonal baseline
+        _fig_s_term.add_trace(go.Scatter(
+            x=_st_pairs, y=_st_seas_vals,
+            line=dict(color='#888888', width=1.5, dash='dot'),
+            name='Seasonal average S',
+        ))
+        # Current implied S curve
+        _fig_s_term.add_trace(go.Scatter(
+            x=_st_pairs, y=_st_implied_vals,
+            line=dict(color='#ff6b35', width=2.5),
+            mode='lines+markers', marker=dict(size=8),
+            name='Current implied S',
+        ))
+        # Colour each marker by gap direction
+        _st_marker_colors = [
+            '#ef5350' if g > 2 else '#66bb6a' if g < -2 else '#888888'
+            for g in _st_gap_vals
+        ]
+        _fig_s_term.data[-1].marker.color = _st_marker_colors
+
+        _fig_s_term.update_layout(
+            paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+            font_color=DARK_TEXT,
+            xaxis=dict(gridcolor=DARK_GRID),
+            yaxis=dict(gridcolor=DARK_GRID, title='Implied S (MYR/t)'),
+            height=300, margin=dict(l=40, r=20, t=30, b=30),
+            legend=dict(orientation='h', y=1.02, font=dict(color=DARK_TEXT)),
+        )
+        st.plotly_chart(_fig_s_term, use_container_width=True)
+
+        # Gap bar
+        _fig_st_gap = go.Figure(go.Bar(
+            x=_st_pairs, y=_st_gap_vals,
+            marker_color=['#ef5350' if g > 0 else '#66bb6a' for g in _st_gap_vals],
+            name='Implied vs seasonal gap',
+        ))
+        _fig_st_gap.add_hline(y=0, line_color='#888888', line_dash='dot')
+        _fig_st_gap.update_layout(
+            paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+            font_color=DARK_TEXT,
+            xaxis=dict(gridcolor=DARK_GRID),
+            yaxis=dict(gridcolor=DARK_GRID, title='Gap (MYR/t)'),
+            height=180, margin=dict(l=40, r=20, t=10, b=30),
+        )
+        st.plotly_chart(_fig_st_gap, use_container_width=True)
+
+        # Auto interpretation
+        _max_gap_pair = _st_pairs[_st_gap_vals.index(max(_st_gap_vals))]
+        _min_gap_pair = _st_pairs[_st_gap_vals.index(min(_st_gap_vals))]
+        st.caption(
+            f"Most expensive vs seasonal: {_max_gap_pair} "
+            f"(+{max(_st_gap_vals):.1f} MYR/t above norm) — "
+            f"market pricing extra tightness here.  "
+            f"Most discounted: {_min_gap_pair} "
+            f"({min(_st_gap_vals):.1f} MYR/t below norm)."
+        )
+    else:
+        st.info("No consecutive pair prices available — fill in outrights in FCPO_Curve_Input.xlsx.")
+
+    st.markdown("---")
+
     # ── Spread history ────────────────────────────────────────────────────────
     st.subheader(f"Spread M{int(_near_off)}/M{int(_far_off)} — {_lookback8}d history")
 
