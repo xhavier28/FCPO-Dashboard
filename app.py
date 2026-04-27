@@ -2013,7 +2013,7 @@ with tab7:
             st.plotly_chart(_fig_mpob, use_container_width=True, key="mpob_s_seas")
 
             # Gap bar
-            _df_mpob_gap = _df_mpob_seas[_df_mpob_seas['s_current_year'].notna()].copy()
+            _df_mpob_gap = _df_mpob_seas.copy()
             _df_mpob_gap['gap'] = _df_mpob_gap['s_current_year'] - _df_mpob_gap['s_mean']
             _fig_mpob_gap = go.Figure(go.Bar(
                 x=_df_mpob_gap['month_label'], y=_df_mpob_gap['gap'],
@@ -2125,7 +2125,7 @@ with tab7:
             st.plotly_chart(_fig_sp, use_container_width=True, key="sp_m1m2_seas")
 
             # Gap bar
-            _df_sp_gap = _df_sp[_df_sp['s_current_year'].notna()].copy()
+            _df_sp_gap = _df_sp.copy()
             _df_sp_gap['gap'] = _df_sp_gap['s_current_year'] - _df_sp_gap['s_mean']
             _fig_sp_gap = go.Figure(go.Bar(
                 x=_df_sp_gap['month_label'], y=_df_sp_gap['gap'],
