@@ -18,6 +18,7 @@ from fcpo_s_calculator import (
     load_mpob_history, estimate_capacity, build_regression_dataset,
     fit_s_regression, fit_seasonal_regression, build_seasonal_s_table,
     get_s_mpob, producer_s_composite, build_forward_s_curve, three_source_gaps,
+    build_per_pair_regression,
 )
 from fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
 import datetime
@@ -482,12 +483,17 @@ def get_s_regression_model():
     seasonal_result = fit_seasonal_regression(reg_df)
     seasonal_table  = build_seasonal_s_table(mpob_df, reg_result, capacity)
 
+    spread_hist    = load_spread_history_from_delta_files()
+    per_pair_reg   = build_per_pair_regression(spread_hist, mpob_df, capacity=capacity)
+
     return {
-        'regression':     reg_result,
-        'seasonal':       seasonal_result,
-        'seasonal_table': seasonal_table,
-        'capacity':       capacity,
-        'reg_df':         reg_df,
+        'regression':          reg_result,
+        'seasonal':            seasonal_result,
+        'seasonal_table':      seasonal_table,
+        'capacity':            capacity,
+        'reg_df':              reg_df,
+        'per_pair_regression': per_pair_reg,
+        'spread_history':      spread_hist,
     }
 
 
@@ -2347,8 +2353,7 @@ with tab7:
 
         st.markdown("---")
 
-        # ── Forward S Curve ───────────────────────────────────────────────────
-        st.subheader("Forward S Curve")
+        # ── Forward S Curve — Fair Value vs Actual ────────────────────────────
 
         # Default override boxes to log-derived values (only on first load)
         if 't7_s_prod_cur' not in st.session_state:
@@ -2356,14 +2361,16 @@ with tab7:
         if 't7_s_prod_fwd' not in st.session_state:
             st.session_state['t7_s_prod_fwd'] = float(max(5.0, min(50.0, _s_forward_t7)))
 
-        _fwd_col1, _fwd_col2 = st.columns(2)
-        with _fwd_col1:
-            _enso_factor = st.number_input(
-                "ENSO adjustment factor (1.0 = neutral)",
-                min_value=0.5, max_value=2.0, value=1.0, step=0.05,
-                key="t7_enso",
+        _fwd_inp_c1, _fwd_inp_c2 = st.columns(2)
+        with _fwd_inp_c1:
+            _enso_label = st.selectbox(
+                "ENSO phase (back month context only)",
+                options=["La Nina — above normal production expected",
+                         "Neutral",
+                         "El Nino — below normal production expected"],
+                index=1, key="t7_enso_label",
             )
-        with _fwd_col2:
+        with _fwd_inp_c2:
             _s_producer_current_input = st.number_input(
                 "S producer current (MYR/t) — from form above",
                 min_value=5.0, max_value=50.0,
@@ -2377,81 +2384,233 @@ with tab7:
                 step=0.5, key="t7_s_prod_fwd",
             )
 
-        _current_month_t7 = datetime.date.today().month
-        _fwd_curve = build_forward_s_curve(
-            _current_month_t7, _s_seas_tbl,
-            _current_stocks_input, _s_capacity,
-            _s_producer_current_input, _s_producer_forward_input,
-            enso_factor=_enso_factor,
-        )
+        _current_curve_t7  = st.session_state.get('current_curve', {})
+        _per_pair_reg      = _s_model.get('per_pair_regression', {})
+        _util_fn_t7        = _s_reg.get('util_to_s_function') if _s_reg else None
+        _mpob_stk_t7       = _current_stocks_input
+        _current_util_t7   = _mpob_stk_t7 / _s_capacity
+        _current_month_t7  = datetime.date.today().month
 
-        def _colour_confidence(conf):
-            if conf == 'HIGH':      return 'background-color: #1a4a1a; color: #7fff7f'
-            if conf == 'MED-HIGH':  return 'background-color: #2a4a1a; color: #b8ff7f'
-            if conf == 'MEDIUM':    return 'background-color: #4a4a00; color: #ffff7f'
-            if conf == 'LOW-MED':   return 'background-color: #4a3000; color: #ffb84d'
-            if conf == 'LOW':       return 'background-color: #4a2000; color: #ff8c00'
-            return 'background-color: #4a1a1a; color: #ff7f7f'
+        # Year ratio for M6+ adjustment
+        _hist_util_cm   = _s_seas_tbl.get(_current_month_t7, {}).get('util_mean', _current_util_t7)
+        _year_ratio     = _current_util_t7 / _hist_util_cm if _hist_util_cm > 0 else 1.0
 
         _fwd_rows = []
-        for _pair, _info in _fwd_curve.items():
-            _seas_m  = _info.get('seasonal_mean')
-            _gap_m   = _info.get('gap_vs_seasonal')
+        for _i in range(1, 12):
+            _near = _i; _far = _i + 1
+            _pair = f"M{_near}/M{_far}"
+
+            # Live prices
+            _F_near = _current_curve_t7.get(_near)
+            _F_far  = _current_curve_t7.get(_far)
+            _actual_spread = round(_F_near - _F_far, 1) if _F_near and _F_far else None
+
+            # Implied S for this pair
+            _s_implied_pair = None
+            if _F_near and _F_far and _F_near > 0 and _F_far > 0:
+                try:
+                    _res_impl = implied_s_backsolve(_F_near, _F_far, _r7)
+                    _s_implied_pair = round(_res_impl['s_implied_myr'], 1)
+                except Exception:
+                    pass
+
+            # Model S — source depends on pair
+            _model_s = None; _model_spread = None; _source = "—"; _conf = "LOW"
+
+            if _near == 1:
+                _reg_pp = _per_pair_reg.get('M1/M2')
+                if _reg_pp and _reg_pp.get('util_to_spread') and _reg_pp['r2'] >= 0.20:
+                    _model_spread = round(_reg_pp['util_to_spread'](_current_util_t7), 1)
+                    _source = f"regression (R²={_reg_pp['r2']})"
+                    _conf = "HIGH" if _reg_pp['r2'] >= 0.4 else "MEDIUM"
+                else:
+                    _model_s = _s_producer_current_input
+                    _source = "producer"
+                    _conf = "HIGH"
+            elif _near == 2:
+                _reg_pp = _per_pair_reg.get('M2/M3')
+                if _reg_pp and _reg_pp.get('util_to_spread') and _reg_pp['r2'] >= 0.20:
+                    _model_spread = round(_reg_pp['util_to_spread'](_current_util_t7), 1)
+                    _source = f"regression (R²={_reg_pp['r2']})"
+                    _conf = "HIGH" if _reg_pp['r2'] >= 0.4 else "MEDIUM"
+                else:
+                    _model_s = _s_producer_forward_input
+                    _source = "producer forward"
+                    _conf = "MED-HIGH"
+            elif _near <= 5:
+                if _util_fn_t7:
+                    _model_s = round(_util_fn_t7(_current_util_t7), 1)
+                    _source = "MPOB current"
+                    _conf = "MEDIUM"
+                else:
+                    _seas_entry = _s_seas_tbl.get(_current_month_t7, {})
+                    _model_s = round(_seas_entry.get('s_mean', 15.0), 1)
+                    _source = "seasonal"
+                    _conf = "MEDIUM"
+            else:
+                _near_mo = ((_current_month_t7 - 1 + _near - 1) % 12) + 1
+                _far_mo  = ((_current_month_t7 - 1 + _far - 1) % 12) + 1
+                _s_near_s = _s_seas_tbl.get(_near_mo, {}).get('s_mean', 15.0)
+                _s_far_s  = _s_seas_tbl.get(_far_mo, {}).get('s_mean', 15.0)
+                _s_base   = (_s_near_s + _s_far_s) / 2
+                _dampen   = max(0.0, 1.0 - (_near - 6) * 0.10)
+                _ratio_adj = 1.0 + (_year_ratio - 1.0) * _dampen
+                _model_s  = round(max(8.0, min(35.0, _s_base * _ratio_adj)), 1)
+                _source   = "seasonal + year ratio"
+                _conf     = "LOW" if _near <= 8 else "VERY LOW"
+
+            # Fair spread
+            if _model_spread is not None:
+                _fair_spread = _model_spread
+            elif _model_s is not None and _F_near and _F_near > 0:
+                import math as _math
+                _r_m   = _r7 / 12
+                _s_rate = _model_s / _F_near
+                _fair_spread = round(_F_near - _F_near * _math.exp((_r_m + _s_rate) * (1/12)), 1)
+            else:
+                _fair_spread = None
+
+            # Edge
+            _edge = round(_actual_spread - _fair_spread, 1) \
+                    if _actual_spread is not None and _fair_spread is not None else None
+
+            # Gap vs seasonal
+            _near_mo2 = ((_current_month_t7 - 1 + _near - 1) % 12) + 1
+            _seas_mean = _s_seas_tbl.get(_near_mo2, {}).get('s_mean')
+            _gap_vs_seas = round(_model_s - _seas_mean, 1) if _model_s and _seas_mean else None
+
+            # Trade role
+            _trade_roles = {
+                1: "Intel only — do not trade",
+                2: "Direction — approach with care",
+                3: "Primary trading zone",
+                4: "Primary trading zone",
+                5: "Primary trading zone — wider stops",
+                6: "Selective trading",
+                7: "Selective trading",
+                8: "Selective trading",
+                9: "Regime context only",
+                10: "Regime context only",
+                11: "Regime context only",
+            }
+
             _fwd_rows.append({
                 'Pair':             _pair,
-                'S value':          f"{_info['s_value']:.1f}",
-                'Source':           _info['source'],
-                'Seasonal mean':    f"{_seas_m:.1f}" if _seas_m is not None else '—',
-                'Gap vs seasonal':  f"{_gap_m:+.1f}" if _gap_m is not None else '—',
-                'Trade role':       _info['trade_role'],
+                'Model S':          f"{_model_s:.1f}" if _model_s else "—",
+                'Source':           _source,
+                'Implied S (live)': f"{_s_implied_pair:.1f}" if _s_implied_pair is not None else "—",
+                'Actual spread':    f"{_actual_spread:+.1f}" if _actual_spread is not None else "—",
+                'Fair spread':      f"{_fair_spread:+.1f}" if _fair_spread is not None else "—",
+                'Edge':             _edge,
+                'Gap vs seasonal':  _gap_vs_seas,
+                'Confidence':       _conf,
+                'Trade role':       _trade_roles.get(_near, "—"),
+                '_edge_raw':        _edge,
+                '_gap_raw':         _gap_vs_seas,
             })
-        _fwd_df = pd.DataFrame(_fwd_rows)
 
-        def _style_fwd(row):
-            styles = [''] * len(row)
-            gap_idx = _fwd_df.columns.get_loc('Gap vs seasonal')
-            raw_gap = row['Gap vs seasonal']
-            try:
-                g = float(raw_gap)
-                if g > 3:
-                    styles[gap_idx] = 'background-color: #4a1a1a; color: #ef5350'
-                elif g < -3:
-                    styles[gap_idx] = 'background-color: #1a4a1a; color: #66bb6a'
-                else:
-                    styles[gap_idx] = 'color: #fafafa'
-            except (ValueError, TypeError):
-                pass
-            return styles
+        _df_fwd = pd.DataFrame(_fwd_rows)
 
+        def _style_forward_table(_df):
+            _display = _df.drop(columns=['_edge_raw', '_gap_raw'])
+
+            def _colour_edge(val):
+                idx = _df.index[_display.index == val.name][0] if val.name in _display.index else None
+                if idx is None:
+                    return [''] * len(val)
+                edge = _df.loc[idx, '_edge_raw']
+                styles = [''] * len(val)
+                edge_i = _display.columns.get_loc('Edge')
+                if edge is not None:
+                    if edge < -5:
+                        styles[edge_i] = 'background-color: rgba(102,187,106,0.35); color: #c6efce'
+                    elif edge > 5:
+                        styles[edge_i] = 'background-color: rgba(239,83,80,0.35); color: #ffc7ce'
+                    elif edge < -2:
+                        styles[edge_i] = 'background-color: rgba(102,187,106,0.15)'
+                    elif edge > 2:
+                        styles[edge_i] = 'background-color: rgba(239,83,80,0.15)'
+                gap = _df.loc[idx, '_gap_raw']
+                gap_i = _display.columns.get_loc('Gap vs seasonal')
+                if gap is not None:
+                    if gap > 5:
+                        styles[gap_i] = 'color: #ef5350; font-weight: bold'
+                    elif gap < -5:
+                        styles[gap_i] = 'color: #66bb6a; font-weight: bold'
+                conf = val.iloc[_display.columns.get_loc('Confidence')]
+                conf_i = _display.columns.get_loc('Confidence')
+                _cmap = {'HIGH': 'color: #66bb6a', 'MED-HIGH': 'color: #aed581',
+                         'MEDIUM': 'color: #ffd54f', 'LOW-MED': 'color: #ffb74d',
+                         'LOW': 'color: #ff8a65', 'VERY LOW': 'color: #ef5350'}
+                styles[conf_i] = _cmap.get(conf, '')
+                return styles
+
+            return _display.style.apply(_colour_edge, axis=1)
+
+        st.subheader("Forward S Curve — Fair Value vs Actual")
+        st.caption(
+            "Model S = best estimate per pair based on data confidence. "
+            "Edge = actual spread minus fair spread (BMD: near minus far). "
+            "Green edge = spread cheap vs fair → BUY. "
+            "Red edge = spread rich vs fair → SELL. "
+            "Primary trading zone = M3/M4 through M5/M6."
+        )
         st.dataframe(
-            _fwd_df.style.apply(_style_fwd, axis=1),
+            _style_forward_table(_df_fwd),
             use_container_width=True, hide_index=True,
         )
 
-        # S bar chart
-        _fig_fwd = go.Figure()
-        _pair_labels  = [r['Pair'] for r in _fwd_rows]
-        _s_vals       = [float(r['S value']) for r in _fwd_rows]
-        _conf_colours = {
-            'HIGH': '#2ca02c', 'MED-HIGH': '#7fbf7f',
-            'MEDIUM': '#ff7f0e', 'LOW-MED': '#d6a040',
-            'LOW': '#d62728', 'VERY LOW': '#8c0000',
-        }
-        _bar_colours = [_conf_colours.get(_fwd_curve[p]['confidence'], '#888888')
-                        for p in _pair_labels]
-        _fig_fwd.add_trace(go.Bar(
-            x=_pair_labels, y=_s_vals,
-            marker_color=_bar_colours,
-            hovertemplate='%{x}<br>S = %{y:.1f} MYR/t<extra></extra>',
-        ))
-        _fig_fwd.update_layout(
-            plot_bgcolor=DARK_PLOT, paper_bgcolor=DARK_BG,
-            font=dict(color=DARK_TEXT),
-            xaxis=dict(title='Tenor pair', showgrid=False, tickfont=dict(color=DARK_TEXT)),
-            yaxis=dict(title='S (MYR/t)', showgrid=True, gridcolor=DARK_GRID),
-            height=300, margin=dict(l=60, r=30, t=30, b=60),
-        )
-        st.plotly_chart(_fig_fwd, use_container_width=True)
+        # ENSO context footnote for M6+ rows
+        if _enso_label != "Neutral":
+            st.caption(f"M6+ context: {_enso_label}. Year ratio vs historical util: {_year_ratio:.2f}x.")
+
+        # Edge bar chart
+        _edge_rows = _df_fwd[_df_fwd['_edge_raw'].notna()].copy()
+
+        if not _edge_rows.empty:
+            _edge_vals   = _edge_rows['_edge_raw'].tolist()
+            _pair_labels = _edge_rows['Pair'].tolist()
+
+            _bar_colors = []
+            for _v in _edge_vals:
+                if _v < -5:    _bar_colors.append('#66bb6a')
+                elif _v > 5:   _bar_colors.append('#ef5350')
+                elif _v < -2:  _bar_colors.append('#aed581')
+                elif _v > 2:   _bar_colors.append('#ff8a65')
+                else:          _bar_colors.append('#888888')
+
+            _fig_edge = go.Figure(go.Bar(
+                x=_pair_labels, y=_edge_vals,
+                marker_color=_bar_colors,
+                text=[f"{v:+.1f}" for v in _edge_vals],
+                textposition='outside',
+            ))
+            _fig_edge.add_hline(y=0, line_color='#ffffff', line_dash='dot', line_width=1)
+            _fig_edge.add_hline(y=5, line_color='#ef5350', line_dash='dash', line_width=0.8,
+                                annotation_text='sell threshold')
+            _fig_edge.add_hline(y=-5, line_color='#66bb6a', line_dash='dash', line_width=0.8,
+                                annotation_text='buy threshold')
+            _fig_edge.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT, font_color=DARK_TEXT,
+                xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+                height=320, yaxis_title='Edge: actual minus fair spread (MYR/t)',
+                xaxis_title='Tenor pair',
+                margin=dict(l=40, r=40, t=40, b=30), showlegend=False,
+            )
+            st.plotly_chart(_fig_edge, use_container_width=True)
+
+            # Auto signal summary
+            _primary_zone = _edge_rows[_edge_rows['Pair'].isin(['M3/M4', 'M4/M5', 'M5/M6'])]
+            if not _primary_zone.empty:
+                _buy_pairs  = _primary_zone[_primary_zone['_edge_raw'] < -5]['Pair'].tolist()
+                _sell_pairs = _primary_zone[_primary_zone['_edge_raw'] > 5]['Pair'].tolist()
+                if _buy_pairs:
+                    st.success(f"BUY SPREAD signal in primary trading zone: {', '.join(_buy_pairs)}")
+                elif _sell_pairs:
+                    st.error(f"SELL SPREAD signal in primary trading zone: {', '.join(_sell_pairs)}")
+                else:
+                    st.caption("Primary trading zone (M3/M4–M5/M6): "
+                               "no strong mispricing signal — within ±5 MYR/t of fair value.")
 
 
 # ── Tab 8: Spread & Butterfly ─────────────────────────────────────────────────

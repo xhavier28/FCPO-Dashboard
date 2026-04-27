@@ -535,3 +535,104 @@ def three_source_gaps(s_implied, s_mpob, s_producer, threshold=8.0):
         'gap3_triggered':  triggered,
         'story':           story,
     }
+
+
+def build_per_pair_regression(spread_history_df, mpob_df, capacity=3_750_000):
+    """
+    For M1/M2 and M2/M3: regress monthly average spread vs MPOB utilisation.
+    Returns dict { 'M1/M2': {...}, 'M2/M3': {...} }
+    """
+    # Build monthly MPOB lookup
+    mpob_monthly = {}
+    for _, row in mpob_df.iterrows():
+        d = pd.to_datetime(row['date'])
+        util = row['mpob_stocks'] / capacity
+        if 0.20 < util < 1.0:
+            mpob_monthly[(d.year, d.month)] = util
+
+    results = {}
+    pair_cols = {'M1/M2': 'spread_m1m2', 'M2/M3': 'spread_m2m3'}
+
+    for pair_label, col in pair_cols.items():
+        if col not in spread_history_df.columns:
+            print(f"{pair_label}: column {col} not found")
+            results[pair_label] = None
+            continue
+
+        df = spread_history_df[['year', 'month', col]].dropna()
+        monthly = df.groupby(['year', 'month'])[col].agg(
+            mean='mean', count='count'
+        ).reset_index()
+        monthly = monthly[monthly['count'] >= 10]
+
+        records = []
+        for _, row in monthly.iterrows():
+            util = mpob_monthly.get((int(row['year']), int(row['month'])))
+            if util:
+                records.append({'util': util, 'spread': row['mean']})
+
+        print(f"{pair_label}: {len(records)} matched observations")
+
+        if len(records) < 12:
+            print(f"  Insufficient data — will use seasonal fallback")
+            results[pair_label] = {
+                'model': 'insufficient_data', 'n_obs': len(records), 'r2': 0.0,
+            }
+            continue
+
+        reg_df = pd.DataFrame(records)
+        util_vals   = reg_df['util'].values
+        spread_vals = reg_df['spread'].values
+
+        slope, intercept, r, p, se = linregress(util_vals, spread_vals)
+        linear_r2 = r ** 2
+
+        try:
+            def exp_model(u, a, b, c):
+                return a * np.exp(b * u) + c
+            popt, _ = curve_fit(exp_model, util_vals, spread_vals,
+                                p0=[-50, 2, 100], maxfev=10000)
+            exp_pred = exp_model(util_vals, *popt)
+            ss_res = np.sum((spread_vals - exp_pred) ** 2)
+            ss_tot = np.sum((spread_vals - np.mean(spread_vals)) ** 2)
+            exp_r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0
+        except Exception:
+            exp_r2 = 0
+            popt = None
+
+        if exp_r2 > linear_r2 and popt is not None:
+            best_r2 = exp_r2
+            best_model = 'exponential'
+            a, b, c = popt
+            def _make_exp(a, b, c):
+                def fn(util):
+                    return float(a * np.exp(b * util) + c)
+                return fn
+            util_to_spread = _make_exp(a, b, c)
+        else:
+            best_r2 = linear_r2
+            best_model = 'linear'
+            def _make_lin(s, i):
+                def fn(util):
+                    return float(s * util + i)
+                return fn
+            util_to_spread = _make_lin(slope, intercept)
+
+        print(f"  Best model: {best_model}, R²={best_r2:.3f}")
+
+        results[pair_label] = {
+            'util_to_spread':  util_to_spread,
+            'model':           best_model,
+            'r2':              round(best_r2, 3),
+            'n_obs':           len(records),
+            'slope':           round(slope, 3),
+            'intercept':       round(intercept, 3),
+            'util_range':      (round(util_vals.min(), 3),
+                                round(util_vals.max(), 3)),
+            'spread_range':    (round(spread_vals.min(), 1),
+                                round(spread_vals.max(), 1)),
+            'warning':         'Low R² — use directionally only'
+                               if best_r2 < 0.25 else None,
+        }
+
+    return results
