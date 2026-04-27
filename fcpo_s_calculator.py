@@ -32,20 +32,26 @@ def _add_months(ym, n):
 
 def load_mpob_history(filepath):
     """
-    Reads MPOB stock history from Excel.
-    Sheet: "Table Data", data from row 2 (index 1 after header), columns [Date, Value].
-    Value already in tonnes (matches existing load_supply_demand() convention).
-    Returns DataFrame [date (datetime), mpob_stocks (float, in tonnes)].
+    Reads MPOB closing stocks from the raw data file.
+    File has two header rows — skip the second one.
+    Values are in tonnes (not thousands).
+    Date format: MM/DD/YYYY
     """
-    df = pd.read_excel(filepath, sheet_name="Table Data")
-    df = df.iloc[1:].reset_index(drop=True)   # drop the "Close" text row
-    df.columns = ["Date", "Value"]
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-    df = df.dropna(subset=["Date"]).copy()
-    df["mpob_stocks"] = pd.to_numeric(df["Value"], errors="coerce")
-    df = df.dropna(subset=["mpob_stocks"])
-    df = df.rename(columns={"Date": "date"})[["date", "mpob_stocks"]]
-    return df.sort_values("date").reset_index(drop=True)
+    df = pd.read_excel(filepath, header=0, skiprows=[1])
+    df.columns = ['date', 'mpob_stocks']
+    df = df.dropna(subset=['date'])
+    df = df[df['date'] != 'Close']
+    df['date'] = pd.to_datetime(df['date'], dayfirst=False)
+    df['mpob_stocks'] = pd.to_numeric(df['mpob_stocks'], errors='coerce')
+    df = df.dropna(subset=['mpob_stocks'])
+    df = df.sort_values('date').reset_index(drop=True)
+
+    print(f"MPOB history loaded: {len(df)} rows")
+    print(f"Date range: {df['date'].min()} to {df['date'].max()}")
+    print(f"Stock range: {df['mpob_stocks'].min():,.0f} to {df['mpob_stocks'].max():,.0f} tonnes")
+    print(df.tail(5).to_string())
+
+    return df[['date', 'mpob_stocks']]
 
 
 def estimate_capacity(mpob_stocks_series, assumed_max_util=0.875):
