@@ -476,10 +476,12 @@ def get_s_regression_model():
     mpob_df   = load_mpob_data()
     contracts = load_contracts()
     capacity  = estimate_capacity(mpob_df['mpob_stocks'])['working_estimate']
+
     reg_df    = build_regression_dataset(mpob_df, contracts, capacity=capacity)
     reg_result      = fit_s_regression(reg_df)
     seasonal_result = fit_seasonal_regression(reg_df)
     seasonal_table  = build_seasonal_s_table(mpob_df, reg_result, capacity)
+
     return {
         'regression':     reg_result,
         'seasonal':       seasonal_result,
