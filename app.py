@@ -1946,7 +1946,7 @@ with tab7:
                 _md = pd.to_datetime(_mrow['date'])
                 _mu = _mrow['mpob_stocks'] / _s_capacity
                 _ms = _mpob_util_fn(_mu)
-                if 3.0 <= _ms <= 55.0:
+                if 3.0 <= _ms <= 80.0:
                     _mpob_records.append({
                         'date': _md, 'year': _md.year, 'month': _md.month,
                         's_mpob': round(_ms, 2),
@@ -1972,6 +1972,7 @@ with tab7:
                 .groupby('month')['s_mpob'].mean()
                 .reset_index().rename(columns={'s_mpob': 's_current_year'})
             )
+
             _df_mpob_seas = (
                 _m_hist
                 .merge(_m_ly_g, on='month', how='left')
