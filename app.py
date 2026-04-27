@@ -12,6 +12,7 @@ from fcpo_spread_engine import (
     get_active_curve, build_spread_history, build_butterfly_history,
     fair_spread_value, implied_s_backsolve, implied_c,
     conviction_score, scenario_interpretation, entry_conditions_checklist,
+    load_spread_history_from_delta_files,
 )
 from fcpo_s_calculator import (
     load_mpob_history, estimate_capacity, build_regression_dataset,
@@ -1802,12 +1803,11 @@ with tab7:
 
         st.markdown("---")
 
-        # ── S Seasonality — Current Year vs Historical ─────────────────────────
-        st.subheader("S Seasonality — Current Year vs Historical")
+        # ── Market Tightness Proxy — Implied S vs Historical ────────────────────
+        st.subheader("Market Tightness Proxy — Implied S vs Historical")
         st.caption(
-            "Compares this year's implied S trajectory against historical average and last year. "
-            "Red bars = running above historical norm (tighter than usual). "
-            "Green bars = running below historical norm (looser than usual)."
+            "Implied S back-solved from M1/M2 prices. Negative = backwardation (tight market). "
+            "Positive = contango. Use as tightness direction indicator, not as absolute storage cost."
         )
 
         if not _s_reg_df.empty:
@@ -1924,6 +1924,235 @@ with tab7:
                 st.caption(_seas_msg)
         else:
             st.info("Regression dataset empty — seasonality chart unavailable.")
+
+        st.markdown("---")
+
+        # ── MPOB Storage Cost (S) — Utilisation Based vs Historical ──────────
+        st.subheader("MPOB Storage Cost (S) — Utilisation Based vs Historical")
+        st.caption(
+            "S estimated from MPOB inventory utilisation via regression. "
+            "Always positive — represents physical storage cost. "
+            "Compare current year vs historical to see if storage pressure "
+            "is above or below seasonal norm."
+        )
+
+        _mpob_util_fn = _s_reg.get('util_to_s_function') if _s_model_ok and _s_reg else None
+        if _mpob_util_fn:
+            _mpob_df_t7   = load_mpob_data()
+            _mpob_records = []
+            for _, _mrow in _mpob_df_t7.iterrows():
+                _md = pd.to_datetime(_mrow['date'])
+                _mu = _mrow['mpob_stocks'] / _s_capacity
+                _ms = _mpob_util_fn(_mu)
+                if 3.0 <= _ms <= 55.0:
+                    _mpob_records.append({
+                        'date': _md, 'year': _md.year, 'month': _md.month,
+                        's_mpob': round(_ms, 2),
+                    })
+
+            _mpob_s_df = pd.DataFrame(_mpob_records).sort_values('date')
+            _m_cy = datetime.date.today().year
+            _m_ly = _m_cy - 1
+
+            _m_hist = (
+                _mpob_s_df[_mpob_s_df['year'] < _m_ly]
+                .groupby('month')['s_mpob']
+                .agg(s_mean='mean', s_min='min', s_max='max')
+                .reset_index()
+            )
+            _m_ly_g = (
+                _mpob_s_df[_mpob_s_df['year'] == _m_ly]
+                .groupby('month')['s_mpob'].mean()
+                .reset_index().rename(columns={'s_mpob': 's_last_year'})
+            )
+            _m_cy_g = (
+                _mpob_s_df[_mpob_s_df['year'] == _m_cy]
+                .groupby('month')['s_mpob'].mean()
+                .reset_index().rename(columns={'s_mpob': 's_current_year'})
+            )
+            _df_mpob_seas = (
+                _m_hist
+                .merge(_m_ly_g, on='month', how='left')
+                .merge(_m_cy_g, on='month', how='left')
+            )
+            _m_labels = ['Jan','Feb','Mar','Apr','May','Jun',
+                         'Jul','Aug','Sep','Oct','Nov','Dec']
+            _df_mpob_seas['month_label'] = _df_mpob_seas['month'].apply(lambda x: _m_labels[x - 1])
+
+            _fig_mpob = go.Figure()
+            _fig_mpob.add_trace(go.Scatter(
+                x=_df_mpob_seas['month_label'].tolist() + _df_mpob_seas['month_label'].tolist()[::-1],
+                y=_df_mpob_seas['s_max'].tolist() + _df_mpob_seas['s_min'].tolist()[::-1],
+                fill='toself', fillcolor='rgba(150,150,150,0.15)',
+                line=dict(width=0), name='Historical range',
+            ))
+            _fig_mpob.add_trace(go.Scatter(
+                x=_df_mpob_seas['month_label'], y=_df_mpob_seas['s_mean'],
+                line=dict(color='#888888', width=1.5, dash='dot'), name='Historical mean',
+            ))
+            _fig_mpob.add_trace(go.Scatter(
+                x=_df_mpob_seas['month_label'], y=_df_mpob_seas['s_last_year'],
+                line=dict(color='#4fc3f7', width=1.5),
+                mode='lines+markers', marker=dict(size=5), name=str(_m_ly),
+            ))
+            _fig_mpob.add_trace(go.Scatter(
+                x=_df_mpob_seas['month_label'], y=_df_mpob_seas['s_current_year'],
+                line=dict(color='#ff6b35', width=2.5),
+                mode='lines+markers', marker=dict(size=7), name=str(_m_cy),
+            ))
+            _fig_mpob.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT, font_color=DARK_TEXT,
+                xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+                height=320, yaxis_title='S MPOB (MYR/t)',
+                margin=dict(l=40, r=40, t=30, b=30),
+                legend=dict(orientation='h', y=1.02),
+            )
+            st.plotly_chart(_fig_mpob, use_container_width=True, key="mpob_s_seas")
+
+            # Gap bar
+            _df_mpob_gap = _df_mpob_seas[_df_mpob_seas['s_current_year'].notna()].copy()
+            _df_mpob_gap['gap'] = _df_mpob_gap['s_current_year'] - _df_mpob_gap['s_mean']
+            _fig_mpob_gap = go.Figure(go.Bar(
+                x=_df_mpob_gap['month_label'], y=_df_mpob_gap['gap'],
+                marker_color=['#ef5350' if v > 0 else '#66bb6a' for v in _df_mpob_gap['gap'].fillna(0)],
+            ))
+            _fig_mpob_gap.add_hline(y=0, line_color='#888888', line_dash='dot', line_width=1)
+            _fig_mpob_gap.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT, font_color=DARK_TEXT,
+                height=180, yaxis_title='Gap vs hist mean (MYR/t)',
+                margin=dict(l=40, r=40, t=10, b=30),
+            )
+            st.plotly_chart(_fig_mpob_gap, use_container_width=True, key="mpob_s_gap")
+
+            if not _df_mpob_gap.empty:
+                _ml = _df_mpob_gap.iloc[-1]
+                _mg = _ml['gap']
+                st.caption(
+                    f"Latest MPOB S: {_ml['s_current_year']:.1f} MYR/t  ·  "
+                    f"Historical mean: {_ml['s_mean']:.1f} MYR/t  ·  "
+                    f"Gap: {_mg:+.1f} MYR/t  ·  "
+                    f"{'Above normal — inventory tighter than usual' if _mg > 1 else 'Below normal — inventory looser than usual' if _mg < -1 else 'Within normal range'}"
+                )
+        else:
+            st.warning("Regression model unavailable — extend MPOB history to enable this chart.")
+
+        st.markdown("---")
+
+        # ── M1/M2 Actual Spread — Seasonal Pattern ──────────────────────────
+        st.subheader("M1/M2 Actual Spread — Seasonal Pattern")
+        st.caption(
+            "Actual M1/M2 spread (BMD convention: near minus far). "
+            "Negative = contango. Positive = backwardation. "
+            "Uses pre-calculated spread values from daily term delta files. "
+            "Directly shows what the tradeable spread has done seasonally."
+        )
+
+        @st.cache_data(ttl=3600)
+        def _cached_spread_hist():
+            return load_spread_history_from_delta_files()
+
+        _spread_hist = _cached_spread_hist()
+
+        if not _spread_hist.empty and 'spread_m1m2' in _spread_hist.columns:
+            _sp_monthly = (
+                _spread_hist.groupby(['year', 'month'])['spread_m1m2']
+                .agg(mean='mean', min='min', max='max', count='count')
+                .reset_index()
+            )
+            _sp_monthly = _sp_monthly[_sp_monthly['count'] >= 5]
+
+            _sp_cy = datetime.date.today().year
+            _sp_ly = _sp_cy - 1
+
+            _sp_hist = (
+                _sp_monthly[_sp_monthly['year'] < _sp_ly]
+                .groupby('month')
+                .agg(s_mean=('mean', 'mean'), s_min=('min', 'min'), s_max=('max', 'max'))
+                .reset_index()
+            )
+            _sp_ly_g = (
+                _sp_monthly[_sp_monthly['year'] == _sp_ly][['month', 'mean']]
+                .rename(columns={'mean': 's_last_year'})
+            )
+            _sp_cy_g = (
+                _sp_monthly[_sp_monthly['year'] == _sp_cy][['month', 'mean']]
+                .rename(columns={'mean': 's_current_year'})
+            )
+            _df_sp = (
+                _sp_hist
+                .merge(_sp_ly_g, on='month', how='left')
+                .merge(_sp_cy_g, on='month', how='left')
+            )
+            _sp_labels = ['Jan','Feb','Mar','Apr','May','Jun',
+                          'Jul','Aug','Sep','Oct','Nov','Dec']
+            _df_sp['month_label'] = _df_sp['month'].apply(lambda x: _sp_labels[x - 1])
+
+            _fig_sp = go.Figure()
+            _fig_sp.add_trace(go.Scatter(
+                x=_df_sp['month_label'].tolist() + _df_sp['month_label'].tolist()[::-1],
+                y=_df_sp['s_max'].tolist() + _df_sp['s_min'].tolist()[::-1],
+                fill='toself', fillcolor='rgba(150,150,150,0.15)',
+                line=dict(width=0), name='Historical range',
+            ))
+            _fig_sp.add_trace(go.Scatter(
+                x=_df_sp['month_label'], y=_df_sp['s_mean'],
+                line=dict(color='#888888', width=1.5, dash='dot'), name='Historical mean',
+            ))
+            _fig_sp.add_trace(go.Scatter(
+                x=_df_sp['month_label'], y=_df_sp['s_last_year'],
+                line=dict(color='#4fc3f7', width=1.5),
+                mode='lines+markers', marker=dict(size=5), name=str(_sp_ly),
+            ))
+            _fig_sp.add_trace(go.Scatter(
+                x=_df_sp['month_label'], y=_df_sp['s_current_year'],
+                line=dict(color='#ff6b35', width=2.5),
+                mode='lines+markers', marker=dict(size=7), name=str(_sp_cy),
+            ))
+            _fig_sp.add_hline(
+                y=0, line_color='#ffffff', line_dash='dot', line_width=0.8,
+                annotation_text='0 — flat', annotation_position='right',
+            )
+            _fig_sp.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT, font_color=DARK_TEXT,
+                xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+                height=320, yaxis_title='M1/M2 spread (MYR/t) — BMD: near minus far',
+                margin=dict(l=40, r=80, t=30, b=30),
+                legend=dict(orientation='h', y=1.02),
+            )
+            st.plotly_chart(_fig_sp, use_container_width=True, key="sp_m1m2_seas")
+
+            # Gap bar
+            _df_sp_gap = _df_sp[_df_sp['s_current_year'].notna()].copy()
+            _df_sp_gap['gap'] = _df_sp_gap['s_current_year'] - _df_sp_gap['s_mean']
+            _fig_sp_gap = go.Figure(go.Bar(
+                x=_df_sp_gap['month_label'], y=_df_sp_gap['gap'],
+                marker_color=['#ef5350' if v > 0 else '#66bb6a' for v in _df_sp_gap['gap'].fillna(0)],
+            ))
+            _fig_sp_gap.add_hline(y=0, line_color='#888888', line_dash='dot', line_width=1)
+            _fig_sp_gap.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT, font_color=DARK_TEXT,
+                height=180, yaxis_title='Gap vs hist mean (MYR/t)',
+                margin=dict(l=40, r=80, t=10, b=30),
+            )
+            st.plotly_chart(_fig_sp_gap, use_container_width=True, key="sp_m1m2_gap")
+
+            if not _df_sp_gap.empty:
+                _spl     = _df_sp_gap.iloc[-1]
+                _sp_gap  = _spl['gap']
+                _sp_act  = _spl['s_current_year']
+                _sp_mean = _spl['s_mean']
+                _sp_regime = "backwardation" if _sp_act > 0 else "contango"
+                st.caption(
+                    f"Latest M1/M2 spread: {_sp_act:+.1f} MYR/t ({_sp_regime})  ·  "
+                    f"Historical mean: {_sp_mean:+.1f} MYR/t  ·  "
+                    f"Gap: {_sp_gap:+.1f} MYR/t  ·  "
+                    f"{'Richer than historical average — market tighter than usual' if _sp_gap > 5 else 'Cheaper than historical average — market looser than usual' if _sp_gap < -5 else 'Near historical average'}"
+                )
+        else:
+            st.warning(
+                "No pre-calculated spread data found. "
+                "Ensure fcpo_daily_term_delta_*.xlsx files are in Raw Data/Daily Term/ folder."
+            )
 
         st.markdown("---")
 

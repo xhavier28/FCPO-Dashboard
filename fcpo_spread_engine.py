@@ -298,3 +298,68 @@ def entry_conditions_checklist(z_short, z_medium, spread, fair_value, c_annual, 
                        'met': True, 'warning': False})
 
     return checklist
+
+
+def load_spread_history_from_delta_files(data_dir="Raw Data/Daily Term"):
+    """
+    Loads pre-calculated spread values from the daily term delta Excel files.
+    Files named: fcpo_daily_term_delta_*.xlsx or fcpo_daily_term_delta.xlsx
+    M1/M2 and M2/M3 computed from price columns; M3/M4+ from Spread columns.
+    Returns DataFrame [date, year, month, spread_m1m2 ... spread_m10m11].
+    """
+    import glob
+    import os
+
+    all_records = []
+    pattern = os.path.join(data_dir, "fcpo_daily_term_delta_*.xlsx")
+    files = sorted(glob.glob(pattern))
+
+    if not files:
+        single = os.path.join(data_dir, "fcpo_daily_term_delta.xlsx")
+        if os.path.exists(single):
+            files = [single]
+
+    for filepath in files:
+        try:
+            df = pd.read_excel(filepath, sheet_name='Sheet1')
+            df.columns = df.columns.str.strip()
+            df['Date'] = pd.to_datetime(df['Date'], dayfirst=True)
+            df = df.dropna(subset=['Date'])
+
+            spread_map = {
+                'spread_m3m4':   'Spread3M4M',
+                'spread_m4m5':   'Spread4M5M',
+                'spread_m5m6':   'Spread5M6M',
+                'spread_m6m7':   'Spread6M7M',
+                'spread_m7m8':   'Spread7M8M',
+                'spread_m8m9':   'Spread8M9M',
+                'spread_m9m10':  'Spread9M10M',
+                'spread_m10m11': 'Spread10M11M',
+            }
+
+            for _, row in df.iterrows():
+                record = {'date': row['Date']}
+
+                if pd.notna(row.get('Current')) and pd.notna(row.get('+1M')):
+                    record['spread_m1m2'] = row['Current'] - row['+1M']
+
+                if pd.notna(row.get('+1M')) and pd.notna(row.get('+2M')):
+                    record['spread_m2m3'] = row['+1M'] - row['+2M']
+
+                for col_name, excel_col in spread_map.items():
+                    if excel_col in df.columns and pd.notna(row.get(excel_col)):
+                        record[col_name] = row[excel_col]
+
+                all_records.append(record)
+
+        except Exception as e:
+            print(f"Error reading {filepath}: {e}")
+            continue
+
+    if not all_records:
+        return pd.DataFrame()
+
+    result = pd.DataFrame(all_records).sort_values('date')
+    result['year']  = result['date'].dt.year
+    result['month'] = result['date'].dt.month
+    return result
