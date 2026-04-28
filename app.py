@@ -3308,98 +3308,215 @@ with tab_enso:
 
     st.markdown("---")
 
-    # ── PANEL 4: MPOB stocks by ENSO phase ──────────────────
-    st.subheader("MPOB Closing Stocks — Average by ENSO Phase")
+    # ── PANEL 4: MPOB stocks & production by ENSO phase ────
+    def _assign_enso_to_mpob(mpob_in, oni_in):
+        """
+        Assigns ENSO phase to each MPOB monthly row.
+        Uses the ONI season where the MPOB month is the MIDDLE month
+        of the 3-month window — most representative assignment.
+
+        Middle month mapping:
+          DJF→Jan(1), JFM→Feb(2), FMA→Mar(3), MAM→Apr(4),
+          AMJ→May(5), MJJ→Jun(6), JJA→Jul(7), JAS→Aug(8),
+          ASO→Sep(9), SON→Oct(10), OND→Nov(11), NDJ→Dec(12)
+        """
+        oni_tmp = oni_in.copy()
+        oni_tmp["middle_month"] = oni_tmp["season_start_month"].apply(
+            lambda m: (m % 12) + 1
+        )
+        oni_lookup = oni_tmp.set_index(["year", "middle_month"])[
+            ["enso_phase", "strength", "oni_anomaly"]
+        ].to_dict("index")
+
+        result = mpob_in.copy()
+        result["enso_phase"] = result.apply(
+            lambda r: oni_lookup.get((r["year"], r["month"]), {}).get("enso_phase", "Unknown"), axis=1)
+        result["strength"] = result.apply(
+            lambda r: oni_lookup.get((r["year"], r["month"]), {}).get("strength", "Unknown"), axis=1)
+        result["oni_anomaly"] = result.apply(
+            lambda r: oni_lookup.get((r["year"], r["month"]), {}).get("oni_anomaly", None), axis=1)
+        return result[result["enso_phase"] != "Unknown"]
+
+    st.subheader("MPOB Closing Stocks & Production — By ENSO Phase")
     st.caption(
-        "Average monthly MPOB closing stocks grouped by historical ENSO phase. "
-        "Orange star line = current year actual. "
-        "Read: is 2026 tracking closer to El Niño or La Niña historical pattern?"
+        "Each line = one calendar year coloured by its dominant ENSO phase. "
+        "Red = El Niño year · Blue = La Niña year · Grey = Neutral year · "
+        "Orange = 2026 actual. "
+        "More honest than averages given limited data — shows actual range within each phase."
     )
 
-    mpob_df = load_mpob_data().copy()
-    mpob_df["year"]  = pd.to_datetime(mpob_df["date"]).dt.year
-    mpob_df["month"] = pd.to_datetime(mpob_df["date"]).dt.month
+    mpob_raw = load_mpob_data().copy()
+    mpob_raw["year"]  = pd.to_datetime(mpob_raw["date"]).dt.year
+    mpob_raw["month"] = pd.to_datetime(mpob_raw["date"]).dt.month
 
-    oni_join = oni_df[oni_df["year"] >= mpob_df["year"].min()][
-        ["year", "season_start_month", "enso_phase", "strength"]
-    ].rename(columns={"season_start_month": "month"})
+    try:
+        sd_df = load_supply_demand()
+        sd_df["year"]  = pd.to_datetime(sd_df["Date"]).dt.year
+        sd_df["month"] = pd.to_datetime(sd_df["Date"]).dt.month
+        has_production = True
+    except Exception:
+        has_production = False
 
-    merged = mpob_df.merge(oni_join, on=["year", "month"], how="left")
-    merged = merged.dropna(subset=["enso_phase"])
+    mpob_enso = _assign_enso_to_mpob(mpob_raw, oni_df)
 
-    phase_avg = merged.groupby(["enso_phase", "month"])["mpob_stocks"].agg(
-        mean="mean", std="std", count="count",
+    year_phase = mpob_enso.groupby("year")["enso_phase"].agg(
+        lambda x: x.value_counts().index[0]
     ).reset_index()
-    phase_avg = phase_avg[phase_avg["count"] >= 2]
+    year_phase.columns = ["year", "dominant_phase"]
 
-    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    phase_avg["month_name"] = phase_avg["month"].apply(lambda x: month_names[x - 1])
+    current_year = datetime.date.today().year
+    month_names  = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    phase_colors = {"El Nino": "#ef5350", "La Nina": "#4fc3f7", "Neutral": "#888888"}
 
-    fig_mpob = go.Figure()
-    phase_styles = {
-        "El Nino": ("#ef5350", "solid", "El Niño years avg"),
-        "La Nina": ("#4fc3f7", "solid", "La Niña years avg"),
-        "Neutral": ("#888888", "dot",   "Neutral years avg"),
-    }
-    for ph, (color, dash, label) in phase_styles.items():
-        df_p = phase_avg[phase_avg["enso_phase"] == ph].sort_values("month")
-        if df_p.empty:
-            continue
-        r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
-        upper = (df_p["mean"] + df_p["std"].fillna(0)) / 1e6
-        lower = (df_p["mean"] - df_p["std"].fillna(0)) / 1e6
-        fig_mpob.add_trace(go.Scatter(
-            x=df_p["month_name"].tolist() + df_p["month_name"].tolist()[::-1],
-            y=upper.tolist() + lower.tolist()[::-1],
-            fill="toself", fillcolor=f"rgba({r},{g},{b},0.10)",
-            line=dict(width=0), showlegend=False,
-        ))
-        fig_mpob.add_trace(go.Scatter(
-            x=df_p["month_name"], y=df_p["mean"] / 1e6,
-            name=label, line=dict(color=color, width=2, dash=dash),
-            mode="lines+markers", marker=dict(size=5),
-        ))
+    col_stocks, col_prod = st.columns(2)
 
-    cy = datetime.date.today().year
-    cy_mpob = mpob_df[mpob_df["year"] == cy].sort_values("month")
-    if not cy_mpob.empty:
-        fig_mpob.add_trace(go.Scatter(
-            x=cy_mpob["month"].apply(lambda x: month_names[x - 1]),
-            y=cy_mpob["mpob_stocks"] / 1e6,
-            name=f"{cy} actual",
-            line=dict(color="#ff6b35", width=2.5),
-            mode="lines+markers",
-            marker=dict(size=9, symbol="star"),
-        ))
+    # ── Left: Stocks chart ───────────────────────────────────
+    with col_stocks:
+        st.caption("MPOB Closing Stocks (million tonnes)")
+        fig_stocks = go.Figure()
 
-    fig_mpob.update_layout(
-        paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
-        font_color=DARK_TEXT, height=340,
-        yaxis_title="MPOB closing stocks (million tonnes)",
-        xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
-        margin=dict(l=40, r=20, t=20, b=30),
-        legend=dict(orientation="h", y=1.02),
-    )
-    st.plotly_chart(fig_mpob, use_container_width=True)
+        for _, yrow in year_phase.iterrows():
+            yr    = yrow["year"]
+            phase = yrow["dominant_phase"]
+            color = phase_colors.get(phase, "#888888")
 
-    if not cy_mpob.empty and not phase_avg.empty:
-        latest_month  = int(cy_mpob["month"].iloc[-1])
-        latest_stocks = cy_mpob["mpob_stocks"].iloc[-1] / 1e6
-        el_ref = phase_avg[(phase_avg["enso_phase"] == "El Nino") &
-                           (phase_avg["month"] == latest_month)]["mean"]
-        ln_ref = phase_avg[(phase_avg["enso_phase"] == "La Nina") &
-                           (phase_avg["month"] == latest_month)]["mean"]
-        if not el_ref.empty and not ln_ref.empty:
-            el_v = el_ref.values[0] / 1e6
-            ln_v = ln_ref.values[0] / 1e6
-            closer = "El Niño" if abs(latest_stocks - el_v) < abs(latest_stocks - ln_v) else "La Niña"
+            yr_data = mpob_enso[mpob_enso["year"] == yr].sort_values("month")
+            if yr_data.empty:
+                continue
+
+            is_current = (yr == current_year)
+            is_recent  = (yr >= current_year - 5)
+
+            fig_stocks.add_trace(go.Scatter(
+                x=yr_data["month"].apply(lambda m: month_names[m - 1]),
+                y=yr_data["mpob_stocks"] / 1e6,
+                name=f"{yr} ({phase[:2]})",
+                line=dict(
+                    color="#ff6b35" if is_current else color,
+                    width=2.5 if is_current else (1.5 if is_recent else 0.8),
+                    dash="solid" if is_current else ("solid" if is_recent else "dot"),
+                ),
+                mode="lines+markers" if is_current else "lines",
+                marker=dict(size=8, symbol="star") if is_current else {},
+                opacity=1.0 if is_current else (0.8 if is_recent else 0.4),
+                showlegend=is_recent or is_current,
+            ))
+
+        fig_stocks.update_layout(
+            paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+            font_color=DARK_TEXT, height=360,
+            yaxis_title="Million tonnes",
+            xaxis=dict(categoryorder="array", categoryarray=month_names),
+            xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+            margin=dict(l=40, r=20, t=20, b=30),
+            legend=dict(orientation="v", x=1.01, y=1, font=dict(size=9)),
+        )
+        st.plotly_chart(fig_stocks, use_container_width=True)
+
+    # ── Right: Production anomaly chart ──────────────────────
+    with col_prod:
+        st.caption("CPO Production Anomaly vs Seasonal Average (%)")
+        if has_production:
+            sd_for_enso = sd_df.rename(columns={"Production": "mpob_stocks"})
+            sd_enso = _assign_enso_to_mpob(sd_for_enso, oni_df)
+            sd_enso["production"] = sd_enso["mpob_stocks"]
+
+            seasonal_prod_avg = sd_enso.groupby("month")["production"].mean()
+            sd_enso["prod_anomaly_pct"] = sd_enso.apply(
+                lambda r: ((r["production"] - seasonal_prod_avg[r["month"]])
+                           / seasonal_prod_avg[r["month"]] * 100)
+                if seasonal_prod_avg.get(r["month"], 0) > 0 else None, axis=1,
+            )
+
+            year_phase_prod = sd_enso.groupby("year")["enso_phase"].agg(
+                lambda x: x.value_counts().index[0]
+            ).reset_index()
+            year_phase_prod.columns = ["year", "dominant_phase"]
+
+            fig_prod = go.Figure()
+            fig_prod.add_hline(y=0, line_color="#ffffff",
+                               line_dash="dot", line_width=1)
+
+            for _, yrow in year_phase_prod.iterrows():
+                yr    = yrow["year"]
+                phase = yrow["dominant_phase"]
+                color = phase_colors.get(phase, "#888888")
+
+                yr_data = sd_enso[sd_enso["year"] == yr].sort_values("month")
+                if yr_data.empty or yr_data["prod_anomaly_pct"].isna().all():
+                    continue
+
+                is_current = (yr == current_year)
+                is_recent  = (yr >= current_year - 5)
+
+                fig_prod.add_trace(go.Scatter(
+                    x=yr_data["month"].apply(lambda m: month_names[m - 1]),
+                    y=yr_data["prod_anomaly_pct"],
+                    name=f"{yr} ({phase[:2]})",
+                    line=dict(
+                        color="#ff6b35" if is_current else color,
+                        width=2.5 if is_current else (1.5 if is_recent else 0.8),
+                        dash="solid" if is_current else ("solid" if is_recent else "dot"),
+                    ),
+                    mode="lines+markers" if is_current else "lines",
+                    marker=dict(size=8, symbol="star") if is_current else {},
+                    opacity=1.0 if is_current else (0.8 if is_recent else 0.4),
+                    showlegend=is_recent or is_current,
+                ))
+
+            fig_prod.update_layout(
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+                font_color=DARK_TEXT, height=360,
+                yaxis_title="Production anomaly (%)",
+                xaxis=dict(categoryorder="array", categoryarray=month_names),
+                xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+                margin=dict(l=40, r=20, t=20, b=30),
+                legend=dict(orientation="v", x=1.01, y=1, font=dict(size=9)),
+            )
+            st.plotly_chart(fig_prod, use_container_width=True)
+
             st.caption(
-                f"{month_names[latest_month - 1]} {cy}: "
+                "Positive = production above seasonal average for that month. "
+                "Negative = below average. "
+                "El Niño years (red) should cluster below zero with a lag. "
+                "La Niña years (blue) should cluster above zero."
+            )
+        else:
+            st.info(
+                "Production data not available. "
+                "Ensure supply demand loader returns a Production column."
+            )
+
+    # Auto-reading caption
+    cy_enso_data = mpob_enso[mpob_enso["year"] == current_year]
+    latest_mpob_month = int(cy_enso_data["month"].max()) if not cy_enso_data.empty else None
+    if latest_mpob_month:
+        latest_stocks = cy_enso_data[
+            cy_enso_data["month"] == latest_mpob_month
+        ]["mpob_stocks"].values[0] / 1e6
+
+        el_vals = mpob_enso[
+            (mpob_enso["enso_phase"] == "El Nino") &
+            (mpob_enso["month"] == latest_mpob_month) &
+            (mpob_enso["year"] < current_year)
+        ]["mpob_stocks"]
+        ln_vals = mpob_enso[
+            (mpob_enso["enso_phase"] == "La Nina") &
+            (mpob_enso["month"] == latest_mpob_month) &
+            (mpob_enso["year"] < current_year)
+        ]["mpob_stocks"]
+
+        if not el_vals.empty and not ln_vals.empty:
+            el_avg = el_vals.mean() / 1e6
+            ln_avg = ln_vals.mean() / 1e6
+            closer = "El Niño" if abs(latest_stocks - el_avg) < abs(latest_stocks - ln_avg) else "La Niña"
+            st.caption(
+                f"{month_names[latest_mpob_month - 1]} {current_year}: "
                 f"MPOB stocks {latest_stocks:.2f}M t  ·  "
-                f"El Niño hist avg = {el_v:.2f}M  ·  "
-                f"La Niña hist avg = {ln_v:.2f}M  ·  "
-                f"2026 tracking closer to **{closer}** pattern"
+                f"El Niño years avg = {el_avg:.2f}M  ·  "
+                f"La Niña years avg = {ln_avg:.2f}M  ·  "
+                f"2026 tracking closer to **{closer}** historical pattern"
             )
 
     st.markdown("---")
