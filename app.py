@@ -847,10 +847,10 @@ if _F_c and _G_c:
 else:
     st.session_state.setdefault('c_current', 0.0)
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_enso = st.tabs([
+tab1, tab2, tab3, tab4, tab_enso, tab7, tab8, tab6 = st.tabs([
     "Year-over-Year", "Term Structure", "Event Log",
-    "Supply & Demand", "Mean Reversion", "Pair Screener",
-    "S Calculator", "Spread & Butterfly", "ENSO Analysis",
+    "Supply & Demand", "ENSO Analysis",
+    "S Calculator", "Spread & Butterfly", "Pair Screener",
 ])
 
 with tab1:
@@ -1034,7 +1034,7 @@ SPREAD_COLORS = [
     "#f4a261", "#e76f51", "#e9c46a", "#2a9d8f",
 ]
 
-with tab5:
+if False:  # Mean Reversion tab hidden
     df_spd = load_spread_data()
     df_spd["date"] = pd.to_datetime(df_spd["date"])
     df_spd_filt = df_spd[df_spd["date"].dt.year.isin([2025, 2026])].copy()
