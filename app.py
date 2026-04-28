@@ -523,7 +523,7 @@ def load_supply_demand():
 
     df = pd.DataFrame({
         "Stock":      _read("FCPO Stock 3Y.xlsx",       "Stock"),
-        "Exports":    _read("MPOB Exports 3Y.xlsx",     "Exports"),
+        "Exports":    _read("MPOB Export 3Y.xlsx",      "Exports"),
         "Production": _read("MPOB Production 3Y.xlsx",  "Production"),
     }).sort_index().reset_index().rename(columns={"index": "Date"})
 
