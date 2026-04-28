@@ -27,6 +27,7 @@ from pathlib import Path
 
 SPOT_DIR = "Raw Data"
 YEAR_COLORS = {
+    2015: "#17becf", 2016: "#bcbd22", 2017: "#7f7f7f", 2018: "#aec7e8", 2019: "#ffbb78",
     2020: "#9467bd", 2021: "#8c564b", 2022: "#e377c2",
     2023: "#1f77b4", 2024: "#ff7f0e", 2025: "#2ca02c", 2026: "#d62728",
 }
@@ -90,7 +91,7 @@ def load_data(spot_dir):
     df = df.sort_values("date").groupby("date", as_index=False).last()
     df["year"] = df["date"].dt.year
     df["doy"] = df["date"].dt.dayofyear
-    df = df[df["year"] >= 2020]
+    df = df[df["year"] >= 2015]
     return df[["date", "year", "doy", "open", "high", "low", "close", "Volume"]]
 
 
