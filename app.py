@@ -18,7 +18,7 @@ from fcpo_s_calculator import (
     load_mpob_history, estimate_capacity, build_regression_dataset,
     fit_s_regression, fit_seasonal_regression, build_seasonal_s_table,
     get_s_mpob, producer_s_composite, build_forward_s_curve, three_source_gaps,
-    build_per_pair_regression,
+    build_per_pair_regression, load_oni_history, load_enso_forecast,
 )
 from fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
 import datetime
@@ -472,6 +472,16 @@ def load_mpob_data():
     return load_mpob_history("Raw Data/Stock and Production/FCPO Stock 3Y.xlsx")
 
 
+@st.cache_data(ttl=3600)
+def _cached_oni_history():
+    return load_oni_history()
+
+
+@st.cache_data(ttl=3600)
+def _cached_enso_forecast():
+    return load_enso_forecast()
+
+
 @st.cache_resource
 def get_s_regression_model():
     mpob_df   = load_mpob_data()
@@ -836,10 +846,10 @@ if _F_c and _G_c:
 else:
     st.session_state.setdefault('c_current', 0.0)
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab_enso = st.tabs([
     "Year-over-Year", "Term Structure", "Event Log",
     "Supply & Demand", "Mean Reversion", "Pair Screener",
-    "S Calculator", "Spread & Butterfly",
+    "S Calculator", "Spread & Butterfly", "ENSO Analysis",
 ])
 
 with tab1:
@@ -3030,3 +3040,401 @@ with tab8:
                 st.info("No butterfly gaps — fill listed butterfly prices in column C rows 39–48.")
     else:
         st.info("Paste outright prices (M1–M12) into FCPO_Curve_Input.xlsx to enable gap analysis.")
+
+# ═══════════════════════════════════════════════════════════════
+# TAB 9 — El Niño & La Niña Analysis
+# ═══════════════════════════════════════════════════════════════
+with tab_enso:
+    st.title("El Niño & La Niña Analysis")
+    st.caption(
+        "Climate context for CPO back month spreads (M6+). "
+        "El Niño → drier SE Asia → production risk 9-12 months later. "
+        "La Niña → wetter → production builds → spread pressure. "
+        "For directional bias on back months only — not front month trading."
+    )
+
+    oni_df  = _cached_oni_history()
+    fc_df   = _cached_enso_forecast()
+
+    if oni_df is None or oni_df.empty:
+        st.error("ONI history file not found. Check Raw Data/ENSO/oni.ascii.txt")
+        st.stop()
+
+    # ── PANEL 1: Current state summary ──────────────────────
+    st.subheader("Current ENSO State")
+
+    latest          = oni_df.iloc[-1]
+    latest_anom     = latest["oni_anomaly"]
+    latest_phase    = latest["enso_phase"]
+    latest_strength = latest["strength"]
+    latest_season   = f"{latest['season']} {int(latest['year'])}"
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Latest ONI", f"{latest_anom:+.2f}°C",
+                help=f"Season: {latest_season}")
+    col2.metric("Current Phase", latest_phase,
+                delta=latest_strength if latest_strength != "Neutral" else None)
+
+    peak_el_pct = 0
+    peak_season = ""
+    if fc_df is not None and not fc_df.empty:
+        latest_fc    = fc_df[fc_df["issue_date"] == fc_df["issue_date"].max()]
+        peak_el_row  = latest_fc.loc[latest_fc["el_nino_pct"].idxmax()]
+        peak_el_pct  = peak_el_row["el_nino_pct"]
+        peak_season  = peak_el_row["season"]
+        last_updated = fc_df["issue_date"].max()
+        col3.metric("Peak El Niño Probability",
+                    f"{peak_el_pct:.0f}%",
+                    help=f"Peaks at {peak_season}")
+        col4.metric("Forecast Last Updated",
+                    pd.to_datetime(last_updated).strftime("%d %b %Y"))
+    else:
+        col3.metric("Peak El Niño Probability", "—")
+        col4.metric("Forecast Last Updated", "No forecast loaded")
+
+    # Alert banner
+    if peak_el_pct >= 70:
+        st.error(
+            f"⚠️ **El Niño developing — {peak_el_pct:.0f}% probability at peak ({peak_season})**  ·  "
+            f"Historical pattern: CPO production typically -5% to -18% below seasonal average "
+            f"approximately 9-12 months after El Niño onset  ·  "
+            f"Back month spreads M6+ for Q4 2026 – Q2 2027 delivery may be underpriced"
+        )
+    elif fc_df is not None and not fc_df.empty:
+        peak_ln = fc_df[fc_df["issue_date"] == fc_df["issue_date"].max()]["la_nina_pct"].max()
+        if peak_ln >= 70:
+            st.info(
+                f"ℹ️ **La Niña likely — {peak_ln:.0f}% probability**  ·  "
+                f"Historical pattern: production above seasonal average  ·  "
+                f"Back month spread pressure as stocks build"
+            )
+        else:
+            st.warning(
+                "Neutral conditions most likely — no strong ENSO-driven bias for back months. "
+                "Monitor monthly ONI updates for phase change."
+            )
+
+    st.markdown("---")
+
+    # ── PANEL 2: Forecast probability chart + evolution ─────
+    st.subheader("ENSO Forecast — Probability & Evolution")
+
+    if fc_df is not None and not fc_df.empty:
+        latest_fc = fc_df[fc_df["issue_date"] == fc_df["issue_date"].max()].copy()
+        last_upd  = fc_df["issue_date"].max()
+
+        days_since = (pd.Timestamp.now() - last_upd).days
+        if days_since > 35:
+            st.warning(
+                f"⚠️ Forecast is {days_since} days old — update ENSO_Data_Template.xlsx "
+                f"with the latest IRI forecast and append new rows."
+            )
+        else:
+            st.caption(
+                f"Source: IRI Columbia University  ·  "
+                f"Issued: {last_upd.strftime('%B %Y')}  ·  "
+                f"Update monthly at iri.columbia.edu/our-expertise/climate/forecasts/"
+            )
+
+        col_chart, col_table = st.columns([3, 2])
+
+        with col_chart:
+            fig_fc = go.Figure()
+            fig_fc.add_trace(go.Bar(
+                name="La Niña", x=latest_fc["season"],
+                y=latest_fc["la_nina_pct"], marker_color="#4fc3f7",
+                text=latest_fc["la_nina_pct"].apply(lambda x: f"{x:.0f}%" if x >= 5 else ""),
+                textposition="inside", textfont=dict(color="white", size=9),
+            ))
+            fig_fc.add_trace(go.Bar(
+                name="Neutral", x=latest_fc["season"],
+                y=latest_fc["neutral_pct"], marker_color="#888888",
+                text=latest_fc["neutral_pct"].apply(lambda x: f"{x:.0f}%" if x >= 5 else ""),
+                textposition="inside", textfont=dict(color="white", size=9),
+            ))
+            fig_fc.add_trace(go.Bar(
+                name="El Niño", x=latest_fc["season"],
+                y=latest_fc["el_nino_pct"], marker_color="#ef5350",
+                text=latest_fc["el_nino_pct"].apply(lambda x: f"{x:.0f}%" if x >= 5 else ""),
+                textposition="inside", textfont=dict(color="white", size=9),
+            ))
+            fig_fc.update_layout(
+                barmode="stack",
+                paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+                font_color=DARK_TEXT, height=280,
+                yaxis=dict(title="Probability (%)", range=[0, 100]),
+                margin=dict(l=40, r=20, t=20, b=30),
+                legend=dict(orientation="h", y=1.05),
+                xaxis_gridcolor=DARK_GRID,
+            )
+            st.plotly_chart(fig_fc, use_container_width=True)
+
+        with col_table:
+            st.caption("Forecast evolution — El Niño % by issue month")
+            pivot = fc_df.pivot_table(
+                index="season",
+                columns="issue_date",
+                values="el_nino_pct",
+                aggfunc="first",
+            )
+            sm_map = fc_df[["season", "season_start_month"]].drop_duplicates()
+            sm_map = sm_map.sort_values("season_start_month")
+            ordered = [s for s in sm_map["season"].tolist() if s in pivot.index]
+            pivot = pivot.reindex(ordered)
+            pivot.columns = [pd.to_datetime(c).strftime("%b %Y")
+                             for c in pivot.columns]
+
+            def _enso_trend(row):
+                vals = row.dropna().values
+                if len(vals) < 2:
+                    return "—"
+                d = vals[-1] - vals[0]
+                if d >= 10:   return f"↑↑ +{d:.0f}%"
+                if d >= 3:    return f"↑ +{d:.0f}%"
+                if d <= -10:  return f"↓↓ {d:.0f}%"
+                if d <= -3:   return f"↓ {d:.0f}%"
+                return "→ stable"
+
+            pivot["Trend"] = pivot.apply(_enso_trend, axis=1)
+            display_piv = pivot.copy()
+            date_cols = [c for c in display_piv.columns if c != "Trend"]
+            for col in date_cols:
+                display_piv[col] = display_piv[col].apply(
+                    lambda x: f"{x:.0f}%" if pd.notna(x) else "—")
+            display_piv.index.name = "Season"
+            display_piv = display_piv.reset_index()
+
+            def _colour_pct(val):
+                if val == "—":
+                    return "color:#666666"
+                try:
+                    p = float(val.replace("%", "").strip())
+                    if p >= 80:
+                        return "background-color:rgba(183,28,28,0.4);color:white;font-weight:bold"
+                    if p >= 60:
+                        return "background-color:rgba(239,83,80,0.3);font-weight:bold"
+                    if p >= 40:
+                        return "background-color:rgba(239,83,80,0.15)"
+                    return ""
+                except Exception:
+                    return ""
+
+            def _colour_trend(val):
+                if "↑" in str(val):
+                    return "color:#ef5350;font-weight:bold"
+                if "↓" in str(val):
+                    return "color:#66bb6a;font-weight:bold"
+                return "color:#888888"
+
+            styled_piv = display_piv.style
+            for col in date_cols:
+                styled_piv = styled_piv.map(_colour_pct, subset=[col])
+            styled_piv = styled_piv.map(_colour_trend, subset=["Trend"])
+            st.dataframe(styled_piv, use_container_width=True, hide_index=True)
+            st.caption(
+                "Red = high El Niño probability. "
+                "↑↑ = confidence rising fast. → = stable."
+            )
+    else:
+        st.warning(
+            "No forecast data. Add ENSO_Data_Template.xlsx to Raw Data/ENSO/ "
+            "and populate the ENSO Forecast sheet."
+        )
+
+    st.markdown("---")
+
+    # ── PANEL 3: ONI history bar chart ───────────────────────
+    st.subheader("ONI History — Confirmed ENSO Phases")
+    st.caption(
+        "Historical ONI anomaly from 1950. "
+        "Red = El Niño. Blue = La Niña. Grey = Neutral. "
+        "Dashed lines = ±0.5°C phase thresholds."
+    )
+
+    recent_oni = oni_df[oni_df["year"] >= datetime.date.today().year - 10].copy()
+
+    def _oni_color(row):
+        if row["enso_phase"] == "El Nino":
+            return {"Strong": "#b71c1c", "Moderate": "#ef5350", "Weak": "#ffcdd2"}.get(row["strength"], "#ef5350")
+        if row["enso_phase"] == "La Nina":
+            return {"Strong": "#0d47a1", "Moderate": "#4fc3f7", "Weak": "#b3e5fc"}.get(row["strength"], "#4fc3f7")
+        return "#888888"
+
+    bar_colors = [_oni_color(r) for _, r in recent_oni.iterrows()]
+
+    fig_oni = go.Figure()
+    fig_oni.add_trace(go.Bar(
+        x=recent_oni["date"], y=recent_oni["oni_anomaly"],
+        marker_color=bar_colors,
+        hovertemplate="%{x|%b %Y}<br>ONI: %{y:+.2f}°C<extra></extra>",
+    ))
+    fig_oni.add_hline(y=0.5, line_color="#ef5350", line_dash="dash",
+                      line_width=1, annotation_text="El Niño (+0.5)",
+                      annotation_position="right")
+    fig_oni.add_hline(y=-0.5, line_color="#4fc3f7", line_dash="dash",
+                      line_width=1, annotation_text="La Niña (−0.5)",
+                      annotation_position="right")
+    fig_oni.add_hline(y=0, line_color="#ffffff", line_dash="dot", line_width=0.5)
+    fig_oni.update_layout(
+        paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+        font_color=DARK_TEXT, height=280,
+        yaxis_title="ONI Anomaly (°C)",
+        margin=dict(l=40, r=100, t=20, b=30),
+        showlegend=False,
+        xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+    )
+    st.plotly_chart(fig_oni, use_container_width=True)
+
+    with st.expander("Show full ONI history 1950–present"):
+        bar_colors_all = [_oni_color(r) for _, r in oni_df.iterrows()]
+        fig_oni_all = go.Figure()
+        fig_oni_all.add_trace(go.Bar(
+            x=oni_df["date"], y=oni_df["oni_anomaly"],
+            marker_color=bar_colors_all,
+            hovertemplate="%{x|%b %Y}<br>ONI: %{y:+.2f}°C<extra></extra>",
+        ))
+        fig_oni_all.add_hline(y=0.5, line_color="#ef5350", line_dash="dash", line_width=1)
+        fig_oni_all.add_hline(y=-0.5, line_color="#4fc3f7", line_dash="dash", line_width=1)
+        fig_oni_all.add_hline(y=0, line_color="#ffffff", line_dash="dot", line_width=0.5)
+        fig_oni_all.update_layout(
+            paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+            font_color=DARK_TEXT, height=280,
+            yaxis_title="ONI Anomaly (°C)",
+            margin=dict(l=40, r=40, t=20, b=30),
+            showlegend=False,
+            xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+        )
+        st.plotly_chart(fig_oni_all, use_container_width=True)
+
+    st.markdown("---")
+
+    # ── PANEL 4: MPOB stocks by ENSO phase ──────────────────
+    st.subheader("MPOB Closing Stocks — Average by ENSO Phase")
+    st.caption(
+        "Average monthly MPOB closing stocks grouped by historical ENSO phase. "
+        "Orange star line = current year actual. "
+        "Read: is 2026 tracking closer to El Niño or La Niña historical pattern?"
+    )
+
+    mpob_df = load_mpob_data().copy()
+    mpob_df["year"]  = pd.to_datetime(mpob_df["date"]).dt.year
+    mpob_df["month"] = pd.to_datetime(mpob_df["date"]).dt.month
+
+    oni_join = oni_df[oni_df["year"] >= mpob_df["year"].min()][
+        ["year", "season_start_month", "enso_phase", "strength"]
+    ].rename(columns={"season_start_month": "month"})
+
+    merged = mpob_df.merge(oni_join, on=["year", "month"], how="left")
+    merged = merged.dropna(subset=["enso_phase"])
+
+    phase_avg = merged.groupby(["enso_phase", "month"])["mpob_stocks"].agg(
+        mean="mean", std="std", count="count",
+    ).reset_index()
+    phase_avg = phase_avg[phase_avg["count"] >= 2]
+
+    month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    phase_avg["month_name"] = phase_avg["month"].apply(lambda x: month_names[x - 1])
+
+    fig_mpob = go.Figure()
+    phase_styles = {
+        "El Nino": ("#ef5350", "solid", "El Niño years avg"),
+        "La Nina": ("#4fc3f7", "solid", "La Niña years avg"),
+        "Neutral": ("#888888", "dot",   "Neutral years avg"),
+    }
+    for ph, (color, dash, label) in phase_styles.items():
+        df_p = phase_avg[phase_avg["enso_phase"] == ph].sort_values("month")
+        if df_p.empty:
+            continue
+        r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
+        upper = (df_p["mean"] + df_p["std"].fillna(0)) / 1e6
+        lower = (df_p["mean"] - df_p["std"].fillna(0)) / 1e6
+        fig_mpob.add_trace(go.Scatter(
+            x=df_p["month_name"].tolist() + df_p["month_name"].tolist()[::-1],
+            y=upper.tolist() + lower.tolist()[::-1],
+            fill="toself", fillcolor=f"rgba({r},{g},{b},0.10)",
+            line=dict(width=0), showlegend=False,
+        ))
+        fig_mpob.add_trace(go.Scatter(
+            x=df_p["month_name"], y=df_p["mean"] / 1e6,
+            name=label, line=dict(color=color, width=2, dash=dash),
+            mode="lines+markers", marker=dict(size=5),
+        ))
+
+    cy = datetime.date.today().year
+    cy_mpob = mpob_df[mpob_df["year"] == cy].sort_values("month")
+    if not cy_mpob.empty:
+        fig_mpob.add_trace(go.Scatter(
+            x=cy_mpob["month"].apply(lambda x: month_names[x - 1]),
+            y=cy_mpob["mpob_stocks"] / 1e6,
+            name=f"{cy} actual",
+            line=dict(color="#ff6b35", width=2.5),
+            mode="lines+markers",
+            marker=dict(size=9, symbol="star"),
+        ))
+
+    fig_mpob.update_layout(
+        paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+        font_color=DARK_TEXT, height=340,
+        yaxis_title="MPOB closing stocks (million tonnes)",
+        xaxis_gridcolor=DARK_GRID, yaxis_gridcolor=DARK_GRID,
+        margin=dict(l=40, r=20, t=20, b=30),
+        legend=dict(orientation="h", y=1.02),
+    )
+    st.plotly_chart(fig_mpob, use_container_width=True)
+
+    if not cy_mpob.empty and not phase_avg.empty:
+        latest_month  = int(cy_mpob["month"].iloc[-1])
+        latest_stocks = cy_mpob["mpob_stocks"].iloc[-1] / 1e6
+        el_ref = phase_avg[(phase_avg["enso_phase"] == "El Nino") &
+                           (phase_avg["month"] == latest_month)]["mean"]
+        ln_ref = phase_avg[(phase_avg["enso_phase"] == "La Nina") &
+                           (phase_avg["month"] == latest_month)]["mean"]
+        if not el_ref.empty and not ln_ref.empty:
+            el_v = el_ref.values[0] / 1e6
+            ln_v = ln_ref.values[0] / 1e6
+            closer = "El Niño" if abs(latest_stocks - el_v) < abs(latest_stocks - ln_v) else "La Niña"
+            st.caption(
+                f"{month_names[latest_month - 1]} {cy}: "
+                f"MPOB stocks {latest_stocks:.2f}M t  ·  "
+                f"El Niño hist avg = {el_v:.2f}M  ·  "
+                f"La Niña hist avg = {ln_v:.2f}M  ·  "
+                f"2026 tracking closer to **{closer}** pattern"
+            )
+
+    st.markdown("---")
+
+    # ── PANEL 5: Update instructions ────────────────────────
+    with st.expander("📋 How to update this tab monthly"):
+        st.markdown(f"""
+**Monthly update — 5 minutes total**
+
+**Step 1 — ONI History (30 seconds):**
+1. Go to [cpc.ncep.noaa.gov/data/indices/oni.ascii.txt](https://cpc.ncep.noaa.gov/data/indices/oni.ascii.txt)
+2. Download the file
+3. Replace `Raw Data/ENSO/oni.ascii.txt` with the new download
+4. No manual editing needed — dashboard reads it automatically
+
+**Step 2 — ENSO Forecast (4 minutes):**
+1. Go to [iri.columbia.edu/our-expertise/climate/forecasts/](https://iri.columbia.edu/our-expertise/climate/forecasts/) → ENSO Forecast
+2. Read the probability table (La Niña %, Neutral %, El Niño % per season)
+3. Open `Raw Data/ENSO/ENSO_Data_Template.xlsx` → ENSO Forecast sheet
+4. **ADD new rows at the bottom** with today's date as Issue Date
+5. **Do NOT delete old rows** — history needed for the evolution table
+6. Save the file
+
+**Current data status:**
+- ONI history: {oni_df['season'].iloc[-1]} {int(oni_df['year'].iloc[-1])} (latest entry)
+- ONI coverage: {int(oni_df['year'].min())} – {int(oni_df['year'].max())} ({len(oni_df)} observations)
+- Forecast: {'loaded — ' + fc_df['issue_date'].max().strftime('%d %b %Y') if fc_df is not None and not fc_df.empty else 'not loaded'}
+        """)
+
+    with st.expander("⚠️ Important caveats before trading on ENSO signals"):
+        st.markdown("""
+- **Back months only (M6+).** Front months M1-M3 use producer intelligence and MPOB data.
+- **Lag varies 6-15 months.** Cannot predict the exact production impact month.
+- **Demand can overwhelm supply.** 2022: El Niño supply pressure overwhelmed by Ukraine war demand shock.
+- **Strength matters more than probability.** Confirmed Strong El Niño (ONI >1.5°C) is more actionable than 90% probability of Weak El Niño.
+- **Directional bias only.** Confirm with Z-score and MPOB before entering any trade.
+- **Update monthly.** Stale forecast data is worse than no data.
+        """)

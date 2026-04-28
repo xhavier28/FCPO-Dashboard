@@ -636,3 +636,72 @@ def build_per_pair_regression(spread_history_df, mpob_df, capacity=3_750_000):
         }
 
     return results
+
+
+# ── ENSO / ONI loaders ──────────────────────────────────────
+
+def load_oni_history():
+    """Reads ONI history directly from NOAA text file. No manual maintenance needed."""
+    df = pd.read_csv(
+        "Raw Data/ENSO/oni.ascii.txt",
+        sep=r'\s+',
+        names=["season", "year", "total", "oni_anomaly"],
+        skiprows=1,
+    )
+    df["year"]        = df["year"].astype(int)
+    df["oni_anomaly"] = pd.to_numeric(df["oni_anomaly"], errors="coerce")
+    df = df.dropna(subset=["oni_anomaly"])
+
+    season_to_month = {
+        "DJF": 12, "JFM": 1, "FMA": 2, "MAM": 3, "AMJ": 4, "MJJ": 5,
+        "JJA": 6,  "JAS": 7, "ASO": 8, "SON": 9, "OND": 10, "NDJ": 11,
+    }
+    df["season_start_month"] = df["season"].map(season_to_month)
+
+    def phase(a):
+        return "El Nino" if a >= 0.5 else ("La Nina" if a <= -0.5 else "Neutral")
+
+    def strength(a):
+        v = abs(a)
+        return "Strong" if v >= 1.5 else ("Moderate" if v >= 1.0 else ("Weak" if v >= 0.5 else "Neutral"))
+
+    def classify(a):
+        if a >= 1.5:   return "Strong El Nino"
+        if a >= 1.0:   return "Moderate El Nino"
+        if a >= 0.5:   return "Weak El Nino"
+        if a <= -1.5:  return "Strong La Nina"
+        if a <= -1.0:  return "Moderate La Nina"
+        if a <= -0.5:  return "Weak La Nina"
+        return "Neutral"
+
+    df["enso_phase"]     = df["oni_anomaly"].apply(phase)
+    df["strength"]       = df["oni_anomaly"].apply(strength)
+    df["classification"] = df["oni_anomaly"].apply(classify)
+    df["date"] = df.apply(
+        lambda r: pd.Timestamp(year=int(r["year"]),
+                               month=int(r["season_start_month"]), day=1),
+        axis=1,
+    )
+    return df.sort_values("date").reset_index(drop=True)
+
+
+def load_enso_forecast():
+    """Reads ENSO probability forecast from Excel. Append new rows monthly."""
+    try:
+        df = pd.read_excel(
+            "Raw Data/ENSO/ENSO_Data_Template.xlsx",
+            sheet_name="ENSO Forecast",
+            header=3, usecols="A:F",
+        )
+        df.columns = ["issue_date", "season", "season_start_month",
+                      "la_nina_pct", "neutral_pct", "el_nino_pct"]
+        df = df.dropna(subset=["season", "el_nino_pct"])
+        df = df[df["season"].astype(str).str.len() == 3]
+        df["issue_date"] = pd.to_datetime(df["issue_date"], errors="coerce")
+        df["season_start_month"] = df["season_start_month"].astype(int)
+        for col in ["la_nina_pct", "neutral_pct", "el_nino_pct"]:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+        return df.dropna(subset=["issue_date"])
+    except Exception as e:
+        print(f"Forecast load error: {e}")
+        return None
