@@ -2626,106 +2626,141 @@ with tab7:
 
 # ── Tab 8: Spread & Butterfly ─────────────────────────────────────────────────
 with tab8:
-    st.header("Spread & Butterfly Analysis")
+    from math import exp, log
+
+    st.title("Spread & Butterfly Analysis")
     st.caption(
         "Calendar spread and butterfly mean-reversion signals with fair-value overlay. "
-        "spread = F_near − F_far (positive = backwardation). "
-        "butterfly = F_mid − 0.5·(F_front + F_back)."
+        "spread = F_near - F_far (positive = backwardation). "
+        "butterfly = F_mid - 0.5*(F_front + F_back)."
     )
 
-    # ── SharePoint / TT live curve — reuse shared block result ───────────────
-    sp_data   = st.session_state.get('sp_data_shared')
-    sp_gaps   = compute_gaps(sp_data)
-    _sp_m1_ok = sp_data is not None and sp_data["outrights"].get(1) is not None
-    if not _sp_m1_ok:
-        st.warning(
-            "No live prices — paste M1–M12 outrights into **FCPO_Curve_Input.xlsx** "
-            "(sheet: *Curve Input*, column C, rows 7–18)."
+    # ── Shared settings ──────────────────────────────────────
+    col_set1, col_set2 = st.columns([3, 2])
+    with col_set1:
+        _lookback8 = st.slider(
+            "Lookback (days)", min_value=30, max_value=365,
+            value=180, step=10, key="tab8_lookback"
         )
-    else:
-        _sp_filled_a = sum(1 for v in sp_data["outrights"].values() if v)
-        _sp_filled_b = sum(1 for v in sp_data["spreads"].values() if v)
-        _sp_filled_c = sum(1 for v in sp_data["butterflies"].values() if v)
-        st.success(
-            f"Live prices loaded — Outrights: {_sp_filled_a}/12 · "
-            f"Spreads: {_sp_filled_b}/11 · Butterflies: {_sp_filled_c}/10"
+    with col_set2:
+        _s_default_t8 = st.session_state.get('s_mpob', 12.0)
+        _s_input_t8 = st.number_input(
+            "S assumption (MYR/t) — defaults to S MPOB, override if needed",
+            min_value=0.0, max_value=60.0,
+            value=float(round(_s_default_t8, 1)),
+            step=0.5,
+            key="tab8_s_assumption"
         )
+        st.caption(f"S MPOB (from Tab 7): {_s_default_t8:.1f} MYR/t")
 
+    st.markdown("---")
+
+    # ── Shared state ─────────────────────────────────────────
     _r8 = st.session_state.get('r_annual', 0.03)
     _contracts_t8 = load_contracts()
-
-    _t8_col1, _t8_col2, _t8_col3 = st.columns(3)
-    with _t8_col1:
-        _near_off  = st.number_input("Near offset (M)", min_value=1, max_value=11, value=1, key="t8_near")
-        _far_off   = st.number_input("Far offset (M)",  min_value=2, max_value=12, value=2, key="t8_far")
-    with _t8_col2:
-        _fr_off    = st.number_input("Front offset (M)", min_value=1, max_value=10, value=1, key="t8_fr")
-        _mid_off   = st.number_input("Mid offset (M)",   min_value=2, max_value=11, value=2, key="t8_mid")
-        _bk_off    = st.number_input("Back offset (M)",  min_value=3, max_value=12, value=3, key="t8_bk")
-    with _t8_col3:
-        _lookback8 = st.slider("Lookback (days)", min_value=30, max_value=365, value=180, key="t8_lb")
-        _s_input_t8 = st.number_input(
-            "S assumption (MYR/t) — for fair value",
-            min_value=5.0, max_value=50.0, value=12.0, step=0.5, key="t8_s_input",
-        )
-
-    # ── Get current curve — reuse shared block result ─────────────────────────
     _today_t8 = _today_sh
     _curve_t8 = st.session_state.get('current_curve') or get_active_curve(_contracts_t8, _today_t8)
-    F_M1 = float(_curve_t8.get(1) or 4000.0)
-    F_M2 = float(_curve_t8.get(2) or 4000.0)
 
-    # S values from shared session state
-    s_implied_live = st.session_state.get('s_implied_live')
-    s_implied_avg  = st.session_state.get('s_implied_avg')
-    s_mpob         = st.session_state.get('s_mpob', _s_input_t8)
-    s_producer     = st.session_state.get('s_producer_current', _s_input_t8)
-    s_forward      = st.session_state.get('s_producer_forward',  _s_input_t8)
+    # ── Live prices banner ───────────────────────────────────
+    sp_data = st.session_state.get('sp_data_shared')
+    sp_gaps = compute_gaps(sp_data)
+    current_curve = _curve_t8
 
-    # For fair value calc use live S implied if available, else MPOB
-    _s_for_fv = s_implied_live if s_implied_live is not None else s_mpob
-    c_current = implied_c(F_M1, F_M2, _s_input_t8, r_annual=_r8)
-    _fv_current = fair_spread_value(F_M1, _r8, _s_input_t8, c_current)
-
-    # ── Current curve metrics ─────────────────────────────────────────────────
-    _c8r1, _c8r2, _c8r3, _c8r4 = st.columns(4)
-    _c8r1.metric("M1 price",        f"MYR {F_M1:,.0f}")
-    _c8r2.metric("M2 price",        f"MYR {F_M2:,.0f}")
-    with _c8r3:
-        st.metric(
-            "S Implied (live)",
-            f"{s_implied_live:.1f} MYR/t" if s_implied_live is not None else "No Excel data",
-            help="Real-time: back-solved from current prices in FCPO_Curve_Input.xlsx",
+    if sp_data and sp_data.get('outrights', {}).get(1):
+        n_out  = sum(1 for v in sp_data['outrights'].values() if v)
+        n_sp   = sum(1 for v in sp_data['spreads'].values() if v)
+        n_bt   = sum(1 for v in sp_data['butterflies'].values() if v)
+        last_upd = get_last_update_time(_tt_xlsx_sh)
+        age_str  = ""
+        if last_upd:
+            mins = int((datetime.datetime.now() - last_upd).total_seconds() / 60)
+            age_str = f"  ·  Updated {mins}m ago"
+        st.success(
+            f"Live prices loaded — Outrights: {n_out}/12 · "
+            f"Spreads: {n_sp}/11 · Butterflies: {n_bt}/10{age_str}",
+            icon="🟢"
         )
-        if s_implied_avg is not None:
-            st.caption(f"Monthly avg (CSV): {s_implied_avg:.1f} MYR/t")
-    _c8r4.metric("c (conv. yield)",  f"{c_current:.1%}")
-
-    _c8r5, _c8r6, _c8r7, _c8r8 = st.columns(4)
-    _c8r5.metric("Fair spread (M1/M2)", f"{_fv_current:.1f} MYR/t")
-    _c8r6.metric("Actual spread",       f"{F_M1 - F_M2:.1f} MYR/t")
-    _c8r7.metric("S MPOB",              f"{s_mpob:.1f} MYR/t")
-    _c8r8.metric("S Producer",          f"{s_producer:.1f} MYR/t")
-
-    # Three-source gap analysis — use live S if available, else avg
-    _s_implied_for_gaps = s_implied_live if s_implied_live is not None else (s_implied_avg or s_mpob)
-    _gaps = three_source_gaps(_s_implied_for_gaps, s_mpob, s_producer)
-    with st.expander("Three-Source Gap Analysis", expanded=True):
-        _gc1, _gc2, _gc3 = st.columns(3)
-        _gc1.metric("Gap1: Implied − MPOB",    f"{_gaps['gap1']:+.1f}", help="Market vs MPOB")
-        _gc2.metric("Gap2: MPOB − Producer",   f"{_gaps['gap2']:+.1f}", help="MPOB vs physical")
-        _gc3.metric("Gap3: Implied − Producer", f"{_gaps['gap3']:+.1f}", help="Market vs physical (key)")
-
-        _sig_col = {
-            'SELL SPREAD': 'error', 'BUY SPREAD': 'success', 'NEUTRAL': 'info'
-        }
-        getattr(st, _sig_col.get(_gaps['gap3_signal'], 'info'))(
-            f"**{_gaps['gap3_signal']}** — {_gaps['story']}"
+    else:
+        st.warning(
+            "No live prices — paste into FCPO_Curve_Input.xlsx "
+            "(Zone A rows 7-18, col C) to enable live signals.",
+            icon="🟡"
         )
 
     st.markdown("---")
 
-    # ── Implied S Term Structure ───────────────────────────────────────────────
+    # ── Overall key metrics ──────────────────────────────────
+    F_M1 = float(current_curve.get(1) or 0)
+    F_M2 = float(current_curve.get(2) or 0)
+
+    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+    col_m1.metric("M1 price", f"MYR {F_M1:,.0f}" if F_M1 else "—")
+    col_m2.metric("M2 price", f"MYR {F_M2:,.0f}" if F_M2 else "—")
+
+    s_implied_live = st.session_state.get('s_implied_live')
+    s_implied_avg  = st.session_state.get('s_implied_avg')
+    with col_m3:
+        st.metric(
+            "S Implied (live)",
+            f"{s_implied_live:.1f} MYR/t" if s_implied_live else "—",
+            help="Back-solved from current M1/M2 prices in Excel"
+        )
+        if s_implied_avg:
+            st.caption(f"Monthly avg (CSV): {s_implied_avg:.1f} MYR/t")
+
+    c_current = implied_c(F_M1 or 4000.0, F_M2 or 4000.0, _s_input_t8, r_annual=_r8)
+    col_m4.metric("c (conv. yield)", f"{c_current*100:.1f}%")
+
+    col_f1, col_f2, col_f3, col_f4 = st.columns(4)
+
+    # Fair spread M1/M2 from s_assumption
+    if F_M1 and F_M2:
+        dt     = 1/12
+        r_m    = _r8 / 12
+        s_rate = _s_input_t8 / F_M1
+        fair_sp = round(F_M1 - F_M1 * exp((r_m + s_rate) * dt), 1)
+        actual_sp = round(F_M1 - F_M2, 1)
+        edge_m1m2 = round(actual_sp - fair_sp, 1)
+    else:
+        fair_sp = actual_sp = edge_m1m2 = None
+
+    col_f1.metric("Fair spread (M1/M2)",
+                  f"{fair_sp:+.1f} MYR/t" if fair_sp is not None else "—")
+    col_f2.metric("Actual spread",
+                  f"{actual_sp:+.1f} MYR/t" if actual_sp is not None else "—",
+                  delta=f"Edge: {edge_m1m2:+.1f}" if edge_m1m2 is not None else None,
+                  delta_color="inverse" if edge_m1m2 and edge_m1m2 < 0 else "normal")
+    col_f3.metric("S MPOB", f"{st.session_state.get('s_mpob', 0):.1f} MYR/t")
+    col_f4.metric("S Producer",
+                  f"{st.session_state.get('s_producer_current', st.session_state.get('s_mpob', 0)):.1f} MYR/t")
+
+    # Three-source gap analysis expander
+    with st.expander("Three-Source Gap Analysis", expanded=True):
+        s_impl  = s_implied_live or s_implied_avg or 0
+        s_mpob  = st.session_state.get('s_mpob', 0)
+        s_prod  = st.session_state.get('s_producer_current', s_mpob)
+        gap1 = round(s_impl - s_mpob, 1)
+        gap2 = round(s_mpob - s_prod, 1)
+        gap3 = round(s_impl - s_prod, 1)
+
+        cg1, cg2, cg3 = st.columns(3)
+        cg1.metric("Gap1: Implied - MPOB", f"{gap1:+.1f}",
+                   help="Positive = market pricing more tightness than inventory justifies")
+        cg2.metric("Gap2: MPOB - Producer", f"{gap2:+.1f}",
+                   help="Negative = producer tighter than MPOB → leading indicator")
+        cg3.metric("Gap3: Implied - Producer", f"{gap3:+.1f}",
+                   help="Primary alpha signal. >+8 = SELL SPREAD. <-8 = BUY SPREAD.")
+
+        if gap3 > 8:
+            st.error("SELL SPREAD — Market overstating tightness vs physical reality. Sell spread.")
+        elif gap3 < -8:
+            st.success("BUY SPREAD — Market underpricing tightness your contact sees. Buy spread.")
+        else:
+            st.info(f"NEUTRAL — Gap3 = {gap3:+.1f} MYR/t. No strong mispricing signal.")
+
+    st.markdown("---")
+
+    # ── Implied S Term Structure ──────────────────────────────
     st.subheader("Implied S Term Structure")
     st.caption(
         "Implied storage cost back-solved from each consecutive tenor pair, "
@@ -2735,7 +2770,7 @@ with tab8:
     )
 
     try:
-        _seas_tbl_t8 = _s_model_t8['seasonal_table']
+        _seas_tbl_t8 = _s_model['seasonal_table']
     except Exception:
         _seas_tbl_t8 = {}
 
@@ -2831,8 +2866,79 @@ with tab8:
 
     st.markdown("---")
 
-    # ── Spread history ────────────────────────────────────────────────────────
-    st.subheader(f"Spread M{int(_near_off)}/M{int(_far_off)} — {_lookback8}d history")
+    # ── SPREAD SECTION ───────────────────────────────────────
+    st.subheader("Calendar Spread Analysis")
+
+    # Dropdown — consecutive pairs only, always 1 month apart
+    _spread_options = [f"M{i}/M{i+1}" for i in range(1, 12)]
+    _selected_spread = st.selectbox(
+        "Select spread pair:",
+        options=_spread_options,
+        index=0,
+        key="spread_selector"
+    )
+
+    # Parse near/far offsets from selection
+    _near_off = int(_selected_spread.split("/")[0][1:])
+    _far_off  = _near_off + 1
+
+    # Get prices for selected pair
+    F_near = current_curve.get(_near_off)
+    F_far  = current_curve.get(_far_off)
+
+    # Key metrics for selected spread
+    col_sp1, col_sp2, col_sp3, col_sp4 = st.columns(4)
+    col_sp1.metric(f"M{_near_off} price",
+                   f"MYR {F_near:,.0f}" if F_near else "—")
+    col_sp2.metric(f"M{_far_off} price",
+                   f"MYR {F_far:,.0f}" if F_far else "—")
+
+    if F_near and F_far:
+        _actual_spread_sel = round(F_near - F_far, 1)
+        _s_rate_sp = _s_input_t8 / F_near
+        _fair_spread_sel = round(
+            F_near - F_near * exp((_r8/12 + _s_rate_sp) * (1/12)), 1)
+        _edge_sel = round(_actual_spread_sel - _fair_spread_sel, 1)
+
+        # Implied S for this specific pair
+        try:
+            _s_impl_pair = round(
+                ((12 * log(F_far/F_near)) - _r8/12) * F_near, 1)
+        except Exception:
+            _s_impl_pair = None
+    else:
+        _actual_spread_sel = _fair_spread_sel = _edge_sel = _s_impl_pair = None
+
+    col_sp3.metric("Actual spread",
+                   f"{_actual_spread_sel:+.1f} MYR/t" if _actual_spread_sel is not None else "—")
+    col_sp4.metric("Fair spread",
+                   f"{_fair_spread_sel:+.1f} MYR/t" if _fair_spread_sel is not None else "—",
+                   delta=f"Edge: {_edge_sel:+.1f}" if _edge_sel is not None else None,
+                   delta_color="inverse" if _edge_sel and _edge_sel < 0 else "normal")
+
+    col_sp5, col_sp6, col_sp7, col_sp8 = st.columns(4)
+    col_sp5.metric("S Implied (this pair)",
+                   f"{_s_impl_pair:.1f} MYR/t" if _s_impl_pair else "—")
+    col_sp6.metric("S assumption used", f"{_s_input_t8:.1f} MYR/t")
+    # Listed spread price from Excel if available
+    _listed_sp_price = None
+    if sp_data:
+        _listed_sp_price = sp_data.get('spreads', {}).get(
+            (_near_off, _far_off))
+    col_sp7.metric("Listed contract price",
+                   f"{_listed_sp_price:+.1f}" if _listed_sp_price else "—",
+                   help="From Zone B of FCPO_Curve_Input.xlsx")
+    _gap_listed = round(_listed_sp_price - _actual_spread_sel, 1) \
+                 if _listed_sp_price and _actual_spread_sel else None
+    col_sp8.metric("Listed vs calc gap",
+                   f"{_gap_listed:+.1f} MYR/t" if _gap_listed is not None else "—",
+                   help="Positive = listed contract trading rich vs outrights")
+
+    # Fair value for spread history chart
+    _fv_current = fair_spread_value(F_M1 or 4000.0, _r8, _s_input_t8, c_current)
+
+    # Spread history chart
+    st.subheader(f"Spread M{_near_off}/M{_far_off} — {_lookback8}d history")
 
     try:
         _spd_hist = build_spread_history(
@@ -2921,8 +3027,73 @@ with tab8:
 
     st.markdown("---")
 
-    # ── Butterfly ─────────────────────────────────────────────────────────────
-    st.subheader(f"Butterfly M{int(_fr_off)}/M{int(_mid_off)}/M{int(_bk_off)} — {_lookback8}d history")
+    # ── BUTTERFLY SECTION ────────────────────────────────────
+    st.subheader("Butterfly Analysis")
+
+    # Dropdown — consecutive triplets only
+    _butterfly_options = [f"M{i}/M{i+1}/M{i+2}" for i in range(1, 11)]
+    _selected_butterfly = st.selectbox(
+        "Select butterfly:",
+        options=_butterfly_options,
+        index=0,
+        key="butterfly_selector"
+    )
+
+    # Parse front/mid/back offsets
+    _parts_bt = _selected_butterfly.split("/")
+    _fr_off  = int(_parts_bt[0][1:])
+    _mid_off = _fr_off + 1
+    _bk_off  = _fr_off + 2
+
+    # Get prices
+    F_front = current_curve.get(_fr_off)
+    F_mid   = current_curve.get(_mid_off)
+    F_back  = current_curve.get(_bk_off)
+
+    # Key metrics for selected butterfly
+    col_bt1, col_bt2, col_bt3, col_bt4 = st.columns(4)
+    col_bt1.metric(f"M{_fr_off} price",
+                   f"MYR {F_front:,.0f}" if F_front else "—")
+    col_bt2.metric(f"M{_mid_off} price",
+                   f"MYR {F_mid:,.0f}" if F_mid else "—")
+    col_bt3.metric(f"M{_bk_off} price",
+                   f"MYR {F_back:,.0f}" if F_back else "—")
+
+    if F_front and F_mid and F_back:
+        _actual_butterfly = round(F_mid - 0.5 * (F_front + F_back), 1)
+        # Fair butterfly: mid fair value minus 0.5*(front fair + back fair)
+        _s_rate_f = _s_input_t8 / F_front
+        _s_rate_b = _s_input_t8 / F_back
+        _fair_front = F_front * exp((_r8/12 + _s_rate_f) * (1/12))
+        _fair_back  = F_back  * exp((_r8/12 + _s_rate_b) * (1/12))
+        _fair_butterfly = round(F_mid - 0.5 * (_fair_front + _fair_back), 1)
+        _edge_bt = round(_actual_butterfly - _fair_butterfly, 1)
+    else:
+        _actual_butterfly = _fair_butterfly = _edge_bt = None
+
+    col_bt4.metric("Actual butterfly",
+                   f"{_actual_butterfly:+.1f} MYR/t" if _actual_butterfly is not None else "—",
+                   delta=f"Edge: {_edge_bt:+.1f}" if _edge_bt is not None else None,
+                   delta_color="inverse" if _edge_bt and _edge_bt < 0 else "normal")
+
+    col_bt5, col_bt6, col_bt7, col_bt8 = st.columns(4)
+    col_bt5.metric("Fair butterfly", f"{_fair_butterfly:+.1f} MYR/t" if _fair_butterfly is not None else "—")
+    col_bt6.metric("S assumption used", f"{_s_input_t8:.1f} MYR/t")
+    # Listed butterfly price from Excel
+    _listed_bt_price = None
+    if sp_data:
+        _listed_bt_price = sp_data.get('butterflies', {}).get(
+            (_fr_off, _mid_off, _bk_off))
+    col_bt7.metric("Listed contract price",
+                   f"{_listed_bt_price:+.1f}" if _listed_bt_price else "—",
+                   help="From Zone C of FCPO_Curve_Input.xlsx")
+    _gap_bt_listed = round(_listed_bt_price - _actual_butterfly, 1) \
+                    if _listed_bt_price and _actual_butterfly else None
+    col_bt8.metric("Listed vs calc gap",
+                   f"{_gap_bt_listed:+.1f} MYR/t" if _gap_bt_listed is not None else "—")
+
+    # Butterfly history chart
+    st.subheader(f"Butterfly M{_fr_off}/M{_mid_off}/M{_bk_off} — {_lookback8}d history")
 
     try:
         _bfly_hist = build_butterfly_history(
@@ -2982,8 +3153,9 @@ with tab8:
         _fig_bfly.update_yaxes(title_text='Z-score', row=2, col=1)
         st.plotly_chart(_fig_bfly, use_container_width=True)
 
-    # ── Panel 5: TT Listed Contract Gaps (SharePoint) ─────────────────────────
     st.markdown("---")
+
+    # ── Panel 5: TT Listed Contract Gaps ─────────────────────────
     st.subheader("Panel 5 — TT Listed Contract Gaps")
     if sp_gaps:
         _lut = get_last_update_time(_tt_xlsx_sh)
