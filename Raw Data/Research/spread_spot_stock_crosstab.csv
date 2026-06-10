@@ -1,0 +1,46 @@
+spot_cat,stock_level,regime,sp_M1M2_fwd3_mean,sp_M1M2_fwd3_n,sp_M1M2_fwd3_std,sp_M2M3_fwd3_mean,sp_M2M3_fwd3_n,sp_M2M3_fwd3_std,sp_M3M4_fwd3_mean,sp_M3M4_fwd3_n,sp_M3M4_fwd3_std,sp_M4M5_fwd3_mean,sp_M4M5_fwd3_n,sp_M4M5_fwd3_std
+Large down,High,Backwardation,,0,,,0,,,0,,,0,
+Large down,High,Contango,4.74,46,43.84,1.2,46,23.45,2.2,46,14.89,1.11,46,12.35
+Large down,High,Transition,21.42,12,56.53,8.58,12,25.95,1.17,12,15.24,-1.25,12,9.46
+Large down,Low,Backwardation,-6.53,94,49.24,-4.28,94,39.33,-3.73,94,28.23,-3.18,94,19.04
+Large down,Low,Contango,70.0,1,,-1.0,1,,6.0,1,,-17.0,1,
+Large down,Low,Transition,-25.38,13,74.11,-25.08,13,31.08,-14.69,13,21.01,-13.62,13,23.16
+Large down,Mid,Backwardation,-6.83,29,66.9,-11.86,29,40.72,-10.55,29,35.69,-5.76,29,27.75
+Large down,Mid,Contango,3.78,40,36.72,-3.28,40,8.92,-1.88,40,10.01,-1.7,40,8.16
+Large down,Mid,Transition,-5.38,16,39.69,-8.12,16,22.8,-4.06,16,15.13,-5.31,16,11.93
+Small down,High,Backwardation,,0,,,0,,,0,,,0,
+Small down,High,Contango,4.84,87,41.65,0.38,87,11.18,1.21,87,10.04,1.05,87,8.87
+Small down,High,Transition,-16.04,24,41.42,-0.46,24,14.46,-1.38,24,12.27,-0.21,24,12.47
+Small down,Low,Backwardation,3.57,77,74.81,1.17,77,34.95,1.35,77,22.87,-0.09,77,15.13
+Small down,Low,Contango,-52.0,1,,-27.0,1,,-8.0,1,,-2.0,1,
+Small down,Low,Transition,-15.3,10,50.53,-13.0,10,28.43,-4.9,10,17.89,-4.1,10,11.86
+Small down,Mid,Backwardation,-13.0,25,53.14,0.44,25,30.21,6.6,25,26.03,3.44,25,19.6
+Small down,Mid,Contango,-5.01,72,36.58,-1.62,72,10.69,-1.11,72,8.33,-1.56,72,7.31
+Small down,Mid,Transition,-0.04,27,41.79,-0.44,27,18.85,-2.22,27,13.18,-2.0,27,12.12
+Flat,High,Backwardation,,0,,,0,,,0,,,0,
+Flat,High,Contango,7.21,96,36.68,2.62,96,14.94,2.77,96,11.61,3.26,96,10.22
+Flat,High,Transition,2.77,44,29.54,2.34,44,17.87,0.95,44,13.2,-0.16,44,10.55
+Flat,Low,Backwardation,5.03,105,72.57,-2.89,105,35.05,-0.72,105,25.69,1.32,105,17.14
+Flat,Low,Contango,80.0,1,,4.0,1,,-4.0,1,,-7.0,1,
+Flat,Low,Transition,2.5,8,96.85,-4.88,8,25.74,-7.12,8,29.74,-3.38,8,19.59
+Flat,Mid,Backwardation,12.16,38,47.34,5.71,38,34.06,2.47,38,26.48,0.53,38,24.8
+Flat,Mid,Contango,-1.57,81,28.37,-1.43,81,10.22,0.36,81,7.87,0.37,81,8.5
+Flat,Mid,Transition,1.31,42,35.4,-0.93,42,19.4,-1.62,42,11.78,-0.62,42,13.51
+Small up,High,Backwardation,,0,,,0,,,0,,,0,
+Small up,High,Contango,2.75,67,34.82,2.03,67,14.14,1.54,67,11.65,-0.13,67,10.18
+Small up,High,Transition,-4.65,31,23.79,0.55,31,15.2,0.87,31,13.58,1.84,31,12.18
+Small up,Low,Backwardation,-4.41,98,58.68,-2.23,98,40.47,-0.07,98,25.6,0.44,98,20.43
+Small up,Low,Contango,17.5,2,54.45,-10.5,2,3.54,-6.0,2,11.31,-1.5,2,4.95
+Small up,Low,Transition,-25.56,9,98.04,-8.22,9,33.83,-2.22,9,33.42,5.56,9,24.67
+Small up,Mid,Backwardation,14.5,28,47.62,11.75,28,30.69,3.5,28,19.41,3.5,28,16.14
+Small up,Mid,Contango,0.31,78,26.76,1.35,78,11.58,0.9,78,9.92,1.62,78,6.56
+Small up,Mid,Transition,10.87,31,35.07,1.65,31,16.12,1.26,31,10.22,2.26,31,10.09
+Large up,High,Backwardation,,0,,,0,,,0,,,0,
+Large up,High,Contango,-4.38,48,31.72,1.75,48,13.37,0.96,48,12.13,3.69,48,11.83
+Large up,High,Transition,-8.72,25,35.61,-1.04,25,14.52,0.2,25,15.43,1.12,25,14.2
+Large up,Low,Backwardation,1.3,118,65.94,4.57,118,38.78,-0.86,118,23.66,-3.21,118,22.2
+Large up,Low,Contango,,0,,,0,,,0,,,0,
+Large up,Low,Transition,34.83,6,29.25,9.17,6,9.87,0.33,6,9.58,-1.17,6,11.05
+Large up,Mid,Backwardation,-18.97,37,54.01,7.11,37,36.76,5.95,37,30.39,1.84,37,23.35
+Large up,Mid,Contango,-9.07,55,29.24,-0.27,55,10.13,1.13,55,7.77,1.95,55,7.92
+Large up,Mid,Transition,24.22,18,50.16,2.33,18,19.6,-0.22,18,9.66,-2.0,18,10.84
