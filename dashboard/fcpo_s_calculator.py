@@ -74,7 +74,7 @@ def build_regression_dataset(mpob_df, contracts_dict, r_annual=0.03, capacity=3_
     Returns DataFrame [date, utilisation, s_implied, F_M1, F_M2, mpob_stocks].
     Filters: 0.30 < utilisation < 0.98 AND 5 < s_implied_myr < 40.
     """
-    from fcpo_spread_engine import implied_s_backsolve
+    from dashboard.fcpo_spread_engine import implied_s_backsolve
 
     rows = []
     for _, row in mpob_df.iterrows():

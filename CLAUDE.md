@@ -37,13 +37,31 @@ pip install -r requirements.txt
 
 Requirements: `streamlit>=1.32.0`, `pandas>=2.1.0`, `plotly>=5.20.0`
 
+## Project Structure
+
+```
+app.py                    # Main Streamlit dashboard
+dashboard/                # Helper modules imported by app.py
+  FCPO_analysis.py        # Spread tables, combined dataset, plotting
+  fcpo_spread_engine.py   # Curve, spread history, conviction scoring
+  fcpo_s_calculator.py    # MPOB, regression, forward S curve
+  fcpo_tt_reader.py       # TT daily term reader
+research/                 # Jupyter notebooks + chart outputs
+  outputs/                # Saved PNGs and CSVs from research
+tools/                    # Standalone utility scripts
+mr_screener/              # Mean-reversion pair screener package
+MRBackTest/               # Backtest engine (separate project)
+ssf_engine/               # SSF engine (separate project)
+Raw Data/                 # All CSV/Excel data files
+```
+
 ## Architecture
 
-Single-file app (`app.py`) with two Streamlit tabs built on Plotly + Pandas.
+Single-file app (`app.py`) with six Streamlit tabs built on Plotly + Pandas. Helper modules live in `dashboard/`.
 
 ### Data Sources
 
-- **Spot price**: `Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv` — Unix timestamp + OHLCV, filtered to 2023–2026.
+- **Spot price**: `Raw Data/MYX_DLY_FCPO1!, D_59dbd.csv` — Unix timestamp + OHLCV, filtered to 2020–2026.
 - **Term structure contracts**: `Raw Data/Term Structure/{year}/FCPO {Mmm}{yy}_Daily.csv` — one CSV per contract month. Auto-scanned by `load_contracts()`. Files may be missing for some months.
 
 ### Key Design Decisions

@@ -5,22 +5,22 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.colors
 from plotly.subplots import make_subplots
-from FCPO_analysis import build_spread_table, load_combined_dataset
+from dashboard.FCPO_analysis import build_spread_table, load_combined_dataset
 from mr_screener.data.loader import load_pair
 from mr_screener.screener.pipeline import run_pair, autotune_delta
-from fcpo_spread_engine import (
+from dashboard.fcpo_spread_engine import (
     get_active_curve, build_spread_history, build_butterfly_history,
     fair_spread_value, implied_s_backsolve, implied_c,
     conviction_score, scenario_interpretation, entry_conditions_checklist,
     load_spread_history_from_delta_files,
 )
-from fcpo_s_calculator import (
+from dashboard.fcpo_s_calculator import (
     load_mpob_history, estimate_capacity, build_regression_dataset,
     fit_s_regression, fit_seasonal_regression, build_seasonal_s_table,
     get_s_mpob, producer_s_composite, build_forward_s_curve, three_source_gaps,
     build_per_pair_regression, load_oni_history, load_enso_forecast,
 )
-from fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
+from dashboard.fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
 import datetime
 import csv
 from pathlib import Path
