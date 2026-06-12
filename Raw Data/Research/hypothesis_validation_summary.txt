@@ -1,0 +1,153 @@
+======================================================================
+FCPO CURVE SHAPE HYPOTHESIS VALIDATION SUMMARY
+For discussion and vendor brief development
+======================================================================
+
+--- SECTION 1: VARIANCE DECOMPOSITION ---
+Total observations: 2043
+Date range: 2017-02-07 to 2026-06-11
+
+Parallel shift explains: 90.5% of curve movement variance
+Twist (M1 vs M6) explains: 9.1% of curve movement variance
+Butterfly explains: 0.3% of curve movement variance
+
+VERDICT: Twist is low (<10%). The curve mostly shifts in parallel.
+Clustering will likely find high/low level variants, not true shapes.
+Consider whether shape clustering adds value beyond regime labels.
+
+Deformation by regime:
+               parallel   twist  butterfly
+regime                                    
+Backwardation   3923.07  492.43     -52.02
+Contango        3528.09  -91.38      23.60
+Transition      3887.59  161.08     -14.23
+Unknown         2428.81  -56.54      14.87
+
+Deformation by stock level:
+             parallel   twist  butterfly
+stock_level                             
+High          4084.41  -20.90      33.66
+Low           3676.11  422.76     -53.03
+Mid           3405.05  106.24     -12.55
+Unknown       2532.24  -19.89      13.85
+
+--- SECTION 2: CLUSTERING RESULTS ---
+Best number of clusters: 3
+Silhouette score: 0.5912
+
+VERDICT: Strong clustering (>0.35). Shapes are well-separated.
+
+All silhouette scores:
+  k=3: 0.5912
+  k=4: 0.5212
+  k=5: 0.5308
+  k=6: 0.4969
+  k=7: 0.4177
+
+Cluster centroids (normalised shape):
+            M1     M2     M3     M4     M5     M6
+Shape 0  1.269  0.765  0.173 -0.331 -0.760 -1.116
+Shape 1 -1.683 -0.037  0.579  0.731  0.473 -0.062
+Shape 2 -1.333 -0.702 -0.198  0.283  0.755  1.194
+
+Shape sizes:
+  Shape 0: 1096 days (53.6% of history)
+  Shape 1: 358 days (17.5% of history)
+  Shape 2: 589 days (28.8% of history)
+
+--- SECTION 3: STABILITY TEST ---
+Distance between first-half and second-half centroids:
+(< 0.3 = very stable, 0.3-0.6 = moderate, > 0.6 = unstable)
+              Second-Shape0  Second-Shape1  Second-Shape2
+First-Shape0          2.465          1.947          3.448
+First-Shape1          3.916          0.125          4.232
+First-Shape2          1.480          4.085          0.116
+  First-Shape 0 best match distance: 1.947 -> UNSTABLE
+  First-Shape 1 best match distance: 0.125 -> STABLE
+  First-Shape 2 best match distance: 0.116 -> STABLE
+
+--- SECTION 4: SHAPE vs REGIME OVERLAP ---
+Row % -- what regime does each shape map to:
+regime    Backwardation  Contango  Transition  Unknown
+shape_id                                              
+0                  59.0       7.3        22.8     10.9
+1                   0.6      61.2        14.2     24.0
+2                   0.0      68.3         2.5     29.2
+
+Key question: Does any single Tier-1 regime split across multiple shapes?
+If yes -- those shapes are the Tier-2 sub-types you want to classify.
+  Backwardation: present in 1 shapes (max concentration 59%)
+  Contango: present in 2 shapes (max concentration 68%)
+  Transition: present in 0 shapes (max concentration 23%)
+
+--- SECTION 5: ENRICHED SHAPE PROFILES ---
+What fundamental conditions accompany each shape:
+          parallel    twist  butterfly  stock_pct  spot_ret_1d
+shape_id                                                      
+0         3784.542  347.986    -34.225      0.328        0.127
+1         3577.035  -54.749     44.825      0.792       -0.044
+2         2945.614 -130.183      9.084      0.622        0.007
+
+Actual price levels by shape:
+              M1      M2      M3      M4      M5      M6
+shape_id                                                
+0         3976.2  3892.1  3803.4  3732.5  3674.8  3628.2
+1         3524.3  3572.0  3593.2  3599.8  3593.9  3579.0
+2         2875.0  2909.1  2936.2  2962.2  2986.0  3005.2
+
+Actual spread levels by shape:
+          M1-M2  M2-M3  M3-M4  M4-M5  M5-M6
+shape_id                                   
+0          84.1   88.7   70.9   57.7   46.6
+1         -47.7  -21.2   -6.6    5.9   14.8
+2         -34.1  -27.1  -26.0  -23.8  -19.2
+
+--- SECTION 6: HYPOTHESIS VERDICTS ---
+
+HYPOTHESIS A -- Natural curve shapes exist:
+  NOT SUPPORTED -- Shapes are either poorly defined or unstable.
+  Rethink clustering approach before vendor engagement.
+
+HYPOTHESIS B prerequisite -- Do shapes add beyond regime labels?
+  LIKELY YES -- Average regime concentration per shape = 63%. Shapes are not just regime relabels.
+  At least some regimes split across multiple shapes.
+  Tier-2 sub-type clustering is justified.
+
+--- SECTION 7: QUESTIONS FOR DISCUSSION ---
+
+Q1. VARIANCE DECOMPOSITION
+    What % of variance does twist explain in your data?
+    Does this meet the >20% threshold to justify shape clustering?
+    Which regime or stock condition shows the highest twist?
+
+Q2. CLUSTER QUALITY
+    What was the best silhouette score and at what k?
+    Are the cluster centroids interpretable as recognisable market states
+    when you look at the actual price levels and spread levels per shape?
+    Can the trading team name each shape from the spread profiles?
+
+Q3. STABILITY
+    Which shapes are stable across the two time periods (distance < 0.3)?
+    Which shapes are unstable? Are the unstable ones meaningful or noise?
+
+Q4. REGIME OVERLAP
+    Does Contango split into multiple distinct shapes?
+    Does Backwardation split into multiple distinct shapes?
+    Which regime has the most internal shape diversity?
+    Is there any shape that spans multiple regimes unexpectedly?
+
+Q5. STOCK CONTEXT
+    Do different shapes correspond to different stock percentile ranges?
+    Is there a shape that only occurs at low stock, or only at high stock?
+    Or do shapes cut across stock levels independently of inventory?
+
+Q6. VENDOR BRIEF READINESS
+    Based on all of the above: are the shapes stable and interpretable
+    enough to form the basis of a vendor brief?
+    What is the specific gap the vendor would be solving:
+    predicting shape transitions, or predicting which shape is next,
+    or something else?
+
+======================================================================
+END -- copy all text above and paste for discussion
+======================================================================

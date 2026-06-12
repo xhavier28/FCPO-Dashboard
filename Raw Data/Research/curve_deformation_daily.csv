@@ -1,0 +1,2044 @@
+date,parallel,twist,butterfly,stock_level,spot_cat,regime
+2017-02-07,2777.0,0.0,-3.5,Unknown,Small down,Unknown
+2017-02-08,2793.8333333333335,-11.0,3.5,Unknown,Flat,Unknown
+2017-03-09,2714.8333333333335,4.0,14.0,Unknown,Large down,Unknown
+2017-03-14,2617.3333333333335,26.0,20.5,Unknown,Flat,Unknown
+2017-03-16,2671.5,37.0,3.5,Unknown,Large up,Unknown
+2017-03-22,2695.5,40.0,8.5,Unknown,Small up,Unknown
+2017-03-30,2565.5,3.0,12.5,Unknown,Large down,Unknown
+2017-04-05,2581.0,31.0,9.5,Unknown,Small up,Unknown
+2017-04-06,2577.5,28.0,12.5,Unknown,Flat,Unknown
+2017-04-11,2557.3333333333335,-29.0,12.0,Unknown,Small up,Unknown
+2017-04-12,2539.1666666666665,-28.0,8.5,Unknown,Small down,Unknown
+2017-04-13,2522.5,-11.0,31.5,Unknown,Small down,Unknown
+2017-04-18,2493.5,-18.0,12.5,Unknown,Small down,Unknown
+2017-04-19,2482.6666666666665,-21.0,13.0,Unknown,Flat,Unknown
+2017-04-20,2507.6666666666665,-11.0,12.5,Unknown,Small up,Unknown
+2017-04-25,2470.6666666666665,-14.0,15.0,Unknown,Large down,Unknown
+2017-04-27,2476.8333333333335,-21.0,12.0,Unknown,Flat,Unknown
+2017-05-02,2517.3333333333335,-17.0,38.0,Unknown,Small up,Unknown
+2017-05-03,2509.5,-48.0,24.0,Unknown,Small down,Unknown
+2017-05-04,2514.5,-29.0,30.5,Unknown,Flat,Unknown
+2017-05-08,2533.0,-18.0,17.0,Unknown,Small up,Unknown
+2017-05-09,2545.1666666666665,-19.0,22.0,Unknown,Flat,Unknown
+2017-05-11,2569.3333333333335,-6.0,4.5,Unknown,Large up,Unknown
+2017-06-05,2464.3333333333335,-17.0,23.0,Unknown,Large down,Unknown
+2017-06-06,2471.1666666666665,-12.0,22.5,Unknown,Flat,Unknown
+2017-06-07,2454.3333333333335,-21.0,22.0,Unknown,Small down,Unknown
+2017-06-08,2455.0,-22.0,18.5,Unknown,Flat,Unknown
+2017-06-13,2468.8333333333335,-23.0,-10.0,Unknown,Small up,Unknown
+2017-06-14,2467.5,-2.0,-6.0,Unknown,Flat,Unknown
+2017-06-15,2482.6666666666665,16.0,-1.5,Unknown,Small up,Unknown
+2017-06-19,2520.3333333333335,-3.0,18.0,Unknown,Small up,Unknown
+2017-06-20,2519.8333333333335,-10.0,24.0,Unknown,Flat,Unknown
+2017-06-21,2498.3333333333335,-11.0,31.0,Unknown,Small down,Unknown
+2017-06-22,2500.5,9.0,36.0,Unknown,Flat,Unknown
+2017-06-28,2496.3333333333335,0.0,28.5,Unknown,Flat,Unknown
+2017-06-29,2520.0,2.0,29.5,Unknown,Small up,Unknown
+2017-07-03,2555.8333333333335,12.0,34.5,Unknown,Large up,Unknown
+2017-07-04,2551.6666666666665,5.0,32.5,Unknown,Flat,Unknown
+2017-07-05,2563.6666666666665,18.0,28.5,Unknown,Small up,Unknown
+2017-07-06,2567.0,21.0,27.0,Unknown,Flat,Unknown
+2017-07-10,2592.1666666666665,38.0,28.5,Unknown,Small up,Unknown
+2017-07-11,2591.3333333333335,43.0,31.0,Unknown,Flat,Unknown
+2017-07-12,2594.6666666666665,39.0,25.0,Unknown,Flat,Unknown
+2017-07-13,2576.6666666666665,33.0,31.5,Unknown,Small down,Unknown
+2017-07-17,2571.0,31.0,21.5,Unknown,Flat,Unknown
+2017-07-18,2546.3333333333335,33.0,30.5,Unknown,Small down,Unknown
+2017-07-19,2555.5,44.0,26.0,Unknown,Small up,Unknown
+2017-07-20,2606.5,46.0,36.5,Unknown,Large up,Unknown
+2017-07-24,2583.0,47.0,34.5,Unknown,Small down,Unknown
+2017-07-25,2642.1666666666665,43.0,25.0,Unknown,Large up,Unknown
+2017-07-26,2655.6666666666665,49.0,33.0,Unknown,Flat,Unknown
+2017-07-27,2698.0,43.0,28.0,Unknown,Large up,Unknown
+2017-07-31,2693.8333333333335,42.0,24.5,Unknown,Flat,Unknown
+2017-08-01,2671.6666666666665,56.0,24.5,Unknown,Small down,Unknown
+2017-08-02,2687.0,45.0,35.5,Unknown,Flat,Unknown
+2017-08-03,2667.3333333333335,26.0,32.0,Unknown,Small down,Unknown
+2017-08-07,2634.6666666666665,24.0,44.0,Unknown,Large down,Unknown
+2017-08-08,2663.3333333333335,50.0,32.5,Unknown,Large up,Unknown
+2017-08-09,2670.0,44.0,32.5,Unknown,Flat,Unknown
+2017-08-10,2698.8333333333335,46.0,32.0,Unknown,Small up,Unknown
+2017-08-14,2695.0,37.0,21.0,Unknown,Flat,Unknown
+2017-08-15,2671.6666666666665,38.0,23.0,Unknown,Small down,Unknown
+2017-08-16,2663.5,35.0,25.0,Unknown,Flat,Unknown
+2017-08-17,2687.5,28.0,32.0,Unknown,Small up,Unknown
+2017-08-21,2716.3333333333335,33.0,26.5,Unknown,Small up,Unknown
+2017-08-22,2749.8333333333335,31.0,26.0,Unknown,Small up,Unknown
+2017-08-23,2758.3333333333335,37.0,31.5,Unknown,Flat,Unknown
+2017-08-24,2795.6666666666665,45.0,33.0,Unknown,Small up,Unknown
+2017-08-28,2757.0,43.0,34.0,Unknown,Small down,Unknown
+2017-08-29,2732.3333333333335,34.0,33.5,Unknown,Small down,Unknown
+2017-08-30,2730.8333333333335,28.0,30.0,Unknown,Flat,Unknown
+2017-09-05,2791.5,35.0,32.5,Unknown,Large up,Unknown
+2017-09-06,2761.0,41.0,29.0,Unknown,Small down,Unknown
+2017-09-07,2784.1666666666665,40.0,29.0,Unknown,Small up,Unknown
+2017-09-11,2763.5,75.0,23.5,Unknown,Flat,Unknown
+2017-09-12,2764.5,90.0,22.5,Unknown,Flat,Unknown
+2017-09-13,2784.6666666666665,105.0,19.5,Unknown,Small up,Unknown
+2017-09-14,2785.8333333333335,104.0,23.5,Unknown,Flat,Unknown
+2017-09-18,2759.1666666666665,106.0,33.5,Unknown,Small down,Unknown
+2017-09-19,2732.8333333333335,108.0,40.5,Unknown,Small down,Unknown
+2017-09-20,2740.5,103.0,46.5,Unknown,Flat,Unknown
+2017-09-21,2715.6666666666665,93.0,46.0,Unknown,Small down,Unknown
+2017-09-25,2667.0,95.0,48.5,Unknown,Large down,Unknown
+2017-09-26,2722.0,108.0,47.0,Unknown,Large up,Unknown
+2017-09-27,2721.0,112.0,47.5,Unknown,Flat,Unknown
+2017-09-28,2683.1666666666665,108.0,51.5,Unknown,Large down,Unknown
+2017-10-02,2636.5,113.0,54.0,Unknown,Large down,Unknown
+2017-10-03,2652.3333333333335,119.0,53.5,Unknown,Small up,Unknown
+2017-10-04,2681.3333333333335,121.0,52.0,Unknown,Small up,Unknown
+2017-10-05,2684.6666666666665,119.0,53.5,Unknown,Flat,Unknown
+2017-10-09,2696.6666666666665,134.0,56.5,Unknown,Small up,Unknown
+2017-10-10,2668.5,122.0,59.5,Unknown,Small down,Unknown
+2017-10-11,2672.8333333333335,123.0,62.5,Unknown,Flat,Unknown
+2017-10-12,2687.3333333333335,121.0,61.5,Unknown,Small up,Unknown
+2017-10-16,2751.0,71.0,40.5,Unknown,Large up,Unknown
+2017-10-17,2734.0,66.0,45.5,Unknown,Small down,Unknown
+2017-10-19,2721.3333333333335,62.0,52.5,Unknown,Small down,Unknown
+2017-10-23,2780.0,69.0,47.0,Unknown,Large up,Unknown
+2017-10-24,2769.8333333333335,72.0,49.0,Unknown,Flat,Unknown
+2017-10-25,2803.0,63.0,49.0,Unknown,Small up,Unknown
+2017-10-26,2810.1666666666665,64.0,49.0,Unknown,Flat,Unknown
+2017-10-30,2839.5,69.0,57.5,Unknown,Small up,Unknown
+2017-10-31,2821.0,55.0,56.5,Unknown,Small down,Unknown
+2017-11-01,2838.6666666666665,59.0,53.5,Unknown,Small up,Unknown
+2017-11-02,2825.8333333333335,58.0,58.0,Unknown,Small down,Unknown
+2017-11-06,2786.1666666666665,53.0,50.0,Unknown,Small down,Unknown
+2017-11-07,2787.8333333333335,51.0,49.0,Unknown,Flat,Unknown
+2017-11-08,2823.5,50.0,46.0,Unknown,Small up,Unknown
+2017-11-09,2809.0,47.0,42.0,Unknown,Flat,Unknown
+2017-11-13,2766.3333333333335,42.0,47.5,Unknown,Large down,Unknown
+2017-11-14,2725.8333333333335,37.0,45.0,Unknown,Large down,Unknown
+2017-11-15,2722.5,41.0,54.0,Unknown,Flat,Unknown
+2017-11-16,2730.0,38.0,48.0,Unknown,Flat,Unknown
+2017-11-20,2632.5,3.0,46.5,Unknown,Large down,Unknown
+2017-11-21,2635.1666666666665,-24.0,42.0,Unknown,Flat,Unknown
+2017-11-22,2650.0,-16.0,36.5,Unknown,Small up,Unknown
+2017-11-23,2618.0,-25.0,45.5,Unknown,Large down,Unknown
+2017-11-27,2603.6666666666665,-52.0,46.5,Unknown,Small down,Unknown
+2017-11-28,2602.5,-47.0,46.5,Unknown,Flat,Unknown
+2017-11-29,2578.3333333333335,-49.0,48.5,Unknown,Small down,Unknown
+2017-11-30,2618.5,-54.0,48.5,Unknown,Large up,Unknown
+2017-12-04,2597.8333333333335,-43.0,44.5,Unknown,Small down,Unknown
+2017-12-05,2574.5,-32.0,45.0,Unknown,Small down,Unknown
+2017-12-06,2548.6666666666665,-31.0,42.0,Unknown,Small down,Unknown
+2017-12-07,2513.6666666666665,-33.0,42.0,Unknown,Small down,Unknown
+2017-12-11,2488.6666666666665,-88.0,50.5,Unknown,Large down,Unknown
+2017-12-12,2495.5,-82.0,51.5,Unknown,Flat,Unknown
+2017-12-13,2492.8333333333335,-98.0,47.0,Unknown,Flat,Unknown
+2017-12-14,2480.0,-90.0,48.0,Unknown,Flat,Unknown
+2017-12-18,2523.0,-78.0,30.5,Unknown,Large up,Unknown
+2017-12-19,2515.1666666666665,-59.0,26.5,Unknown,Flat,Unknown
+2017-12-20,2495.0,-55.0,31.5,Unknown,Small down,Unknown
+2017-12-21,2452.8333333333335,-57.0,12.5,Unknown,Small down,Unknown
+2017-12-22,2456.0,-69.0,21.5,Unknown,Flat,Unknown
+2017-12-26,2499.0,-86.0,30.0,Unknown,Small up,Unknown
+2017-12-27,2536.8333333333335,-87.0,32.5,Unknown,Small up,Unknown
+2017-12-28,2515.0,-82.0,33.5,Unknown,Small down,Unknown
+2017-12-29,2497.0,-83.0,26.5,Unknown,Small down,Unknown
+2018-01-02,2528.3333333333335,-82.0,30.0,Unknown,Small up,Unknown
+2018-01-03,2596.6666666666665,-44.0,32.5,Unknown,Large up,Unknown
+2018-01-04,2578.3333333333335,-30.0,20.5,Unknown,Flat,Unknown
+2018-01-05,2574.8333333333335,-39.0,36.0,Unknown,Small down,Unknown
+2018-01-08,2604.8333333333335,-11.0,44.0,Unknown,Large up,Unknown
+2018-01-09,2588.1666666666665,24.0,26.5,Unknown,Small up,Unknown
+2018-01-10,2600.8333333333335,-10.0,40.5,Unknown,Small down,Unknown
+2018-01-11,2554.3333333333335,-4.0,30.5,Unknown,Small down,Unknown
+2018-01-12,2530.3333333333335,-13.0,23.5,Unknown,Small down,Unknown
+2018-01-15,2543.0,37.0,26.0,Unknown,Small up,Unknown
+2018-01-16,2505.0,22.0,21.5,Unknown,Large down,Unknown
+2018-01-17,2475.5,26.0,19.5,Unknown,Small down,Unknown
+2018-01-18,2471.6666666666665,8.0,12.0,Unknown,Flat,Unknown
+2018-01-19,2440.6666666666665,-1.0,8.0,Unknown,Small down,Unknown
+2018-01-22,2474.0,-2.0,13.0,Unknown,Small up,Unknown
+2018-01-23,2487.1666666666665,17.0,12.0,Unknown,Small up,Unknown
+2018-01-24,2513.0,14.0,14.0,Unknown,Small up,Unknown
+2018-01-25,2488.8333333333335,14.0,10.0,Unknown,Small down,Unknown
+2018-01-26,2484.5,-1.0,1.5,Unknown,Flat,Unknown
+2018-01-29,2516.1666666666665,2.0,12.0,Unknown,Small up,Unknown
+2018-01-30,2489.1666666666665,-2.0,9.0,Unknown,Small down,Unknown
+2018-02-02,2470.1666666666665,12.0,2.5,Unknown,Flat,Unknown
+2018-02-05,2491.8333333333335,19.0,2.5,Unknown,Small up,Unknown
+2018-02-06,2470.6666666666665,7.0,2.5,Unknown,Small down,Unknown
+2018-02-07,2485.6666666666665,-3.0,6.0,Unknown,Flat,Unknown
+2018-02-08,2498.1666666666665,12.0,2.5,Unknown,Small up,Unknown
+2018-02-09,2511.6666666666665,-15.0,13.0,Unknown,Flat,Unknown
+2018-02-12,2542.6666666666665,18.0,-0.5,Unknown,Large up,Unknown
+2018-02-13,2513.3333333333335,2.0,5.0,Unknown,Large down,Unknown
+2018-02-14,2505.1666666666665,11.0,3.0,Unknown,Flat,Unknown
+2018-02-15,2505.8333333333335,10.0,5.5,Unknown,Flat,Unknown
+2018-02-19,2508.5,47.0,6.0,Unknown,Small up,Unknown
+2018-02-20,2482.6666666666665,55.0,1.0,Unknown,Small down,Unknown
+2018-02-21,2486.0,56.0,2.5,Unknown,Flat,Unknown
+2018-02-22,2487.3333333333335,47.0,0.5,Unknown,Flat,Unknown
+2018-02-23,2515.8333333333335,55.0,10.0,Unknown,Small up,Unknown
+2018-02-26,2531.8333333333335,50.0,9.0,Unknown,Small up,Unknown
+2018-02-27,2532.1666666666665,58.0,9.5,Unknown,Flat,Unknown
+2018-02-28,2549.3333333333335,53.0,8.5,Unknown,Small up,Unknown
+2018-03-01,2539.8333333333335,60.0,12.5,Unknown,Flat,Unknown
+2018-03-02,2470.5,47.0,-6.0,Unknown,Large down,Unknown
+2018-03-05,2464.0,55.0,-3.5,Unknown,Flat,Unknown
+2018-03-06,2478.1666666666665,17.0,13.5,Unknown,Flat,Unknown
+2018-03-07,2436.8333333333335,25.0,19.5,Unknown,Large down,Unknown
+2018-03-08,2413.5,29.0,-9.0,Unknown,Flat,Unknown
+2018-03-09,2380.1666666666665,29.0,-11.0,Unknown,Small down,Unknown
+2018-03-12,2380.0,-5.0,6.5,Unknown,Small down,Unknown
+2018-03-13,2405.3333333333335,-23.0,19.5,Unknown,Flat,Unknown
+2018-03-14,2434.3333333333335,28.0,2.0,Unknown,Large up,Unknown
+2018-03-15,2440.0,37.0,-4.5,Unknown,Small up,Unknown
+2018-03-16,2416.8333333333335,28.0,-6.0,Unknown,Small down,Unknown
+2018-03-20,2430.6666666666665,40.0,2.5,Unknown,Small up,Unknown
+2018-03-21,2441.8333333333335,39.0,-1.0,Unknown,Flat,Unknown
+2018-03-22,2439.6666666666665,9.0,10.0,Unknown,Small down,Unknown
+2018-03-23,2422.6666666666665,-4.0,10.5,Unknown,Small down,Unknown
+2018-03-27,2421.6666666666665,-20.0,25.0,Unknown,Small down,Unknown
+2018-03-28,2410.5,-6.0,16.5,Unknown,Flat,Unknown
+2018-03-29,2394.1666666666665,-7.0,19.5,Unknown,Small down,Unknown
+2018-03-30,2411.6666666666665,-26.0,29.5,Unknown,Flat,Unknown
+2018-04-03,2427.3333333333335,-4.0,17.0,Unknown,Small up,Unknown
+2018-04-04,2440.8333333333335,-24.0,28.5,Unknown,Flat,Unknown
+2018-04-05,2459.3333333333335,-6.0,18.5,Unknown,Small up,Unknown
+2018-04-06,2488.6666666666665,-29.0,32.0,Unknown,Flat,Unknown
+2018-04-10,2426.0,17.0,3.5,Unknown,Small down,Unknown
+2018-04-11,2430.6666666666665,6.0,4.5,Unknown,Flat,Unknown
+2018-04-12,2412.8333333333335,-76.0,37.5,Unknown,Large down,Unknown
+2018-04-13,2398.8333333333335,-13.0,5.0,Unknown,Large up,Unknown
+2018-04-17,2404.5,-11.0,11.0,Unknown,Flat,Unknown
+2018-04-18,2405.1666666666665,-11.0,11.0,Unknown,Flat,Unknown
+2018-04-19,2402.0,-11.0,17.0,Unknown,Flat,Unknown
+2018-04-20,2414.8333333333335,-6.0,3.5,Unknown,Small up,Unknown
+2018-04-23,2405.5,-3.0,2.5,Unknown,Flat,Unknown
+2018-04-24,2396.1666666666665,-5.0,0.0,Unknown,Flat,Unknown
+2018-04-25,2394.8333333333335,0.0,5.0,Unknown,Flat,Unknown
+2018-04-26,2387.6666666666665,-1.0,2.5,Unknown,Flat,Unknown
+2018-04-27,2380.5,-8.0,2.0,Unknown,Flat,Unknown
+2018-04-30,2354.3333333333335,-40.0,16.5,Unknown,Large down,Unknown
+2018-05-02,2360.3333333333335,-21.0,6.0,Unknown,Small up,Unknown
+2018-05-03,2333.6666666666665,-26.0,2.0,Unknown,Small down,Unknown
+2018-05-04,2338.1666666666665,-38.0,14.0,Unknown,Flat,Unknown
+2018-05-07,2376.8333333333335,-27.0,13.0,Unknown,Large up,Unknown
+2018-05-08,2377.0,-25.0,7.0,Unknown,Flat,Unknown
+2018-05-14,2421.6666666666665,-15.0,-1.0,Unknown,Large up,Unknown
+2018-05-15,2425.0,-68.0,29.5,Unknown,Large down,Unknown
+2018-05-16,2416.6666666666665,-21.0,4.5,Unknown,Small up,Unknown
+2018-05-17,2435.6666666666665,-29.0,1.5,Unknown,Small up,Unknown
+2018-05-18,2453.5,-38.0,1.5,Unknown,Small up,Unknown
+2018-05-21,2450.3333333333335,-37.0,-2.5,Unknown,Flat,Unknown
+2018-05-22,2477.0,-30.0,-0.5,Unknown,Small up,Unknown
+2018-05-23,2474.5,-26.0,0.5,Unknown,Flat,Unknown
+2018-05-24,2490.6666666666665,-31.0,2.5,Unknown,Flat,Unknown
+2018-05-25,2458.6666666666665,-23.0,-8.0,Unknown,Small down,Unknown
+2018-05-28,2420.5,-22.0,-5.0,Unknown,Large down,Unknown
+2018-05-30,2441.3333333333335,-25.0,-3.0,Unknown,Small up,Unknown
+2018-05-31,2425.0,-13.0,-7.5,Unknown,Flat,Unknown
+2018-06-01,2441.1666666666665,-10.0,-8.0,Unknown,Small up,Unknown
+2018-06-04,2412.1666666666665,-11.0,-11.0,Unknown,Small down,Unknown
+2018-06-05,2403.8333333333335,-12.0,-10.0,Unknown,Flat,Unknown
+2018-06-06,2396.3333333333335,-11.0,-6.5,Unknown,Flat,Unknown
+2018-06-07,2392.6666666666665,-10.0,-12.0,Unknown,Flat,Unknown
+2018-06-08,2372.3333333333335,-6.0,-17.5,Unknown,Small down,Unknown
+2018-06-11,2363.0,-19.0,-10.5,Unknown,Small down,Unknown
+2018-06-12,2331.0,-34.0,-4.5,Unknown,Large down,Unknown
+2018-06-13,2319.8333333333335,-42.0,-3.5,Unknown,Small down,Unknown
+2018-06-14,2347.1666666666665,-42.0,-21.0,Unknown,Large up,Unknown
+2018-06-18,2322.8333333333335,-59.0,-24.5,Unknown,Small down,Unknown
+2018-06-19,2274.6666666666665,-51.0,-21.5,Unknown,Large down,Unknown
+2018-06-20,2276.5,-54.0,-30.5,Unknown,Flat,Unknown
+2018-06-21,2265.1666666666665,-54.0,-28.5,Unknown,Small down,Unknown
+2018-06-22,2296.0,-51.0,-26.5,Unknown,Small up,Unknown
+2018-06-25,2302.6666666666665,-46.0,-28.0,Unknown,Flat,Unknown
+2018-06-26,2288.6666666666665,-44.0,-23.0,Unknown,Small down,Unknown
+2018-06-27,2318.6666666666665,-63.0,-9.0,Unknown,Small up,Unknown
+2018-06-28,2347.3333333333335,-53.0,-10.0,Unknown,Small up,Unknown
+2018-06-29,2328.8333333333335,-60.0,-5.0,Unknown,Small down,Unknown
+2018-07-02,2329.1666666666665,-76.0,6.5,Unknown,Small down,Unknown
+2018-07-03,2314.8333333333335,-48.0,-1.5,Unknown,Flat,Unknown
+2018-07-04,2302.5,-34.0,-9.5,Unknown,Flat,Unknown
+2018-07-05,2282.6666666666665,-48.0,-3.0,Unknown,Small down,Unknown
+2018-07-06,2269.5,-45.0,-6.5,Unknown,Flat,Unknown
+2018-07-09,2263.8333333333335,-98.0,20.5,Unknown,Large down,Unknown
+2018-07-10,2256.8333333333335,-78.0,11.5,Unknown,Flat,Unknown
+2018-07-11,2224.1666666666665,-73.0,-18.5,Unknown,Small down,Unknown
+2018-07-12,2196.1666666666665,-48.0,-14.0,Unknown,Small down,Unknown
+2018-07-13,2153.5,-52.0,-13.5,Unknown,Large down,Unknown
+2018-07-16,2183.0,-78.0,-16.5,Unknown,Small up,Unknown
+2018-07-17,2182.1666666666665,-60.0,-19.5,Unknown,Flat,Unknown
+2018-07-18,2223.8333333333335,-68.0,-18.5,Unknown,Large up,Unknown
+2018-07-19,2207.1666666666665,-61.0,-17.0,Unknown,Small down,Unknown
+2018-07-20,2203.8333333333335,-62.0,-13.0,Unknown,Flat,Unknown
+2018-07-23,2176.6666666666665,-95.0,-3.5,Unknown,Large down,Unknown
+2018-07-24,2159.8333333333335,-121.0,4.0,Unknown,Large down,Unknown
+2018-07-25,2171.3333333333335,-125.0,3.0,Unknown,Small up,Unknown
+2018-07-26,2211.0,-135.0,3.0,Unknown,Large up,Unknown
+2018-07-27,2201.0,-145.0,-4.0,Unknown,Small down,Unknown
+2018-07-30,2208.1666666666665,-161.0,-4.0,Unknown,Flat,Unknown
+2018-07-31,2209.6666666666665,-159.0,-2.0,Unknown,Flat,Unknown
+2018-08-01,2227.6666666666665,-156.0,-3.0,Unknown,Small up,Unknown
+2018-08-02,2215.8333333333335,-149.0,-15.0,Unknown,Flat,Unknown
+2018-08-03,2220.3333333333335,-128.0,-23.0,Unknown,Small up,Unknown
+2018-08-06,2232.0,-129.0,-24.0,Unknown,Flat,Unknown
+2018-08-07,2286.6666666666665,-153.0,-9.5,Unknown,Large up,Unknown
+2018-08-08,2274.8333333333335,-133.0,-7.0,Unknown,Flat,Unknown
+2018-08-09,2290.8333333333335,-132.0,-6.0,Unknown,Small up,Unknown
+2018-08-10,2294.5,-144.0,-6.5,Unknown,Flat,Unknown
+2018-08-13,2221.6666666666665,-152.0,-12.5,Unknown,Large down,Unknown
+2018-08-14,2228.5,-173.0,-1.5,Unknown,Flat,Unknown
+2018-08-15,2239.1666666666665,-137.0,-19.0,Unknown,Large up,Unknown
+2018-08-16,2247.1666666666665,-130.0,-18.5,Unknown,Small up,Unknown
+2018-08-17,2261.6666666666665,-133.0,-18.5,Unknown,Small up,Unknown
+2018-08-20,2279.1666666666665,-143.0,-17.0,Unknown,Flat,Unknown
+2018-08-21,2266.8333333333335,-142.0,-20.5,Unknown,Flat,Unknown
+2018-08-23,2245.5,-148.0,-25.0,Unknown,Small down,Unknown
+2018-08-24,2245.1666666666665,-154.0,-21.5,Unknown,Flat,Unknown
+2018-08-27,2226.0,-143.0,-25.0,Unknown,Small down,Unknown
+2018-08-28,2255.5,-152.0,-19.0,Unknown,Small up,Unknown
+2018-08-29,2241.6666666666665,-149.0,-21.0,Unknown,Small down,Unknown
+2018-08-30,2269.5,-163.0,-18.5,Unknown,Small up,Unknown
+2018-09-03,2280.1666666666665,-156.0,-14.0,Unknown,Small up,Unknown
+2018-09-04,2317.8333333333335,-165.0,-12.5,Unknown,Small up,Unknown
+2018-09-05,2311.6666666666665,-154.0,-13.0,Unknown,Flat,Unknown
+2018-09-06,2297.3333333333335,-158.0,-12.0,Unknown,Small down,Unknown
+2018-09-07,2283.3333333333335,-163.0,-5.0,Unknown,Small down,Unknown
+2018-09-12,2260.0,-135.0,-17.0,Unknown,Flat,Unknown
+2018-09-13,2265.3333333333335,-136.0,-17.5,Unknown,Flat,Unknown
+2018-09-14,2249.1666666666665,-120.0,-32.5,Unknown,Flat,Unknown
+2018-09-18,2228.0,-143.0,-23.0,Unknown,Large down,Unknown
+2018-09-19,2185.3333333333335,-137.0,-22.5,Unknown,Large down,Unknown
+2018-09-20,2172.5,-132.0,-22.5,Unknown,Small down,Unknown
+2018-09-21,2167.8333333333335,-131.0,-25.5,Unknown,Flat,Unknown
+2018-09-24,2190.3333333333335,-133.0,-27.5,Unknown,Small up,Unknown
+2018-09-25,2205.8333333333335,-146.0,-19.5,Unknown,Flat,Unknown
+2018-09-26,2212.3333333333335,-153.0,-14.5,Unknown,Flat,Unknown
+2018-09-27,2191.0,-171.0,-15.5,Unknown,Small down,Unknown
+2018-09-28,2201.6666666666665,-199.0,-15.5,Unknown,Flat,Unknown
+2018-10-01,2202.5,-232.0,-34.0,Mid,Flat,Unknown
+2018-10-02,2206.1666666666665,-265.0,-24.0,Mid,Small down,Unknown
+2018-10-03,2234.5,-234.0,-17.0,Mid,Large up,Unknown
+2018-10-04,2264.1666666666665,-245.0,-11.5,Mid,Small up,Unknown
+2018-10-05,2306.6666666666665,-254.0,21.5,Mid,Small up,Unknown
+2018-10-08,2226.3333333333335,-230.0,-23.0,Mid,Large down,Unknown
+2018-10-09,2240.8333333333335,-249.0,-10.5,Mid,Flat,Unknown
+2018-10-10,2238.8333333333335,-240.0,-32.0,Mid,Small up,Unknown
+2018-10-11,2210.8333333333335,-253.0,-15.5,Mid,Large down,Unknown
+2018-10-12,2228.8333333333335,-245.0,-12.5,Mid,Small up,Unknown
+2018-10-15,2225.1666666666665,-193.0,-30.5,Mid,Large up,Unknown
+2018-10-16,2267.3333333333335,-242.0,9.5,Mid,Flat,Unknown
+2018-10-17,2282.8333333333335,-241.0,11.5,Mid,Small up,Unknown
+2018-10-18,2263.3333333333335,-243.0,9.0,Mid,Small down,Unknown
+2018-10-19,2248.3333333333335,-238.0,6.0,Mid,Small down,Unknown
+2018-10-22,2261.1666666666665,-229.0,3.5,Mid,Small up,Unknown
+2018-10-23,2241.0,-233.0,4.0,Mid,Small down,Unknown
+2018-10-24,2222.0,-230.0,5.5,Mid,Small down,Unknown
+2018-10-25,2200.0,-242.0,12.5,Mid,Large down,Unknown
+2018-10-26,2172.0,-243.0,6.0,Mid,Small down,Unknown
+2018-10-29,2209.5,-254.0,12.0,Mid,Small up,Unknown
+2018-10-30,2190.6666666666665,-252.0,6.5,Mid,Small down,Unknown
+2018-10-31,2165.8333333333335,-313.0,34.5,Mid,Large down,Unknown
+2018-11-01,2165.3333333333335,-305.0,23.0,Mid,Small up,Unknown
+2018-11-02,2173.8333333333335,-305.0,26.5,Mid,Flat,Unknown
+2018-11-05,2151.6666666666665,-286.0,8.5,Mid,Flat,Unknown
+2018-11-07,2135.6666666666665,-311.0,19.0,Mid,Large down,Unknown
+2018-11-08,2120.5,-284.0,1.0,Mid,Small up,Unknown
+2018-11-09,2132.3333333333335,-301.0,22.0,Mid,Small down,Unknown
+2018-11-12,2121.8333333333335,-304.0,27.5,Mid,Small down,Unknown
+2018-11-13,2094.8333333333335,-319.0,40.0,Mid,Large down,Unknown
+2018-11-14,2051.0,-343.0,52.5,Mid,Large down,Unknown
+2018-11-15,2056.1666666666665,-345.0,60.0,Mid,Flat,Unknown
+2018-11-16,1988.6666666666667,-363.0,54.0,Mid,Large down,Unknown
+2018-11-19,2001.8333333333333,-348.0,45.5,Mid,Small up,Unknown
+2018-11-21,2022.6666666666667,-322.0,38.0,Mid,Large up,Unknown
+2018-11-22,2075.0,-295.0,29.5,Mid,Large up,Unknown
+2018-11-23,2064.5,-290.0,30.0,Mid,Flat,Unknown
+2018-11-26,1993.3333333333333,-310.0,21.5,Mid,Large down,Unknown
+2018-11-27,1991.0,-332.0,33.5,Mid,Small down,Unknown
+2018-11-28,2034.5,-340.0,41.5,Mid,Large up,Unknown
+2018-11-29,2047.0,-318.0,34.0,Mid,Small up,Unknown
+2018-11-30,2056.8333333333335,-316.0,40.0,Mid,Flat,Unknown
+2018-12-03,2023.3333333333333,-367.0,44.0,Mid,Large down,Unknown
+2018-12-04,2036.3333333333333,-420.0,67.5,Mid,Small down,Unknown
+2018-12-05,2018.8333333333333,-410.0,55.5,Mid,Flat,Unknown
+2018-12-06,2026.0,-392.0,53.5,Mid,Small up,Unknown
+2018-12-07,2018.6666666666667,-401.0,57.0,Mid,Small down,Unknown
+2018-12-24,2135.6666666666665,-140.0,21.0,Mid,Large down,Unknown
+2018-12-26,2109.8333333333335,-175.0,22.0,Mid,Large down,Unknown
+2018-12-27,2115.5,-175.0,28.0,Mid,Flat,Unknown
+2018-12-28,2123.0,-181.0,37.5,Mid,Flat,Unknown
+2018-12-31,2122.5,-191.0,41.5,Mid,Flat,Unknown
+2019-01-02,2171.3333333333335,-158.0,28.5,Mid,Large up,Unknown
+2019-01-03,2167.5,-130.0,12.5,Mid,Small up,Unknown
+2019-01-04,2185.8333333333335,-120.0,10.5,Mid,Small up,Unknown
+2019-01-07,2169.6666666666665,-137.0,18.5,Mid,Small down,Unknown
+2019-01-08,2185.0,-116.0,16.5,Mid,Small up,Unknown
+2019-01-09,2216.1666666666665,-117.0,40.0,Mid,Small up,Unknown
+2019-01-10,2181.1666666666665,-127.0,4.0,Mid,Small down,Unknown
+2019-01-11,2206.6666666666665,-124.0,41.5,Mid,Flat,Unknown
+2019-01-14,2156.0,-121.0,-3.5,Mid,Small down,Unknown
+2019-01-15,2166.3333333333335,-95.0,-12.5,Mid,Small up,Unknown
+2019-01-16,2172.8333333333335,-122.0,36.5,Mid,Large down,Unknown
+2019-01-17,2193.8333333333335,-102.0,35.0,Mid,Small up,Contango
+2019-01-18,2218.3333333333335,-110.0,40.0,Mid,Small up,Contango
+2019-01-22,2247.3333333333335,-116.0,49.5,Mid,Small up,Contango
+2019-01-23,2270.5,-108.0,45.0,Mid,Small up,Contango
+2019-01-24,2286.1666666666665,-116.0,49.5,Mid,Flat,Contango
+2019-01-25,2282.5,-128.0,48.0,Mid,Flat,Contango
+2019-01-28,2312.0,-117.0,55.0,Mid,Small up,Contango
+2019-01-29,2282.8333333333335,-123.0,47.0,Mid,Small down,Contango
+2019-01-30,2290.8333333333335,-121.0,50.0,Mid,Flat,Contango
+2019-01-31,2288.8333333333335,-124.0,48.0,Mid,Flat,Contango
+2019-02-04,2315.5,-46.0,32.5,Mid,Large up,Contango
+2019-02-07,2303.8333333333335,-117.0,51.5,Mid,Large down,Contango
+2019-02-08,2274.8333333333335,-111.0,52.5,Mid,Small down,Contango
+2019-02-11,2259.6666666666665,-88.0,29.0,Mid,Small up,Contango
+2019-02-12,2248.1666666666665,-86.0,31.5,Mid,Small down,Contango
+2019-02-13,2244.3333333333335,-80.0,31.5,Mid,Flat,Contango
+2019-02-14,2277.6666666666665,-56.0,34.5,Mid,Large up,Contango
+2019-02-15,2259.6666666666665,-73.0,37.5,Mid,Small down,Contango
+2019-02-18,2270.8333333333335,-85.0,39.0,Mid,Flat,Contango
+2019-02-19,2241.3333333333335,-110.0,56.5,Mid,Large down,Contango
+2019-02-20,2227.3333333333335,-129.0,52.5,Mid,Small down,Contango
+2019-02-21,2247.5,-137.0,58.0,Mid,Small up,Contango
+2019-02-22,2237.8333333333335,-136.0,55.0,Mid,Flat,Contango
+2019-03-01,2175.6666666666665,-270.0,87.0,Mid,Large up,Contango
+2019-03-04,2141.6666666666665,-243.0,69.5,Mid,Flat,Contango
+2019-03-05,2153.1666666666665,-254.0,71.0,Mid,Flat,Contango
+2019-03-06,2156.0,-240.0,58.5,Mid,Small up,Contango
+2019-03-07,2130.5,-228.0,54.5,Mid,Small down,Contango
+2019-03-08,2123.6666666666665,-229.0,57.0,Mid,Flat,Contango
+2019-03-11,2115.1666666666665,-235.0,60.0,Mid,Small down,Contango
+2019-03-12,2114.8333333333335,-218.0,41.5,Mid,Small up,Contango
+2019-03-13,2133.6666666666665,-143.0,26.5,Mid,Large up,Contango
+2019-03-14,2114.6666666666665,-157.0,28.0,Mid,Small down,Contango
+2019-03-22,2173.6666666666665,-134.0,28.5,Mid,Flat,Contango
+2019-03-25,2147.8333333333335,-138.0,28.5,Mid,Small down,Contango
+2019-03-26,2137.1666666666665,-161.0,34.5,Mid,Small down,Contango
+2019-03-27,2141.8333333333335,-179.0,37.0,Mid,Flat,Contango
+2019-03-28,2125.1666666666665,-184.0,38.0,Mid,Small down,Contango
+2019-03-29,2111.5,-184.0,30.5,Mid,Flat,Contango
+2019-04-01,2120.3333333333335,-181.0,32.5,Mid,Flat,Contango
+2019-04-02,2153.0,-178.0,44.5,Mid,Small up,Contango
+2019-04-03,2172.5,-153.0,43.0,Mid,Large up,Contango
+2019-04-04,2195.8333333333335,-137.0,47.0,Mid,Small up,Contango
+2019-04-05,2217.0,-81.0,28.5,Mid,Large up,Contango
+2019-04-08,2199.8333333333335,-74.0,20.5,Mid,Flat,Contango
+2019-04-09,2208.3333333333335,-71.0,20.0,Mid,Small up,Contango
+2019-04-10,2163.0,-96.0,31.0,Mid,Large down,Contango
+2019-04-11,2167.1666666666665,-83.0,24.5,Mid,Small up,Contango
+2019-04-12,2156.5,-103.0,34.0,Mid,Small down,Contango
+2019-04-15,2140.0,-76.0,12.5,Mid,Flat,Contango
+2019-04-16,2167.5,-97.0,23.0,Mid,Flat,Contango
+2019-04-17,2198.3333333333335,-99.0,30.5,Mid,Small up,Contango
+2019-04-18,2175.6666666666665,-107.0,25.5,Mid,Small down,Contango
+2019-04-19,2183.1666666666665,-116.0,30.5,Mid,Flat,Contango
+2019-04-22,2169.0,-120.0,27.5,Mid,Small down,Contango
+2019-04-23,2163.1666666666665,-129.0,37.0,Mid,Small down,Contango
+2019-04-24,2165.6666666666665,-138.0,37.0,Mid,Flat,Contango
+2019-04-25,2149.1666666666665,-146.0,43.0,Mid,Small down,Contango
+2019-04-26,2115.6666666666665,-147.0,33.0,Mid,Small down,Contango
+2019-04-29,2105.3333333333335,-166.0,40.0,Mid,Small down,Contango
+2019-04-30,2094.8333333333335,-178.0,32.5,Mid,Small down,Contango
+2019-05-02,2038.3333333333333,-162.0,10.5,Mid,Large down,Contango
+2019-05-03,2050.8333333333335,-139.0,2.5,Mid,Large up,Contango
+2019-05-06,2026.5,-135.0,-0.5,Mid,Small down,Contango
+2019-05-07,2046.8333333333333,-153.0,14.5,Mid,Flat,Contango
+2019-05-08,2076.5,-138.0,2.0,Mid,Large up,Contango
+2019-05-09,2012.1666666666667,-164.0,15.5,Mid,Large down,Contango
+2019-05-10,1996.8333333333333,-116.0,-4.5,Mid,Small up,Contango
+2019-05-13,2021.8333333333333,-129.0,-1.5,Mid,Small up,Contango
+2019-05-14,2022.8333333333333,-118.0,-1.5,Mid,Flat,Contango
+2019-05-15,2057.8333333333335,-109.0,-3.0,Mid,Large up,Contango
+2019-05-16,2105.6666666666665,-95.0,-2.5,Mid,Large up,Contango
+2019-05-17,2108.1666666666665,-113.0,3.0,Mid,Flat,Contango
+2019-05-21,2071.0,-101.0,6.0,Mid,Large down,Contango
+2019-05-23,2024.5,-99.0,0.0,Mid,Large down,Contango
+2019-05-24,2024.8333333333333,-102.0,-4.0,Mid,Flat,Contango
+2019-05-27,2033.8333333333333,-95.0,0.5,Mid,Small up,Contango
+2019-05-28,2070.0,-95.0,8.0,Mid,Large up,Contango
+2019-05-29,2105.3333333333335,-104.0,15.5,Mid,Small up,Contango
+2019-05-30,2085.1666666666665,-110.0,15.0,Mid,Small down,Contango
+2019-05-31,2076.3333333333335,-82.0,4.0,Mid,Small up,Contango
+2019-06-03,2036.0,-71.0,-5.5,Mid,Small down,Contango
+2019-06-04,2062.0,-66.0,-3.5,Mid,Small up,Contango
+2019-06-07,2034.6666666666667,-72.0,-3.5,Mid,Small down,Contango
+2019-06-10,2021.0,-99.0,-22.0,Mid,Small down,Contango
+2019-06-11,2018.6666666666667,-67.0,-10.0,Mid,Flat,Contango
+2019-06-12,1999.1666666666667,-95.0,-28.0,Mid,Small down,Contango
+2019-06-13,2006.0,-123.0,22.0,Mid,Large down,Contango
+2019-06-14,2017.1666666666667,-49.0,-12.5,Mid,Large up,Contango
+2019-06-17,2048.1666666666665,-71.0,-20.5,Mid,Small up,Contango
+2019-06-18,2038.0,-86.0,-17.5,Mid,Small down,Contango
+2019-06-19,2061.6666666666665,-91.0,-19.5,Mid,Small up,Contango
+2019-06-20,2040.6666666666667,-95.0,-22.0,Mid,Small down,Contango
+2019-06-21,2038.5,-102.0,-18.5,Mid,Flat,Contango
+2019-06-24,2015.1666666666667,-117.0,-16.5,Mid,Large down,Contango
+2019-06-25,1996.1666666666667,-123.0,-13.0,Mid,Small down,Contango
+2019-06-26,1983.6666666666667,-161.0,-11.0,Mid,Large down,Contango
+2019-06-27,1973.0,-230.0,18.5,Mid,Large down,Contango
+2019-06-28,1968.8333333333333,-204.0,-2.0,Mid,Small up,Contango
+2019-07-01,1979.5,-194.0,-8.5,Mid,Small up,Contango
+2019-07-02,1992.3333333333333,-164.0,-18.0,Mid,Large up,Contango
+2019-07-03,1982.6666666666667,-163.0,-25.0,Mid,Flat,Contango
+2019-07-04,1974.1666666666667,-179.0,-13.5,Mid,Small down,Contango
+2019-07-05,1981.1666666666667,-170.0,-16.0,Mid,Small up,Contango
+2019-07-08,1966.6666666666667,-147.0,-24.5,Mid,Flat,Contango
+2019-07-09,1963.1666666666667,-132.0,-22.0,Mid,Flat,Contango
+2019-07-10,1954.5,-173.0,-5.5,Mid,Large down,Contango
+2019-07-11,1999.1666666666667,-200.0,-25.0,Mid,Large up,Contango
+2019-07-12,1968.8333333333333,-166.0,-25.0,Mid,Small down,Contango
+2019-07-15,2022.3333333333333,-212.0,-21.5,Mid,Small up,Contango
+2019-07-16,2016.5,-222.0,-25.0,Mid,Flat,Contango
+2019-07-17,2022.5,-219.0,-21.5,Mid,Flat,Contango
+2019-07-18,2013.1666666666667,-217.0,-15.0,Mid,Small down,Contango
+2019-07-19,2003.8333333333333,-213.0,-15.0,Mid,Flat,Contango
+2019-07-22,2014.0,-204.0,-16.0,Mid,Small up,Contango
+2019-07-23,2029.1666666666667,-200.0,-6.5,Mid,Small up,Contango
+2019-07-24,2050.3333333333335,-209.0,1.5,Mid,Small up,Contango
+2019-07-25,2080.3333333333335,-195.0,-4.0,Mid,Large up,Contango
+2019-07-26,2083.6666666666665,-173.0,-3.5,Mid,Small up,Contango
+2019-07-29,2082.0,-161.0,-10.0,Mid,Flat,Contango
+2019-07-31,2088.6666666666665,-151.0,-9.0,Mid,Small up,Contango
+2019-08-01,2080.5,-146.0,-4.0,Mid,Flat,Contango
+2019-08-02,2079.0,-140.0,-6.5,Mid,Flat,Contango
+2019-08-05,2106.6666666666665,-158.0,3.5,Mid,Small up,Contango
+2019-08-06,2112.3333333333335,-154.0,6.5,Mid,Flat,Contango
+2019-08-07,2114.0,-143.0,4.0,Mid,Flat,Contango
+2019-08-08,2137.1666666666665,-157.0,22.0,Mid,Flat,Contango
+2019-08-09,2186.1666666666665,-96.0,-3.0,Mid,Large up,Contango
+2019-08-13,2219.0,-108.0,7.0,Mid,Small up,Contango
+2019-08-14,2227.8333333333335,-101.0,-1.0,Mid,Small up,Contango
+2019-08-15,2210.3333333333335,-126.0,4.0,Mid,Large down,Contango
+2019-08-16,2205.1666666666665,-120.0,0.0,Mid,Flat,Contango
+2019-08-19,2170.8333333333335,-125.0,3.0,Mid,Large down,Contango
+2019-08-20,2191.3333333333335,-127.0,-3.0,Mid,Small up,Contango
+2019-08-21,2220.0,-117.0,-1.0,Mid,Large up,Contango
+2019-08-22,2262.8333333333335,-109.0,11.5,Mid,Large up,Contango
+2019-08-23,2268.1666666666665,-101.0,11.5,Mid,Flat,Contango
+2019-08-26,2277.0,-103.0,9.5,Mid,Flat,Contango
+2019-08-27,2247.3333333333335,-105.0,7.0,Mid,Small down,Contango
+2019-08-28,2263.0,-114.0,11.5,Mid,Flat,Contango
+2019-08-29,2229.3333333333335,-137.0,16.0,Mid,Large down,Contango
+2019-08-30,2238.8333333333335,-145.0,24.0,Mid,Flat,Contango
+2019-09-03,2189.8333333333335,-158.0,17.5,Mid,Large down,Contango
+2019-09-04,2200.3333333333335,-175.0,20.5,Mid,Flat,Contango
+2019-09-05,2195.6666666666665,-190.0,18.5,Mid,Flat,Contango
+2019-09-06,2215.1666666666665,-177.0,15.0,Mid,Small up,Contango
+2019-09-10,2231.8333333333335,-194.0,24.5,Mid,Flat,Contango
+2019-09-11,2216.3333333333335,-188.0,21.0,Mid,Flat,Contango
+2019-09-12,2206.3333333333335,-128.0,-2.5,Mid,Large up,Contango
+2019-09-13,2231.3333333333335,-124.0,12.5,Mid,Small up,Contango
+2019-09-17,2291.6666666666665,-141.0,14.5,Mid,Large up,Contango
+2019-09-18,2273.3333333333335,-139.0,9.0,Mid,Small down,Contango
+2019-09-19,2259.0,-151.0,4.5,Mid,Small down,Contango
+2019-09-20,2240.5,-154.0,4.0,Mid,Small down,Contango
+2019-09-23,2207.6666666666665,-165.0,2.0,Mid,Large down,Contango
+2019-09-24,2167.3333333333335,-184.0,-7.5,Mid,Large down,Contango
+2019-09-25,2172.8333333333335,-194.0,-0.5,Mid,Flat,Contango
+2019-09-26,2201.6666666666665,-191.0,-10.5,Mid,Large up,Contango
+2019-09-27,2180.5,-194.0,-12.5,Mid,Small down,Contango
+2019-09-30,2164.5,-179.0,-16.5,Mid,Flat,Contango
+2019-10-01,2197.5,-194.0,-12.0,Mid,Small up,Contango
+2019-10-02,2176.6666666666665,-200.0,-17.5,Mid,Small down,Contango
+2019-10-03,2172.6666666666665,-197.0,-22.0,Mid,Flat,Contango
+2019-10-04,2217.0,-195.0,9.5,Mid,Small up,Contango
+2019-10-07,2188.1666666666665,-182.0,-11.0,Mid,Small down,Contango
+2019-10-08,2200.3333333333335,-173.0,-10.0,Mid,Small up,Contango
+2019-10-09,2216.5,-185.0,4.5,Mid,Flat,Contango
+2019-10-10,2256.6666666666665,-166.0,14.0,Mid,Large up,Contango
+2019-10-11,2212.3333333333335,-186.0,-10.5,Mid,Large down,Contango
+2019-10-14,2182.6666666666665,-220.0,-3.0,Mid,Large down,Contango
+2019-10-15,2232.8333333333335,-179.0,3.5,Mid,Large up,Contango
+2019-10-16,2271.0,-157.0,3.0,Mid,Large up,Contango
+2019-10-17,2274.8333333333335,-157.0,6.5,Mid,Flat,Contango
+2019-10-18,2299.1666666666665,-164.0,15.5,Mid,Small up,Contango
+2019-10-21,2300.8333333333335,-153.0,10.0,Mid,Flat,Contango
+2019-10-22,2328.1666666666665,-164.0,19.0,Mid,Small up,Contango
+2019-10-23,2332.1666666666665,-159.0,22.5,Mid,Flat,Contango
+2019-10-24,2387.6666666666665,-168.0,30.5,Mid,Large up,Contango
+2019-10-25,2405.8333333333335,-161.0,24.5,Mid,Small up,Contango
+2019-10-29,2427.8333333333335,-155.0,21.5,Mid,Small up,Contango
+2019-10-30,2497.1666666666665,-142.0,31.5,Mid,Large up,Contango
+2019-10-31,2485.8333333333335,-68.0,14.5,Mid,Small up,Transition
+2019-11-01,2454.0,-107.0,34.0,Mid,Large down,Contango
+2019-11-04,2524.5,-98.0,35.5,Mid,Large up,Contango
+2019-11-05,2507.1666666666665,-72.0,30.5,Mid,Flat,Transition
+2019-11-06,2556.0,-82.0,31.0,Mid,Large up,Contango
+2019-11-07,2527.3333333333335,-66.0,18.0,Mid,Flat,Contango
+2019-11-08,2585.3333333333335,-53.0,53.5,Mid,Large up,Transition
+2019-11-11,2618.5,-93.0,45.0,Mid,Small up,Contango
+2019-11-12,2613.6666666666665,-62.0,58.5,Mid,Flat,Transition
+2019-11-13,2596.5,-65.0,56.5,Mid,Small down,Transition
+2019-11-14,2611.5,-46.0,54.0,Mid,Small up,Transition
+2019-11-15,2584.6666666666665,-73.0,57.0,Mid,Large down,Transition
+2019-11-18,2576.6666666666665,-98.0,62.0,Mid,Small down,Contango
+2019-11-19,2604.5,-103.0,62.5,Mid,Small up,Contango
+2019-11-20,2669.8333333333335,-96.0,57.5,Mid,Large up,Contango
+2019-11-21,2649.6666666666665,-98.0,52.0,Mid,Small down,Contango
+2019-11-22,2725.6666666666665,-100.0,55.5,Mid,Large up,Transition
+2019-11-25,2715.3333333333335,-77.0,50.5,Mid,Flat,Transition
+2019-11-26,2657.6666666666665,-104.0,55.0,Mid,Large down,Contango
+2019-11-27,2671.1666666666665,-82.0,53.0,Mid,Small up,Transition
+2019-11-28,2698.6666666666665,-62.0,66.0,Mid,Small up,Transition
+2019-11-29,2711.6666666666665,-84.0,82.0,Mid,Flat,Transition
+2019-12-02,2702.8333333333335,-35.0,67.0,Mid,Small up,Transition
+2019-12-03,2713.3333333333335,71.0,43.0,Mid,Large up,Backwardation
+2019-12-04,2735.5,10.0,72.5,Mid,Small down,Transition
+2019-12-05,2777.3333333333335,-2.0,79.0,Mid,Small up,Transition
+2019-12-06,2808.0,106.0,52.5,Mid,Large up,Backwardation
+2019-12-09,2847.6666666666665,122.0,50.5,Mid,Large up,Backwardation
+2019-12-10,2853.5,26.0,88.0,Mid,Large down,Backwardation
+2019-12-11,2816.1666666666665,141.0,58.0,Mid,Small up,Backwardation
+2019-12-12,2834.3333333333335,22.0,101.5,Mid,Large down,Backwardation
+2019-12-13,2797.3333333333335,113.0,55.0,Mid,Small up,Backwardation
+2019-12-16,2833.3333333333335,97.0,55.5,Mid,Small up,Backwardation
+2019-12-17,2840.8333333333335,66.0,49.5,Mid,Flat,Backwardation
+2019-12-18,2830.0,59.0,46.0,Mid,Flat,Backwardation
+2019-12-19,2843.0,74.0,51.5,Mid,Small up,Backwardation
+2019-12-20,2878.0,95.0,54.0,Mid,Large up,Backwardation
+2019-12-23,2873.3333333333335,102.0,44.0,Mid,Flat,Backwardation
+2019-12-24,2890.5,81.0,54.5,Mid,Flat,Backwardation
+2019-12-26,2967.0,70.0,58.0,Mid,Large up,Backwardation
+2019-12-27,3039.1666666666665,63.0,59.0,Mid,Large up,Backwardation
+2019-12-30,3085.3333333333335,101.0,65.0,Mid,Large up,Backwardation
+2019-12-31,3004.8333333333335,119.0,38.5,Low,Large down,Backwardation
+2020-01-02,3096.3333333333335,106.0,42.0,Low,Large up,Backwardation
+2020-01-03,3086.1666666666665,101.0,48.5,Low,Flat,Backwardation
+2020-01-06,3027.6666666666665,94.0,27.0,Low,Large down,Backwardation
+2020-01-07,3024.8333333333335,78.0,41.0,Low,Small down,Backwardation
+2020-01-08,3016.3333333333335,92.0,32.5,Low,Flat,Backwardation
+2020-01-09,3079.0,124.0,41.0,Low,Large up,Backwardation
+2020-01-10,3104.3333333333335,106.0,45.0,Low,Flat,Backwardation
+2020-01-13,3025.1666666666665,192.0,26.5,Low,Small down,Backwardation
+2020-01-14,2979.1666666666665,138.0,31.0,Low,Large down,Backwardation
+2020-01-15,2927.6666666666665,200.0,-3.0,Low,Flat,Backwardation
+2020-01-16,2868.3333333333335,201.0,-1.0,Low,Large down,Backwardation
+2020-01-17,2826.6666666666665,193.0,-4.0,Low,Large down,Backwardation
+2020-01-20,2880.3333333333335,187.0,3.5,Low,Large up,Backwardation
+2020-01-21,2859.0,216.0,14.0,Low,Flat,Backwardation
+2020-01-22,2942.6666666666665,218.0,17.5,Low,Large up,Backwardation
+2020-01-23,2892.8333333333335,206.0,18.5,Low,Large down,Backwardation
+2020-01-24,2831.6666666666665,219.0,15.5,Low,Large down,Backwardation
+2020-02-04,2644.1666666666665,135.0,31.0,Low,Small up,Backwardation
+2020-02-11,2677.0,175.0,5.0,Low,Small down,Backwardation
+2020-02-12,2691.1666666666665,90.0,25.5,Low,Small down,Backwardation
+2020-02-13,2620.5,90.0,12.0,Low,Large down,Backwardation
+2020-02-14,2632.5,98.0,38.0,Low,Flat,Backwardation
+2020-02-17,2636.6666666666665,165.0,-9.0,Low,Large up,Backwardation
+2020-02-18,2630.5,177.0,-17.0,Low,Flat,Backwardation
+2020-02-19,2547.3333333333335,161.0,-31.5,Low,Large down,Backwardation
+2020-02-20,2582.5,151.0,-21.0,Low,Small up,Backwardation
+2020-02-21,2615.5,126.0,-9.5,Low,Small up,Backwardation
+2020-02-24,2544.5,88.0,-20.0,Low,Large down,Backwardation
+2020-02-25,2441.1666666666665,58.0,-16.0,Low,Large down,Backwardation
+2020-02-26,2423.0,52.0,-18.5,Low,Small down,Backwardation
+2020-02-27,2470.8333333333335,29.0,-22.0,Low,Large up,Transition
+2020-03-10,2350.1666666666665,7.0,-9.0,Low,Small up,Transition
+2020-03-11,2359.3333333333335,-20.0,11.0,Low,Small down,Transition
+2020-03-12,2303.8333333333335,151.0,-68.0,Low,Large up,Backwardation
+2020-03-13,2273.8333333333335,64.0,-26.5,Low,Large down,Backwardation
+2020-03-16,2218.5,96.0,-19.0,Low,Large down,Backwardation
+2020-03-17,2240.1666666666665,138.0,-24.5,Low,Large up,Backwardation
+2020-03-18,2236.0,150.0,-25.0,Low,Flat,Backwardation
+2020-03-19,2215.8333333333335,74.0,-25.0,Low,Large down,Backwardation
+2020-03-20,2290.6666666666665,68.0,-24.5,Low,Large up,Backwardation
+2020-03-23,2294.3333333333335,94.0,-34.5,Low,Small up,Backwardation
+2020-03-24,2348.5,103.0,-16.0,Low,Large up,Backwardation
+2020-03-25,2386.3333333333335,168.0,-29.5,Low,Large up,Backwardation
+2020-03-26,2354.5,117.0,-16.0,Low,Large down,Backwardation
+2020-03-27,2379.5,176.0,-37.0,Low,Large up,Backwardation
+2020-03-30,2439.3333333333335,252.0,-49.0,Low,Large up,Backwardation
+2020-03-31,2393.8333333333335,219.0,-27.5,Low,Large down,Backwardation
+2020-04-01,2334.8333333333335,207.0,-36.5,Low,Large down,Backwardation
+2020-04-02,2309.0,154.0,-32.0,Low,Large down,Backwardation
+2020-04-03,2248.0,138.0,-35.5,Low,Large down,Backwardation
+2020-04-06,2228.5,113.0,-43.5,Low,Small down,Backwardation
+2020-04-07,2302.3333333333335,92.0,5.5,Low,Small up,Backwardation
+2020-04-08,2352.5,102.0,-2.0,Low,Large up,Backwardation
+2020-04-09,2305.0,156.0,-35.5,Low,Flat,Backwardation
+2020-04-10,2321.0,167.0,-44.5,Low,Small up,Backwardation
+2020-04-13,2258.0,121.0,-39.0,Low,Large down,Backwardation
+2020-04-14,2232.6666666666665,82.0,-23.0,Low,Large down,Backwardation
+2020-04-15,2243.5,92.0,-27.5,Low,Small up,Backwardation
+2020-04-16,2206.0,63.0,-19.0,Low,Large down,Backwardation
+2020-04-17,2236.6666666666665,68.0,-19.0,Low,Large up,Backwardation
+2020-04-20,2234.6666666666665,79.0,-27.5,Low,Flat,Backwardation
+2020-04-27,2035.6666666666667,-15.0,-38.5,Low,Large down,Transition
+2020-04-28,2035.6666666666667,7.0,-35.0,Low,Flat,Transition
+2020-04-29,2044.0,-1.0,-30.0,Low,Flat,Transition
+2020-04-30,2090.0,6.0,-19.0,Low,Large up,Transition
+2020-05-04,1996.1666666666667,32.0,-39.5,Low,Large down,Backwardation
+2020-05-05,1993.6666666666667,40.0,-44.0,Low,Flat,Backwardation
+2020-05-06,1967.0,15.0,-44.0,Low,Large down,Transition
+2020-05-08,2037.3333333333333,-6.0,-38.5,Low,Large up,Transition
+2020-05-12,2018.6666666666667,-19.0,-40.5,Low,Small down,Transition
+2020-05-13,2050.8333333333335,-21.0,-37.5,Low,Small up,Transition
+2020-05-14,2061.5,56.0,-72.5,Low,Large up,Backwardation
+2020-05-15,2105.5,-9.0,-31.0,Low,Small down,Transition
+2020-05-18,2169.6666666666665,2.0,-40.5,Low,Large up,Transition
+2020-05-19,2200.0,20.0,-36.0,Low,Large up,Transition
+2020-05-20,2180.8333333333335,28.0,-47.0,Low,Flat,Transition
+2020-05-21,2226.8333333333335,45.0,-44.5,Low,Large up,Backwardation
+2020-05-22,2187.5,55.0,-46.0,Low,Large down,Backwardation
+2020-05-27,2299.0,62.0,-31.0,Low,Large up,Backwardation
+2020-05-28,2289.0,76.0,-46.5,Low,Flat,Backwardation
+2020-05-29,2311.3333333333335,77.0,-40.5,Low,Small up,Backwardation
+2020-06-01,2307.1666666666665,92.0,-61.0,Low,Small up,Backwardation
+2020-06-02,2359.3333333333335,130.0,-63.5,Low,Large up,Backwardation
+2020-06-03,2408.8333333333335,90.0,-31.5,Low,Flat,Backwardation
+2020-06-04,2340.0,75.0,-38.0,Low,Large down,Backwardation
+2020-06-05,2361.8333333333335,55.0,-29.0,Low,Flat,Backwardation
+2020-06-09,2389.1666666666665,40.0,-5.5,Low,Flat,Backwardation
+2020-06-10,2353.5,44.0,-17.0,Low,Small down,Backwardation
+2020-06-11,2371.3333333333335,77.0,-29.5,Low,Large up,Backwardation
+2020-06-12,2370.5,103.0,-24.0,Low,Flat,Backwardation
+2020-06-15,2332.8333333333335,145.0,-39.0,Low,Flat,Backwardation
+2020-06-16,2370.8333333333335,117.0,-50.0,Low,Small up,Backwardation
+2020-06-17,2369.5,110.0,-45.0,Low,Flat,Backwardation
+2020-06-18,2377.5,109.0,-43.5,Low,Flat,Backwardation
+2020-06-19,2477.0,94.0,-27.0,Low,Large up,Backwardation
+2020-06-22,2454.0,91.0,-37.5,Low,Small down,Backwardation
+2020-06-23,2473.1666666666665,111.0,-32.0,Low,Small up,Backwardation
+2020-06-24,2447.6666666666665,137.0,-50.0,Low,Flat,Backwardation
+2020-06-25,2406.0,158.0,-55.5,Low,Small down,Backwardation
+2020-06-26,2382.6666666666665,130.0,-53.0,Low,Large down,Backwardation
+2020-06-29,2349.6666666666665,109.0,-46.0,Low,Large down,Backwardation
+2020-06-30,2312.3333333333335,87.0,-46.5,Low,Large down,Backwardation
+2020-07-01,2338.8333333333335,74.0,-38.0,Low,Small up,Backwardation
+2020-07-02,2372.0,65.0,-35.5,Low,Small up,Backwardation
+2020-07-03,2368.6666666666665,48.0,-27.0,Low,Small down,Backwardation
+2020-07-06,2397.3333333333335,47.0,-24.0,Low,Small up,Backwardation
+2020-07-07,2373.5,64.0,-40.5,Low,Flat,Backwardation
+2020-07-08,2415.0,76.0,-33.0,Low,Large up,Backwardation
+2020-07-09,2406.8333333333335,72.0,-27.0,Low,Small down,Backwardation
+2020-07-10,2413.5,80.0,-23.5,Low,Flat,Backwardation
+2020-07-13,2415.6666666666665,72.0,-40.5,Low,Flat,Backwardation
+2020-07-14,2494.3333333333335,55.0,-3.5,Low,Large up,Backwardation
+2020-07-15,2535.3333333333335,104.0,-34.5,Low,Large up,Backwardation
+2020-07-16,2524.8333333333335,117.0,-40.0,Low,Flat,Backwardation
+2020-07-17,2617.0,134.0,-32.0,Low,Large up,Backwardation
+2020-07-20,2661.5,158.0,-29.5,Low,Large up,Backwardation
+2020-07-21,2638.3333333333335,161.0,-28.5,Low,Small down,Backwardation
+2020-07-22,2650.8333333333335,164.0,-24.0,Low,Flat,Backwardation
+2020-07-23,2696.8333333333335,187.0,-19.5,Low,Large up,Backwardation
+2020-07-24,2754.1666666666665,266.0,-14.5,Low,Large up,Backwardation
+2020-07-27,2659.6666666666665,233.0,-32.5,Low,Large down,Backwardation
+2020-07-28,2601.8333333333335,154.0,-22.0,Low,Large down,Backwardation
+2020-07-29,2642.8333333333335,147.0,-29.5,Low,Large up,Backwardation
+2020-07-30,2673.8333333333335,177.0,-33.5,Low,Large up,Backwardation
+2020-08-03,2727.1666666666665,203.0,-40.5,Low,Large up,Backwardation
+2020-08-04,2760.5,226.0,-32.5,Low,Small up,Backwardation
+2020-08-05,2717.3333333333335,216.0,-46.0,Low,Small down,Backwardation
+2020-08-06,2763.3333333333335,227.0,-36.5,Low,Large up,Backwardation
+2020-08-07,2757.1666666666665,218.0,-36.0,Low,Flat,Backwardation
+2020-08-10,2714.5,247.0,-57.0,Low,Small down,Backwardation
+2020-08-11,2653.1666666666665,259.0,-67.5,Low,Large down,Backwardation
+2020-08-12,2695.6666666666665,290.0,-76.0,Low,Large up,Backwardation
+2020-08-13,2723.6666666666665,284.0,-63.5,Low,Small up,Backwardation
+2020-08-14,2687.3333333333335,196.0,-37.0,Low,Large down,Backwardation
+2020-08-17,2683.6666666666665,140.0,-37.0,Low,Small down,Backwardation
+2020-08-18,2715.1666666666665,151.0,-38.0,Low,Small up,Backwardation
+2020-08-19,2740.3333333333335,147.0,-34.0,Low,Small up,Backwardation
+2020-08-21,2684.0,165.0,-47.0,Low,Small down,Backwardation
+2020-08-24,2671.3333333333335,145.0,-45.0,Low,Small down,Backwardation
+2020-08-25,2623.5,139.0,-45.5,Low,Large down,Backwardation
+2020-08-26,2651.5,126.0,-43.5,Low,Small up,Backwardation
+2020-08-27,2687.8333333333335,138.0,-42.5,Low,Small up,Backwardation
+2020-08-28,2745.3333333333335,147.0,-40.0,Low,Large up,Backwardation
+2020-09-01,2788.3333333333335,157.0,-42.5,Low,Large up,Backwardation
+2020-09-02,2810.6666666666665,147.0,-33.0,Low,Flat,Backwardation
+2020-09-03,2883.8333333333335,154.0,-20.5,Low,Large up,Backwardation
+2020-09-04,2832.8333333333335,195.0,-37.0,Low,Small down,Backwardation
+2020-09-07,2801.8333333333335,165.0,-30.5,Low,Large down,Backwardation
+2020-09-08,2863.3333333333335,143.0,-13.5,Low,Small up,Backwardation
+2020-09-09,2812.5,178.0,-35.0,Low,Small down,Backwardation
+2020-09-10,2779.3333333333335,137.0,-26.0,Low,Large down,Backwardation
+2020-09-11,2804.8333333333335,130.0,-15.5,Low,Flat,Backwardation
+2020-09-14,2878.3333333333335,81.0,8.0,Low,Small up,Backwardation
+2020-09-15,2918.1666666666665,61.0,27.0,Low,Small up,Backwardation
+2020-09-17,2957.3333333333335,118.0,11.5,Low,Large up,Backwardation
+2020-09-18,3053.3333333333335,126.0,24.0,Low,Large up,Backwardation
+2020-09-21,2988.6666666666665,114.0,11.5,Low,Large down,Backwardation
+2020-09-22,2939.1666666666665,116.0,6.0,Low,Large down,Backwardation
+2020-09-23,2850.5,122.0,-4.5,Low,Large down,Backwardation
+2020-09-24,2752.3333333333335,150.0,-19.5,Low,Large down,Backwardation
+2020-09-25,2824.1666666666665,183.0,-29.5,Low,Large up,Backwardation
+2020-09-28,2825.5,200.0,-41.5,Low,Small up,Backwardation
+2020-09-29,2771.8333333333335,224.0,-40.0,Low,Small down,Backwardation
+2020-09-30,2718.0,185.0,-35.5,Low,Large down,Backwardation
+2020-10-01,2789.1666666666665,212.0,-40.0,Low,Large up,Backwardation
+2020-10-02,2713.3333333333335,217.0,-43.5,Low,Large down,Backwardation
+2020-10-05,2721.8333333333335,190.0,-38.5,Low,Flat,Backwardation
+2020-10-06,2814.0,163.0,-21.5,Low,Large up,Backwardation
+2020-10-07,2865.8333333333335,215.0,-31.5,Low,Large up,Backwardation
+2020-10-08,2883.8333333333335,204.0,-29.0,Low,Flat,Backwardation
+2020-10-09,2901.3333333333335,227.0,-24.0,Low,Small up,Backwardation
+2020-10-12,2972.5,190.0,8.0,Low,Small up,Backwardation
+2020-10-13,2942.1666666666665,216.0,-13.0,Low,Flat,Backwardation
+2020-10-14,2960.5,204.0,6.5,Low,Flat,Backwardation
+2020-10-15,2851.0,229.0,-19.0,Low,Large down,Backwardation
+2020-10-16,2856.0,240.0,-16.5,Low,Flat,Backwardation
+2020-10-19,2764.0,228.0,-19.0,Low,Large down,Backwardation
+2020-10-20,2846.6666666666665,250.0,-15.0,Low,Large up,Backwardation
+2020-10-21,2871.5,266.0,-9.0,Low,Small up,Backwardation
+2020-10-22,2919.0,284.0,-8.5,Low,Large up,Backwardation
+2020-10-23,2918.8333333333335,289.0,-8.5,Low,Flat,Backwardation
+2020-11-02,2989.8333333333335,472.0,-87.5,Low,Flat,Backwardation
+2020-11-03,3065.8333333333335,506.0,-76.0,Low,Large up,Backwardation
+2020-11-04,3092.1666666666665,533.0,-71.5,Low,Small up,Backwardation
+2020-11-05,3186.3333333333335,489.0,-39.0,Low,Large up,Backwardation
+2020-11-06,3163.1666666666665,458.0,-43.5,Low,Small down,Backwardation
+2020-11-09,3203.8333333333335,468.0,-26.0,Low,Small up,Backwardation
+2020-11-10,3226.1666666666665,429.0,-9.5,Low,Flat,Backwardation
+2020-11-11,3298.8333333333335,362.0,38.5,Low,Flat,Backwardation
+2020-11-12,3342.8333333333335,394.0,38.5,Low,Large up,Backwardation
+2020-11-13,3259.0,494.0,-1.5,Low,Flat,Backwardation
+2020-11-16,3243.3333333333335,473.0,-15.5,Low,Small down,Backwardation
+2020-11-17,3243.0,435.0,-16.5,Low,Small down,Backwardation
+2020-11-18,3331.1666666666665,428.0,-26.5,Low,Large up,Backwardation
+2020-11-19,3313.3333333333335,417.0,-21.0,Low,Small down,Backwardation
+2020-11-20,3263.3333333333335,397.0,-28.5,Low,Large down,Backwardation
+2020-11-23,3302.5,397.0,-26.5,Low,Small up,Backwardation
+2020-11-24,3232.3333333333335,383.0,-36.0,Low,Large down,Backwardation
+2020-11-25,3263.0,370.0,-33.0,Low,Small up,Backwardation
+2020-11-26,3210.8333333333335,341.0,-24.0,Low,Large down,Backwardation
+2020-11-27,3312.1666666666665,365.0,-16.0,Low,Large up,Backwardation
+2020-11-30,3281.8333333333335,326.0,-9.0,Low,Large down,Backwardation
+2020-12-01,3318.8333333333335,367.0,-9.5,Low,Large up,Backwardation
+2020-12-02,3274.6666666666665,392.0,-5.5,Low,Small down,Backwardation
+2020-12-03,3284.0,417.0,2.0,Low,Flat,Backwardation
+2020-12-10,3377.5,584.0,-57.5,Low,Large up,Backwardation
+2020-12-11,3384.6666666666665,598.0,-67.5,Low,Flat,Backwardation
+2020-12-14,3431.8333333333335,579.0,-56.0,Low,Small up,Backwardation
+2020-12-15,3429.6666666666665,576.0,-61.5,Low,Flat,Backwardation
+2020-12-16,3339.5,459.0,-33.0,Low,Large down,Backwardation
+2020-12-17,3353.3333333333335,460.0,-37.5,Low,Flat,Backwardation
+2020-12-18,3410.6666666666665,474.0,-27.0,Low,Large up,Backwardation
+2020-12-21,3377.1666666666665,491.0,-39.0,Low,Flat,Backwardation
+2020-12-22,3387.0,510.0,-39.0,Low,Flat,Backwardation
+2020-12-23,3499.5,569.0,-43.0,Low,Large up,Backwardation
+2020-12-24,3528.0,613.0,-42.5,Low,Small up,Backwardation
+2020-12-28,3498.8333333333335,631.0,-44.0,Low,Small down,Backwardation
+2020-12-29,3506.8333333333335,619.0,-43.5,Low,Flat,Backwardation
+2020-12-30,3547.6666666666665,623.0,-46.0,Low,Small up,Backwardation
+2020-12-31,3560.5,627.0,-40.5,Low,Flat,Backwardation
+2021-01-04,3663.1666666666665,581.0,-3.0,Low,Small up,Backwardation
+2021-01-05,3688.0,579.0,9.0,Low,Flat,Backwardation
+2021-01-06,3792.6666666666665,533.0,41.5,Low,Large up,Backwardation
+2021-01-07,3749.8333333333335,495.0,27.5,Low,Small down,Backwardation
+2021-01-08,3757.0,482.0,29.0,Low,Flat,Backwardation
+2021-01-11,3738.5,503.0,19.0,Low,Flat,Backwardation
+2021-01-12,3642.0,538.0,8.0,Low,Large down,Backwardation
+2021-01-13,3640.8333333333335,533.0,-4.5,Low,Flat,Backwardation
+2021-01-14,3496.6666666666665,501.0,-24.5,Low,Large down,Backwardation
+2021-01-15,3430.8333333333335,653.0,-114.5,Low,Large up,Backwardation
+2021-01-18,3338.5,506.0,-77.0,Low,Large down,Backwardation
+2021-01-19,3268.3333333333335,410.0,-63.0,Low,Large down,Backwardation
+2021-01-20,3227.0,402.0,-72.5,Low,Small down,Backwardation
+2021-01-21,3281.6666666666665,455.0,-76.0,Low,Large up,Backwardation
+2021-01-22,3279.6666666666665,510.0,-90.5,Low,Small up,Backwardation
+2021-01-25,3235.0,539.0,-88.0,Low,Small down,Backwardation
+2021-01-26,3266.1666666666665,565.0,-105.0,Low,Large up,Backwardation
+2021-01-27,3391.5,645.0,-121.0,Low,Large up,Backwardation
+2021-01-29,3485.5,745.0,-137.5,Low,Large up,Backwardation
+2021-02-02,3406.3333333333335,795.0,-167.5,Low,Small down,Backwardation
+2021-02-03,3254.1666666666665,723.0,-170.5,Low,Large down,Backwardation
+2021-02-04,3326.6666666666665,845.0,-176.0,Low,Large up,Backwardation
+2021-02-05,3384.5,871.0,-177.5,Low,Large up,Backwardation
+2021-02-08,3413.8333333333335,816.0,-125.0,Low,Small down,Backwardation
+2021-02-09,3512.5,766.0,-69.5,Low,Small up,Backwardation
+2021-02-10,3556.3333333333335,781.0,-40.5,Low,Small up,Backwardation
+2021-02-11,3498.0,836.0,-72.0,Low,Flat,Backwardation
+2021-02-15,3625.0,664.0,32.0,Low,Flat,Backwardation
+2021-02-16,3493.0,779.0,-98.5,Low,Flat,Backwardation
+2021-02-17,3586.5,766.0,-82.0,Low,Large up,Backwardation
+2021-02-18,3460.5,728.0,-102.0,Low,Large down,Backwardation
+2021-02-19,3505.3333333333335,709.0,-111.0,Low,Small up,Backwardation
+2021-02-22,3527.6666666666665,712.0,-115.0,Low,Small up,Backwardation
+2021-02-23,3628.1666666666665,687.0,-70.0,Low,Large up,Backwardation
+2021-02-24,3601.3333333333335,607.0,-40.5,Low,Large down,Backwardation
+2021-02-25,3725.5,570.0,-13.5,Low,Large up,Backwardation
+2021-02-26,3688.6666666666665,598.0,-18.5,Low,Flat,Backwardation
+2021-03-01,3633.3333333333335,608.0,-42.5,Low,Small down,Backwardation
+2021-03-02,3596.0,592.0,-32.0,Low,Small down,Backwardation
+2021-03-03,3625.1666666666665,554.0,-9.5,Low,Flat,Backwardation
+2021-03-04,3662.5,572.0,-3.5,Low,Small up,Backwardation
+2021-03-05,3664.6666666666665,553.0,13.5,Low,Flat,Backwardation
+2021-03-08,3798.0,534.0,35.0,Low,Large up,Backwardation
+2021-03-09,3835.5,515.0,36.5,Low,Small up,Backwardation
+2021-03-10,3892.3333333333335,519.0,45.5,Low,Small up,Backwardation
+2021-03-11,3974.5,541.0,45.0,Low,Large up,Backwardation
+2021-03-12,4053.8333333333335,583.0,24.5,Low,Large up,Backwardation
+2021-03-15,3963.5,579.0,2.0,Low,Large down,Backwardation
+2021-03-16,3855.3333333333335,596.0,-28.5,Low,Large down,Backwardation
+2021-03-17,3889.3333333333335,596.0,-23.0,Low,Small up,Backwardation
+2021-03-18,3759.3333333333335,597.0,-38.5,Low,Large down,Backwardation
+2021-03-19,3690.6666666666665,603.0,-45.0,Low,Large down,Backwardation
+2021-03-22,3800.5,621.0,-47.0,Low,Large up,Backwardation
+2021-03-23,3884.3333333333335,659.0,-41.5,Low,Large up,Backwardation
+2021-03-24,3883.6666666666665,646.0,-38.0,Low,Flat,Backwardation
+2021-03-25,3824.8333333333335,629.0,-46.0,Low,Small down,Backwardation
+2021-03-26,3666.0,639.0,-78.0,Low,Large down,Backwardation
+2021-03-29,3718.5,721.0,-83.0,Low,Large up,Backwardation
+2021-03-30,3567.5,751.0,-136.0,Low,Large down,Backwardation
+2021-03-31,3612.1666666666665,756.0,-141.5,Low,Small up,Backwardation
+2021-04-01,3706.6666666666665,778.0,-104.5,Low,Large up,Backwardation
+2021-04-02,3710.0,771.0,-109.0,Low,Flat,Backwardation
+2021-04-05,3712.1666666666665,795.0,-113.0,Low,Flat,Backwardation
+2021-04-06,3766.6666666666665,768.0,-116.0,Low,Small up,Backwardation
+2021-04-07,3810.6666666666665,834.0,-120.5,Low,Large up,Backwardation
+2021-04-08,3757.3333333333335,854.0,-123.0,Low,Small down,Backwardation
+2021-04-09,3734.5,944.0,-149.0,Low,Small up,Backwardation
+2021-04-12,3636.1666666666665,1010.0,-197.5,Low,Small down,Backwardation
+2021-04-13,3694.6666666666665,954.0,-153.0,Low,Flat,Backwardation
+2021-04-14,3696.3333333333335,904.0,-137.5,Low,Small down,Backwardation
+2021-04-15,3760.8333333333335,863.0,-97.0,Low,Flat,Backwardation
+2021-04-16,3717.3333333333335,768.0,-154.5,Low,Small down,Backwardation
+2021-04-19,3717.3333333333335,762.0,-146.5,Low,Flat,Backwardation
+2021-04-20,3796.3333333333335,738.0,-120.0,Low,Small up,Backwardation
+2021-04-21,3878.6666666666665,792.0,-129.5,Low,Large up,Backwardation
+2021-04-22,3962.1666666666665,801.0,-104.0,Low,Large up,Backwardation
+2021-04-23,3905.1666666666665,788.0,-113.0,Low,Small down,Backwardation
+2021-04-26,3881.0,775.0,-131.5,Low,Flat,Backwardation
+2021-04-27,4024.8333333333335,842.0,-94.0,Low,Large up,Backwardation
+2021-04-28,3919.6666666666665,877.0,-127.5,Low,Large down,Backwardation
+2021-04-30,3863.5,913.0,-166.0,Low,Flat,Backwardation
+2021-05-03,4035.6666666666665,964.0,-156.0,Low,Large up,Backwardation
+2021-05-04,4029.3333333333335,991.0,-176.5,Low,Flat,Backwardation
+2021-05-05,4026.8333333333335,960.0,-174.5,Low,Flat,Backwardation
+2021-05-06,4191.5,892.0,-152.0,Low,Large up,Backwardation
+2021-05-07,4374.0,913.0,-107.5,Low,Large up,Backwardation
+2021-05-10,4315.833333333333,957.0,-126.5,Low,Small down,Backwardation
+2021-05-11,4292.0,938.0,-117.0,Low,Small down,Backwardation
+2021-05-12,4423.666666666667,780.0,1.5,Low,Flat,Backwardation
+2021-05-17,4214.666666666667,810.0,-128.0,Low,Large down,Backwardation
+2021-05-18,4403.666666666667,783.0,-80.0,Low,Large up,Backwardation
+2021-05-19,4268.666666666667,714.0,-95.5,Low,Large down,Backwardation
+2021-05-20,4083.0,669.0,-95.0,Low,Large down,Backwardation
+2021-05-21,3980.8333333333335,676.0,-129.0,Low,Large down,Backwardation
+2021-05-24,3888.1666666666665,566.0,-118.5,Low,Large down,Backwardation
+2021-05-25,4011.8333333333335,606.0,-106.5,Low,Large up,Backwardation
+2021-05-27,3903.0,608.0,-107.5,Low,Large down,Backwardation
+2021-05-28,3993.1666666666665,544.0,-82.5,Low,Small up,Backwardation
+2021-06-04,4098.833333333333,266.0,1.0,Low,Small down,Backwardation
+2021-06-08,4026.6666666666665,292.0,-21.0,Low,Small down,Backwardation
+2021-06-09,3876.3333333333335,335.0,-82.5,Low,Large down,Backwardation
+2021-06-10,3852.8333333333335,318.0,-77.5,Low,Small down,Backwardation
+2021-06-21,3401.8333333333335,260.0,-61.0,Low,Small down,Backwardation
+2021-06-22,3410.8333333333335,209.0,-78.0,Low,Flat,Backwardation
+2021-06-23,3467.8333333333335,183.0,-77.5,Low,Small up,Backwardation
+2021-06-24,3438.6666666666665,227.0,-76.0,Low,Flat,Backwardation
+2021-06-25,3534.6666666666665,249.0,-85.5,Low,Large up,Backwardation
+2021-06-28,3523.6666666666665,254.0,-91.5,Low,Flat,Backwardation
+2021-06-29,3559.1666666666665,290.0,-81.5,Low,Small up,Backwardation
+2021-06-30,3588.5,312.0,-68.0,Low,Small up,Backwardation
+2021-07-01,3681.5,300.0,-20.0,Low,Large up,Backwardation
+2021-07-02,3760.5,269.0,-8.5,Low,Small up,Backwardation
+2021-07-05,3836.5,295.0,18.5,Low,Large up,Backwardation
+2021-07-06,3816.3333333333335,264.0,2.0,Low,Small down,Backwardation
+2021-07-07,3770.8333333333335,296.0,-29.0,Low,Flat,Backwardation
+2021-07-08,3751.3333333333335,338.0,-37.5,Low,Flat,Backwardation
+2021-07-09,3849.6666666666665,340.0,7.0,Low,Large up,Backwardation
+2021-07-12,3840.6666666666665,292.0,-18.5,Low,Flat,Backwardation
+2021-07-13,3935.3333333333335,241.0,16.5,Low,Small up,Backwardation
+2021-07-14,3997.1666666666665,259.0,-7.5,Low,Large up,Backwardation
+2021-07-15,4111.833333333333,154.0,57.0,Low,Flat,Backwardation
+2021-07-16,4117.5,322.0,-33.5,Low,Large up,Backwardation
+2021-07-19,4133.0,369.0,-44.5,Low,Small up,Backwardation
+2021-07-21,4131.833333333333,455.0,-65.5,Low,Small up,Backwardation
+2021-07-22,4111.166666666667,534.0,-96.5,Low,Small up,Backwardation
+2021-07-23,4234.0,533.0,-73.5,Low,Large up,Backwardation
+2021-07-26,4336.833333333333,558.0,-39.0,Low,Large up,Backwardation
+2021-07-27,4387.333333333333,602.0,-51.5,Low,Large up,Backwardation
+2021-07-28,4276.666666666667,553.0,-77.0,Low,Large down,Backwardation
+2021-07-29,4387.333333333333,532.0,-42.0,Low,Large up,Backwardation
+2021-07-30,4333.5,597.0,-59.0,Low,Flat,Backwardation
+2021-08-02,4103.333333333333,595.0,-98.5,Low,Large down,Backwardation
+2021-08-03,4131.166666666667,611.0,-110.0,Low,Small up,Backwardation
+2021-08-04,4258.833333333333,627.0,-74.0,Low,Large up,Backwardation
+2021-08-05,4187.166666666667,592.0,-78.0,Low,Large down,Backwardation
+2021-08-06,4247.166666666667,503.0,-47.0,Low,Flat,Backwardation
+2021-08-09,4179.166666666667,485.0,-67.0,Low,Small down,Backwardation
+2021-08-11,4445.833333333333,378.0,10.5,Low,Large up,Backwardation
+2021-08-12,4417.833333333333,362.0,24.0,Low,Small down,Backwardation
+2021-08-13,4437.333333333333,291.0,77.5,Low,Small down,Backwardation
+2021-08-16,4415.5,448.0,-36.0,Low,Large up,Backwardation
+2021-08-17,4392.0,441.0,-52.0,Low,Flat,Backwardation
+2021-08-18,4294.833333333333,446.0,-63.5,Low,Large down,Backwardation
+2021-08-19,4240.166666666667,427.0,-85.0,Low,Small down,Backwardation
+2021-08-20,4260.5,419.0,-74.0,Low,Flat,Backwardation
+2021-08-23,4316.333333333333,399.0,-60.0,Low,Small up,Backwardation
+2021-08-24,4294.5,403.0,-61.5,Low,Flat,Backwardation
+2021-08-25,4339.333333333333,416.0,-42.0,Low,Small up,Backwardation
+2021-08-26,4361.666666666667,452.0,-25.5,Low,Small up,Backwardation
+2021-08-27,4307.5,464.0,-40.0,Low,Small down,Backwardation
+2021-08-30,4236.666666666667,479.0,-45.5,Low,Small down,Backwardation
+2021-09-01,4155.833333333333,521.0,-59.0,Mid,Small down,Backwardation
+2021-09-02,4214.333333333333,480.0,-40.5,Mid,Small up,Backwardation
+2021-09-03,4277.833333333333,509.0,-35.5,Mid,Large up,Backwardation
+2021-09-06,4301.5,466.0,-38.0,Mid,Flat,Backwardation
+2021-09-07,4363.166666666667,481.0,-37.5,Mid,Large up,Backwardation
+2021-09-08,4446.166666666667,489.0,-30.0,Mid,Large up,Backwardation
+2021-09-09,4372.666666666667,519.0,-56.0,Mid,Small down,Backwardation
+2021-09-10,4275.166666666667,584.0,-100.5,Mid,Small down,Backwardation
+2021-09-13,4300.333333333333,533.0,-63.5,Mid,Small down,Backwardation
+2021-09-14,4318.333333333333,580.0,-75.5,Mid,Small up,Backwardation
+2021-09-15,4401.0,558.0,-38.0,Mid,Small up,Backwardation
+2021-09-17,4225.833333333333,540.0,-41.0,Mid,Large down,Backwardation
+2021-09-20,4145.166666666667,535.0,-50.0,Mid,Large down,Backwardation
+2021-09-21,4164.833333333333,561.0,-42.5,Mid,Small up,Backwardation
+2021-09-22,4292.333333333333,544.0,-26.5,Mid,Large up,Backwardation
+2021-09-23,4397.666666666667,530.0,6.5,Mid,Large up,Backwardation
+2021-09-24,4390.333333333333,548.0,-1.0,Mid,Flat,Backwardation
+2021-09-27,4349.5,547.0,-11.0,Mid,Small down,Backwardation
+2021-09-28,4402.833333333333,568.0,-19.0,Mid,Small up,Backwardation
+2021-09-29,4412.166666666667,564.0,-25.5,Mid,Flat,Backwardation
+2021-09-30,4558.333333333333,533.0,-19.5,Mid,Large up,Backwardation
+2021-10-01,4470.333333333333,526.0,-38.0,Mid,Large down,Backwardation
+2021-10-04,4555.5,536.0,-37.5,Mid,Large up,Backwardation
+2021-10-05,4708.666666666667,503.0,-27.5,Mid,Large up,Backwardation
+2021-10-06,4827.333333333333,489.0,1.5,Mid,Large up,Backwardation
+2021-10-07,4798.166666666667,494.0,7.0,Mid,Small down,Backwardation
+2021-10-08,4913.0,484.0,19.0,Mid,Large up,Backwardation
+2021-10-11,4913.833333333333,510.0,-10.5,Mid,Small up,Backwardation
+2021-10-12,4826.0,490.0,-23.0,Mid,Large down,Backwardation
+2021-10-13,4956.666666666667,450.0,40.5,Mid,Small up,Backwardation
+2021-10-14,4848.666666666667,560.0,-43.0,Mid,Flat,Backwardation
+2021-10-15,4920.5,496.0,1.5,Mid,Flat,Backwardation
+2021-10-18,4896.666666666667,551.0,0.5,Mid,Flat,Backwardation
+2021-10-20,5013.0,572.0,2.0,Mid,Large up,Backwardation
+2021-10-21,4918.666666666667,575.0,-4.5,Mid,Large down,Backwardation
+2021-10-22,4880.833333333333,594.0,-17.0,Mid,Flat,Backwardation
+2021-10-25,4921.666666666667,626.0,-15.5,Mid,Small up,Backwardation
+2021-10-26,4968.5,672.0,-32.5,Mid,Small up,Backwardation
+2021-10-27,4928.5,689.0,-54.0,Mid,Flat,Backwardation
+2021-10-28,4897.333333333333,749.0,-73.0,Mid,Flat,Backwardation
+2021-10-29,4990.5,805.0,-83.5,Mid,Large up,Backwardation
+2021-11-01,4922.666666666667,847.0,-101.0,Mid,Small down,Backwardation
+2021-11-02,4931.166666666667,854.0,-81.0,Mid,Flat,Backwardation
+2021-11-03,5013.0,832.0,-38.5,Mid,Small up,Backwardation
+2021-11-05,4834.5,915.0,-76.5,Mid,Large down,Backwardation
+2021-11-08,4849.0,900.0,-74.0,Mid,Flat,Backwardation
+2021-11-09,4737.333333333333,972.0,-76.0,Mid,Small down,Backwardation
+2021-11-10,4865.333333333333,998.0,-72.5,Mid,Large up,Backwardation
+2021-11-11,4828.666666666667,1009.0,-87.5,Mid,Flat,Backwardation
+2021-11-12,4870.666666666667,1001.0,-68.5,Mid,Flat,Backwardation
+2021-11-15,4900.833333333333,982.0,-63.0,Mid,Flat,Backwardation
+2021-11-16,4735.5,921.0,-89.5,Mid,Large down,Backwardation
+2021-11-17,4833.166666666667,901.0,-72.0,Mid,Small up,Backwardation
+2021-11-18,4924.833333333333,979.0,-59.5,Mid,Large up,Backwardation
+2021-11-19,4921.166666666667,960.0,-67.5,Mid,Flat,Backwardation
+2021-11-22,4890.333333333333,950.0,-56.0,Mid,Small down,Backwardation
+2021-11-23,4792.666666666667,936.0,-71.0,Mid,Large down,Backwardation
+2021-11-24,4859.0,888.0,-76.0,Mid,Small up,Backwardation
+2021-11-25,4870.5,869.0,-71.0,Mid,Flat,Backwardation
+2021-11-26,4799.333333333333,858.0,-70.5,Mid,Small down,Backwardation
+2021-11-29,4787.5,930.0,-59.0,Mid,Flat,Backwardation
+2021-11-30,4610.333333333333,1072.0,-103.0,Mid,Large down,Backwardation
+2021-12-01,4626.833333333333,1078.0,-108.5,Mid,Flat,Backwardation
+2021-12-02,4587.833333333333,1069.0,-99.0,Mid,Small down,Backwardation
+2021-12-06,4694.0,1004.0,-95.0,Mid,Small up,Backwardation
+2021-12-07,4845.666666666667,906.0,-26.0,Mid,Small up,Backwardation
+2021-12-08,4769.0,958.0,-51.5,Mid,Small down,Backwardation
+2021-12-09,4708.833333333333,981.0,-67.5,Mid,Small down,Backwardation
+2021-12-10,4723.0,985.0,-59.0,Mid,Flat,Backwardation
+2021-12-13,4701.166666666667,1035.0,-64.0,Mid,Flat,Backwardation
+2021-12-14,4612.0,999.0,-43.0,Mid,Large down,Backwardation
+2021-12-21,4366.333333333333,829.0,-133.5,Mid,Large up,Backwardation
+2021-12-22,4431.833333333333,835.0,-145.0,Mid,Large up,Backwardation
+2021-12-23,4460.5,854.0,-140.0,Mid,Small up,Backwardation
+2021-12-24,4624.333333333333,867.0,-122.5,Mid,Large up,Backwardation
+2021-12-27,4579.666666666667,872.0,-135.5,Mid,Small down,Backwardation
+2021-12-28,4739.5,904.0,-113.5,Mid,Large up,Backwardation
+2021-12-29,4652.5,916.0,-103.5,Mid,Large down,Backwardation
+2021-12-30,4642.666666666667,921.0,-104.5,Mid,Flat,Backwardation
+2021-12-31,4659.666666666667,903.0,-102.5,Low,Flat,Backwardation
+2022-01-03,4801.833333333333,841.0,-79.0,Low,Large up,Backwardation
+2022-01-04,4847.166666666667,883.0,-58.0,Low,Small up,Backwardation
+2022-01-05,4970.666666666667,892.0,-55.0,Low,Large up,Backwardation
+2022-01-06,4914.833333333333,901.0,-58.0,Low,Small down,Backwardation
+2022-01-07,4915.666666666667,826.0,-20.5,Low,Small down,Backwardation
+2022-01-10,4937.833333333333,771.0,16.5,Low,Small down,Backwardation
+2022-01-11,4970.0,706.0,45.5,Low,Flat,Backwardation
+2022-01-12,4939.666666666667,695.0,45.5,Low,Small down,Backwardation
+2022-01-13,5050.5,648.0,81.0,Low,Small up,Backwardation
+2022-01-14,5018.833333333333,652.0,70.5,Low,Flat,Backwardation
+2022-01-17,4956.5,731.0,-6.5,Low,Flat,Backwardation
+2022-01-19,5041.166666666667,664.0,31.0,Low,Small up,Backwardation
+2022-01-20,5105.5,632.0,32.0,Low,Small up,Backwardation
+2022-01-21,5238.666666666667,588.0,44.0,Low,Large up,Backwardation
+2022-01-24,5164.333333333333,619.0,51.5,Low,Small down,Backwardation
+2022-01-25,5173.5,650.0,66.5,Low,Flat,Backwardation
+2022-01-26,5223.5,657.0,66.0,Low,Small up,Backwardation
+2022-01-27,5323.833333333333,683.0,79.0,Low,Large up,Backwardation
+2022-01-28,5510.0,704.0,86.0,Low,Large up,Backwardation
+2022-01-31,5483.833333333333,721.0,47.0,Low,Flat,Backwardation
+2022-02-03,5403.833333333333,705.0,71.5,Low,Large down,Backwardation
+2022-02-04,5495.0,673.0,89.5,Low,Small up,Backwardation
+2022-02-07,5430.333333333333,580.0,91.5,Low,Large down,Backwardation
+2022-02-08,5356.5,451.0,86.5,Low,Large down,Backwardation
+2022-02-09,5498.666666666667,604.0,66.0,Low,Large up,Backwardation
+2022-02-10,5435.333333333333,660.0,49.5,Low,Flat,Backwardation
+2022-02-11,5474.5,709.0,53.0,Low,Small up,Backwardation
+2022-02-14,5568.333333333333,781.0,42.5,Low,Large up,Backwardation
+2022-02-15,5550.5,725.0,73.5,Low,Small down,Backwardation
+2022-02-16,5375.0,859.0,-51.5,Low,Flat,Backwardation
+2022-02-17,5448.666666666667,958.0,-75.5,Low,Large up,Backwardation
+2022-02-18,5491.5,940.0,-93.0,Low,Small up,Backwardation
+2022-02-21,5622.833333333333,1007.0,-88.5,Low,Large up,Backwardation
+2022-02-22,5773.0,1078.0,-83.0,Low,Large up,Backwardation
+2022-02-23,5903.166666666667,1131.0,-80.0,Low,Large up,Backwardation
+2022-03-24,5947.666666666667,924.0,-193.5,Low,Large down,Backwardation
+2022-03-25,6042.166666666667,919.0,-216.0,Low,Large up,Backwardation
+2022-03-28,5993.666666666667,933.0,-221.0,Low,Small down,Backwardation
+2022-03-29,6030.0,974.0,-228.5,Low,Small up,Backwardation
+2022-03-30,5943.5,948.0,-226.5,Low,Large down,Backwardation
+2022-03-31,5751.833333333333,1012.0,-263.5,Low,Large down,Backwardation
+2022-04-01,5628.666666666667,1135.0,-359.0,Low,Flat,Backwardation
+2022-04-04,5704.5,1067.0,-275.5,Low,Flat,Backwardation
+2022-04-05,5916.5,1050.0,-246.0,Low,Large up,Backwardation
+2022-04-06,5933.666666666667,1100.0,-268.0,Low,Small up,Backwardation
+2022-04-07,5888.166666666667,1175.0,-345.5,Low,Small up,Backwardation
+2022-04-08,5982.0,1108.0,-320.5,Low,Small up,Backwardation
+2022-04-11,6044.666666666667,1161.0,-277.0,Low,Small up,Backwardation
+2022-04-12,6211.0,1105.0,-250.0,Low,Large up,Backwardation
+2022-04-13,6145.5,1056.0,-217.0,Low,Large down,Backwardation
+2022-04-14,6267.166666666667,971.0,-130.0,Low,Small up,Backwardation
+2022-04-15,6283.833333333333,696.0,-98.5,Low,Large down,Backwardation
+2022-04-18,6422.166666666667,768.0,-94.5,Low,Large up,Backwardation
+2022-04-20,6261.0,890.0,-112.5,Low,Small down,Backwardation
+2022-04-21,6280.333333333333,887.0,-141.0,Low,Small up,Backwardation
+2022-04-22,6333.833333333333,904.0,-162.5,Low,Small up,Backwardation
+2022-04-25,6226.166666666667,1205.0,-269.5,Low,Small up,Backwardation
+2022-04-26,6380.5,1200.0,-204.5,Low,Large up,Backwardation
+2022-05-06,6402.0,1095.0,-234.5,Mid,Large down,Backwardation
+2022-05-09,6418.5,1036.0,-230.0,Mid,Flat,Backwardation
+2022-05-10,6321.666666666667,998.0,-241.0,Mid,Large down,Backwardation
+2022-05-11,6477.5,1111.0,-256.5,Mid,Large up,Backwardation
+2022-05-12,6353.0,1035.0,-236.5,Mid,Large down,Backwardation
+2022-05-13,6181.0,735.0,-228.5,Mid,Large down,Backwardation
+2022-05-17,6165.0,725.0,-246.5,Mid,Flat,Backwardation
+2022-05-18,6184.666666666667,755.0,-239.5,Mid,Flat,Backwardation
+2022-05-19,6134.333333333333,759.0,-250.5,Mid,Small down,Backwardation
+2022-05-20,6162.166666666667,782.0,-248.5,Mid,Small up,Backwardation
+2022-05-23,6308.166666666667,805.0,-234.0,Mid,Large up,Backwardation
+2022-05-24,6490.833333333333,904.0,-210.0,Mid,Large up,Backwardation
+2022-05-25,6406.166666666667,897.0,-221.5,Mid,Small down,Backwardation
+2022-05-26,6530.833333333333,927.0,-187.0,Mid,Large up,Backwardation
+2022-05-27,6350.666666666667,876.0,-190.0,Mid,Large down,Backwardation
+2022-05-30,6231.833333333333,801.0,-169.5,Mid,Large down,Backwardation
+2022-05-31,6275.333333333333,617.0,-78.5,Low,Small down,Backwardation
+2022-06-01,6310.833333333333,633.0,-64.0,Low,Small up,Backwardation
+2022-06-02,6391.166666666667,711.0,-39.0,Low,Large up,Backwardation
+2022-06-03,6388.333333333333,627.0,-63.5,Low,Flat,Backwardation
+2022-06-07,6452.666666666667,611.0,-29.0,Low,Small up,Backwardation
+2022-06-08,6428.0,585.0,-64.0,Low,Flat,Backwardation
+2022-06-09,6207.0,652.0,-141.5,Low,Large down,Backwardation
+2022-06-10,5936.166666666667,681.0,-147.0,Low,Large down,Backwardation
+2022-06-13,5785.333333333333,608.0,-119.0,Low,Large down,Backwardation
+2022-06-14,5854.833333333333,594.0,-122.0,Low,Small up,Backwardation
+2022-06-15,5672.833333333333,499.0,-134.5,Low,Large down,Transition
+2022-06-28,5013.166666666667,196.0,-91.0,Low,Large up,Transition
+2022-06-29,4940.333333333333,162.0,-102.5,Low,Large down,Transition
+2022-06-30,4950.166666666667,165.0,-103.5,Mid,Flat,Transition
+2022-07-01,4749.0,177.0,-111.0,Mid,Large down,Transition
+2022-07-27,3863.1666666666665,-6.0,-86.0,Mid,Small up,Contango
+2022-07-28,4009.3333333333335,-59.0,-88.5,Mid,Large up,Contango
+2022-08-05,3942.3333333333335,55.0,-91.0,Mid,Large up,Contango
+2022-08-08,4103.833333333333,-14.0,-64.5,Mid,Large up,Contango
+2022-08-09,4144.666666666667,-6.0,-50.0,Mid,Small up,Contango
+2022-08-10,4136.333333333333,21.0,-72.5,Mid,Flat,Contango
+2022-08-11,4266.666666666667,-128.0,11.5,Mid,Flat,Contango
+2022-08-19,4115.833333333333,-82.0,-42.0,Mid,Small up,Contango
+2022-08-22,4186.833333333333,-88.0,-37.5,Mid,Large up,Contango
+2022-08-23,4257.666666666667,-77.0,-31.5,Mid,Large up,Contango
+2022-08-24,4323.5,-83.0,-21.5,Mid,Small up,Contango
+2022-08-25,4279.0,-101.0,-24.5,Mid,Small down,Contango
+2022-08-26,4198.166666666667,-112.0,-17.0,Mid,Large down,Contango
+2022-08-29,4189.833333333333,-181.0,9.5,Mid,Small down,Contango
+2022-08-30,4148.0,-243.0,29.0,Mid,Large down,Contango
+2022-09-01,4001.5,-216.0,6.5,High,Large down,Contango
+2022-09-02,3919.3333333333335,-178.0,-8.5,High,Small down,Contango
+2022-09-05,3927.1666666666665,-144.0,-8.5,High,Small up,Contango
+2022-09-06,3814.5,-165.0,-13.5,High,Large down,Contango
+2022-09-07,3718.1666666666665,-199.0,2.0,High,Large down,Contango
+2022-09-08,3569.5,-196.0,-18.0,High,Large down,Contango
+2022-09-09,3662.1666666666665,-220.0,2.0,High,Large up,Contango
+2022-09-12,3689.5,-277.0,34.5,High,Small down,Contango
+2022-09-20,3758.6666666666665,-171.0,-8.0,High,Large up,Contango
+2022-09-21,3902.6666666666665,-168.0,4.0,High,Large up,Contango
+2022-09-22,3843.1666666666665,-160.0,1.5,High,Small down,Contango
+2022-09-23,3752.1666666666665,-166.0,-10.5,High,Large down,Contango
+2022-10-11,3688.3333333333335,-263.0,56.0,High,Large down,Contango
+2022-10-12,3785.6666666666665,-177.0,21.5,High,Large up,Contango
+2022-10-13,3671.1666666666665,-214.0,24.5,High,Large down,Contango
+2022-10-14,3826.5,-274.0,64.0,High,Large up,Contango
+2022-10-17,3882.5,-140.0,19.0,High,Large up,Contango
+2022-10-18,4004.8333333333335,-108.0,28.0,High,Large up,Contango
+2022-10-19,4105.333333333333,-108.0,51.5,High,Large up,Contango
+2022-10-20,4087.1666666666665,-113.0,63.0,High,Small down,Contango
+2022-10-21,4086.8333333333335,-145.0,62.5,High,Flat,Contango
+2022-10-25,4100.166666666667,-162.0,94.0,High,Flat,Contango
+2022-10-26,4077.0,-212.0,119.5,High,Large down,Contango
+2022-10-27,4111.333333333333,-213.0,135.0,High,Small up,Contango
+2022-10-28,3956.3333333333335,-192.0,107.5,High,Large down,Contango
+2022-10-31,4013.6666666666665,-182.0,112.5,High,Large up,Contango
+2022-11-01,4196.166666666667,-154.0,122.0,High,Large up,Contango
+2022-11-02,4355.333333333333,-164.0,132.5,High,Large up,Contango
+2022-11-03,4299.833333333333,-179.0,106.0,High,Small down,Contango
+2022-11-04,4336.333333333333,-194.0,111.0,High,Small up,Contango
+2022-11-07,4411.166666666667,-174.0,101.5,High,Large up,Contango
+2022-11-08,4346.333333333333,-116.0,65.5,High,Flat,Contango
+2022-11-09,4183.0,-53.0,50.0,High,Large down,Contango
+2022-11-10,4146.5,-147.0,96.5,High,Large down,Contango
+2022-11-11,4288.666666666667,-81.0,91.5,High,Large up,Contango
+2022-11-14,4096.666666666667,-160.0,61.5,High,Large down,Contango
+2022-11-15,4028.0,-83.0,88.5,High,Small down,Contango
+2022-11-16,3987.8333333333335,-61.0,85.5,High,Small down,Contango
+2022-11-17,3829.8333333333335,-19.0,41.0,High,Large down,Contango
+2022-11-21,3836.3333333333335,-1.0,39.5,High,Flat,Contango
+2022-11-22,3988.3333333333335,-32.0,45.0,High,Large up,Contango
+2022-11-23,4086.6666666666665,-41.0,54.0,High,Large up,Contango
+2022-11-24,4022.0,11.0,52.0,High,Small down,Contango
+2022-11-25,4110.833333333333,-27.0,66.5,High,Small up,Contango
+2022-11-29,4188.833333333333,-64.0,95.0,High,Small up,Contango
+2022-11-30,4203.166666666667,-90.0,98.5,High,Flat,Contango
+2022-12-01,4058.8333333333335,-41.0,66.5,High,Large down,Contango
+2022-12-02,3938.0,-18.0,52.5,High,Large down,Contango
+2022-12-05,3950.1666666666665,-80.0,57.0,High,Small down,Contango
+2022-12-06,4084.5,-74.0,34.0,High,Large up,Contango
+2022-12-07,3964.8333333333335,-73.0,49.5,High,Large down,Contango
+2022-12-08,3939.0,-101.0,51.0,High,Small down,Contango
+2022-12-09,3986.6666666666665,-125.0,41.5,High,Small up,Contango
+2022-12-16,3896.1666666666665,-20.0,38.0,High,Small up,Contango
+2022-12-19,3908.6666666666665,-10.0,42.5,High,Flat,Contango
+2022-12-20,3852.5,8.0,32.5,High,Small down,Contango
+2022-12-21,3942.6666666666665,-16.0,35.5,High,Large up,Contango
+2022-12-22,3881.3333333333335,-10.0,25.5,High,Small down,Contango
+2022-12-23,3822.0,-12.0,24.5,High,Large down,Contango
+2023-01-03,4226.0,106.0,31.0,High,Large up,Transition
+2023-01-04,4151.5,126.0,13.0,High,Small down,Transition
+2023-01-05,4077.0,54.0,19.0,High,Large down,Contango
+2023-01-06,4019.6666666666665,-78.0,76.5,High,Large down,Contango
+2023-01-09,4090.8333333333335,-102.0,65.0,High,Large up,Contango
+2023-01-10,3965.3333333333335,-72.0,33.5,High,Large down,Contango
+2023-01-11,3894.5,-121.0,51.5,High,Large down,Contango
+2023-01-12,3897.1666666666665,-131.0,48.0,High,Flat,Contango
+2023-01-13,3842.5,-4.0,12.0,High,Small up,Contango
+2023-01-16,3851.8333333333335,-6.0,5.0,High,Flat,Contango
+2023-01-17,3796.6666666666665,-5.0,2.5,High,Small down,Contango
+2023-01-18,3866.1666666666665,7.0,12.5,High,Large up,Contango
+2023-01-19,3881.0,24.0,11.5,High,Small up,Contango
+2023-01-20,3885.6666666666665,25.0,19.0,High,Flat,Contango
+2023-01-25,3752.8333333333335,11.0,2.5,High,Large down,Contango
+2023-01-26,3773.3333333333335,15.0,4.5,High,Small up,Contango
+2023-01-27,3895.3333333333335,5.0,32.0,High,Large up,Contango
+2023-01-30,3912.3333333333335,-80.0,51.0,High,Small down,Contango
+2023-01-31,3795.5,-107.0,59.0,High,Large down,Contango
+2023-02-02,3734.0,-128.0,62.0,High,Large down,Contango
+2023-02-03,3830.3333333333335,-129.0,64.0,High,Large up,Contango
+2023-02-07,3904.0,-46.0,53.0,High,Large up,Contango
+2023-02-08,3955.6666666666665,-141.0,108.5,High,Small down,Contango
+2023-02-09,3937.5,-114.0,91.5,High,Flat,Contango
+2023-02-10,3894.3333333333335,-82.0,82.5,High,Flat,Contango
+2023-02-13,3894.1666666666665,-37.0,51.0,High,Small up,Contango
+2023-02-14,3936.5,-33.0,41.5,High,Small up,Contango
+2023-02-15,3920.8333333333335,19.0,32.0,High,Flat,Contango
+2023-02-16,4042.5,25.0,44.5,High,Large up,Contango
+2023-02-17,4103.0,40.0,51.0,High,Large up,Contango
+2023-02-20,4132.5,39.0,49.5,High,Small up,Contango
+2023-02-21,4106.833333333333,39.0,49.5,High,Small down,Contango
+2023-02-22,4110.5,40.0,58.0,High,Flat,Contango
+2023-02-23,4195.5,59.0,62.5,High,Large up,Contango
+2023-02-24,4164.5,64.0,64.0,High,Small down,Contango
+2023-02-27,4192.0,57.0,56.5,High,Small up,Contango
+2023-02-28,4108.666666666667,58.0,45.5,High,Large down,Contango
+2023-03-01,4155.666666666667,77.0,42.5,High,Small up,Contango
+2023-03-02,4252.833333333333,94.0,57.5,High,Large up,Contango
+2023-03-03,4315.5,85.0,62.0,High,Small up,Contango
+2023-03-06,4246.333333333333,80.0,49.5,High,Large down,Contango
+2023-03-07,4176.666666666667,85.0,43.0,High,Small down,Contango
+2023-03-08,4156.833333333333,150.0,17.5,High,Small up,Transition
+2023-03-09,4166.666666666667,61.0,64.0,High,Large down,Contango
+2023-03-10,4075.0,182.0,8.5,High,Flat,Transition
+2023-03-13,4023.0,197.0,2.0,High,Small down,Transition
+2023-03-14,3928.5,196.0,-32.0,High,Large down,Transition
+2023-03-15,3954.1666666666665,190.0,-15.0,High,Flat,Transition
+2023-03-16,3926.5,273.0,-38.0,High,Small up,Transition
+2023-03-17,3914.1666666666665,266.0,-40.0,High,Flat,Transition
+2023-03-20,3791.5,236.0,-53.5,High,Large down,Transition
+2023-03-21,3785.1666666666665,252.0,-52.5,High,Flat,Transition
+2023-03-22,3673.0,255.0,-65.5,High,Large down,Transition
+2023-03-23,3586.6666666666665,247.0,-73.5,High,Large down,Transition
+2023-03-24,3547.5,300.0,-100.5,High,Flat,Transition
+2023-03-27,3617.3333333333335,384.0,-141.5,High,Large up,Transition
+2023-03-28,3716.3333333333335,449.0,-136.0,High,Large up,Transition
+2023-03-29,3731.1666666666665,462.0,-129.5,High,Flat,Transition
+2023-03-30,3801.5,490.0,-122.0,High,Large up,Transition
+2023-03-31,3771.6666666666665,453.0,-115.5,Mid,Small down,Transition
+2023-04-03,3882.3333333333335,469.0,-94.5,Mid,Large up,Transition
+2023-04-04,3959.0,472.0,-79.5,Mid,Large up,Transition
+2023-04-05,3872.3333333333335,531.0,-121.0,Mid,Small down,Backwardation
+2023-04-06,3830.5,569.0,-134.5,Mid,Flat,Backwardation
+2023-04-07,3824.3333333333335,609.0,-166.5,Mid,Small up,Backwardation
+2023-04-10,3858.5,760.0,-201.0,Mid,Large up,Backwardation
+2023-04-11,3884.8333333333335,688.0,-132.5,Mid,Small down,Backwardation
+2023-04-12,3783.6666666666665,660.0,-162.0,Mid,Large down,Backwardation
+2023-04-13,3727.5,585.0,-152.0,Mid,Large down,Backwardation
+2023-04-14,3710.3333333333335,621.0,-155.0,Mid,Flat,Backwardation
+2023-04-17,3679.1666666666665,483.0,-173.0,Mid,Large down,Transition
+2023-04-18,3825.8333333333335,460.0,-157.0,Mid,Large up,Transition
+2023-04-19,3769.0,444.0,-156.5,Mid,Large down,Transition
+2023-04-20,3758.8333333333335,492.0,-195.5,Mid,Small up,Transition
+2023-04-25,3698.6666666666665,530.0,-214.0,Mid,Small down,Transition
+2023-04-26,3649.8333333333335,561.0,-244.0,Mid,Flat,Transition
+2023-04-27,3552.0,660.0,-287.0,Mid,Small down,Backwardation
+2023-04-28,3461.1666666666665,638.0,-305.0,Mid,Large down,Backwardation
+2023-05-02,3522.0,663.0,-296.5,Low,Large up,Backwardation
+2023-05-03,3528.8333333333335,673.0,-283.0,Low,Flat,Backwardation
+2023-05-05,3664.3333333333335,579.0,-213.0,Low,Small up,Transition
+2023-05-08,3796.0,441.0,-135.5,Low,Flat,Transition
+2023-05-09,3804.0,444.0,-89.0,Low,Small down,Transition
+2023-05-10,3704.0,386.0,-80.5,Low,Large down,Transition
+2023-05-11,3606.6666666666665,333.0,-75.0,Low,Large down,Transition
+2023-05-12,3635.8333333333335,304.0,-50.5,Low,Flat,Transition
+2023-05-15,3613.6666666666665,403.0,-83.5,Low,Small up,Transition
+2023-05-16,3503.3333333333335,332.0,-143.0,Low,Large down,Transition
+2023-05-17,3486.0,319.0,-146.0,Low,Small down,Transition
+2023-05-18,3446.1666666666665,305.0,-142.5,Low,Small down,Transition
+2023-05-19,3529.0,270.0,-128.0,Low,Small up,Transition
+2023-05-22,3474.6666666666665,266.0,-126.0,Low,Large down,Transition
+2023-05-23,3414.8333333333335,185.0,-89.0,Low,Large down,Transition
+2023-05-24,3431.3333333333335,129.0,-64.0,Low,Small down,Contango
+2023-05-25,3512.6666666666665,87.0,-39.5,Low,Small up,Contango
+2023-05-26,3570.1666666666665,38.0,-26.5,Low,Small up,Contango
+2023-05-29,3557.3333333333335,40.0,-25.5,Low,Flat,Contango
+2023-05-30,3420.1666666666665,29.0,-27.5,Low,Large down,Contango
+2023-06-07,3343.0,74.0,-57.5,Mid,Small up,Contango
+2023-06-08,3296.5,100.0,-77.5,Mid,Small down,Contango
+2023-06-09,3399.1666666666665,87.0,-70.5,Mid,Large up,Contango
+2023-06-12,3368.6666666666665,-2.0,-34.5,Mid,Large down,Contango
+2023-06-13,3437.5,8.0,-37.0,Mid,Large up,Contango
+2023-06-14,3458.6666666666665,17.0,-25.0,Mid,Small up,Contango
+2023-06-15,3519.8333333333335,-5.0,-8.5,Mid,Small up,Contango
+2023-06-22,3581.5,-11.0,-27.0,Mid,Small down,Contango
+2023-06-23,3630.1666666666665,0.0,-23.5,Mid,Small up,Contango
+2023-06-26,3726.8333333333335,5.0,-20.0,Mid,Large up,Contango
+2023-06-27,3677.6666666666665,2.0,-11.5,Mid,Small down,Contango
+2023-06-28,3757.0,-14.0,-9.5,Mid,Large up,Contango
+2023-06-30,3779.3333333333335,-41.0,10.0,Mid,Flat,Contango
+2023-07-03,3967.8333333333335,-62.0,36.5,Mid,Large up,Contango
+2023-07-04,3868.5,-63.0,32.0,Mid,Large down,Contango
+2023-07-05,3859.1666666666665,-90.0,19.5,Mid,Flat,Contango
+2023-07-06,3902.0,-105.0,36.0,Mid,Small up,Contango
+2023-07-07,3832.6666666666665,-109.0,21.5,Mid,Large down,Contango
+2023-07-10,3916.8333333333335,-129.0,37.0,Mid,Large up,Contango
+2023-07-11,3881.3333333333335,-70.0,28.0,Mid,Flat,Contango
+2023-07-12,3911.6666666666665,-119.0,45.5,Mid,Flat,Contango
+2023-07-13,3859.1666666666665,-124.0,34.5,Mid,Small down,Contango
+2023-07-14,3875.6666666666665,-94.0,21.0,Mid,Small up,Contango
+2023-07-17,3929.6666666666665,-73.0,14.5,Mid,Large up,Contango
+2023-07-18,3892.8333333333335,-71.0,9.5,Mid,Small down,Contango
+2023-07-20,4038.5,-68.0,22.5,Mid,Large up,Contango
+2023-07-21,4035.3333333333335,-65.0,16.5,Mid,Flat,Contango
+2023-07-24,4156.666666666667,-91.0,33.0,Mid,Large up,Contango
+2023-07-25,4053.8333333333335,-83.0,38.5,Mid,Large down,Contango
+2023-07-26,4051.1666666666665,-135.0,33.0,Mid,Small down,Contango
+2023-07-27,4012.8333333333335,-134.0,39.5,Mid,Small down,Contango
+2023-07-28,3988.0,-165.0,52.0,Mid,Small down,Contango
+2023-07-31,3876.6666666666665,-136.0,29.0,Mid,Large down,Contango
+2023-08-01,3864.1666666666665,-150.0,28.5,Mid,Small down,Contango
+2023-08-02,3905.8333333333335,-161.0,37.5,Mid,Small up,Contango
+2023-08-03,3825.6666666666665,-128.0,11.0,Mid,Small down,Contango
+2023-08-04,3867.6666666666665,-188.0,17.5,Mid,Flat,Contango
+2023-08-07,3782.6666666666665,-151.0,6.5,Mid,Large down,Contango
+2023-08-08,3710.1666666666665,-85.0,-17.0,Mid,Small down,Contango
+2023-08-09,3784.6666666666665,-104.0,-16.5,Mid,Large up,Contango
+2023-08-10,3748.6666666666665,-54.0,-29.0,Mid,Flat,Contango
+2023-08-11,3740.6666666666665,-77.0,-22.5,Mid,Small down,Contango
+2023-08-14,3718.6666666666665,-45.0,-32.0,Mid,Flat,Contango
+2023-08-15,3813.3333333333335,-98.0,4.0,Mid,Small up,Contango
+2023-08-16,3854.8333333333335,-75.0,-3.5,Mid,Large up,Contango
+2023-08-17,3929.3333333333335,-68.0,0.5,Mid,Large up,Contango
+2023-08-18,3877.5,-55.0,-9.5,Mid,Small down,Contango
+2023-08-21,3943.8333333333335,-55.0,-7.5,Mid,Large up,Contango
+2023-08-22,3876.8333333333335,-50.0,-12.5,Mid,Large down,Contango
+2023-08-23,3840.3333333333335,-62.0,-6.0,Mid,Small down,Contango
+2023-08-24,3879.8333333333335,-116.0,23.0,Mid,Flat,Contango
+2023-08-25,3958.0,-164.0,43.5,Mid,Small up,Contango
+2023-08-28,3911.8333333333335,-180.0,36.0,Mid,Small down,Contango
+2023-08-29,3924.1666666666665,-194.0,44.5,Mid,Flat,Contango
+2023-08-30,4003.8333333333335,-224.0,55.0,Mid,Small up,Contango
+2023-09-01,4032.8333333333335,-195.0,45.0,High,Small up,Contango
+2023-09-04,3981.3333333333335,-188.0,38.5,High,Small down,Contango
+2023-09-05,3912.0,-184.0,19.0,High,Small down,Contango
+2023-09-06,3894.3333333333335,-240.0,26.5,High,Small down,Contango
+2023-09-07,3851.3333333333335,-202.0,10.5,High,Flat,Contango
+2023-09-08,3840.6666666666665,-217.0,11.5,High,Flat,Contango
+2023-09-11,3743.1666666666665,-223.0,-8.5,High,Large down,Contango
+2023-09-12,3708.5,-219.0,2.5,High,Small down,Contango
+2023-09-13,3753.6666666666665,-213.0,-4.5,High,Small up,Contango
+2023-09-14,3775.6666666666665,-303.0,29.0,High,Small down,Contango
+2023-09-15,3803.6666666666665,-220.0,8.0,High,Large up,Contango
+2023-09-18,3773.5,-179.0,2.0,High,Flat,Contango
+2023-09-19,3772.5,-148.0,-7.5,High,Small up,Contango
+2023-09-20,3741.6666666666665,-150.0,-8.5,High,Small down,Contango
+2023-09-21,3703.6666666666665,-116.0,-14.0,High,Flat,Contango
+2023-09-22,3701.3333333333335,-128.0,-4.5,High,Flat,Contango
+2023-09-25,3735.8333333333335,-124.0,-3.5,High,Small up,Contango
+2023-09-26,3702.1666666666665,-171.0,16.5,High,Large down,Contango
+2023-09-27,3778.6666666666665,-172.0,24.5,High,Large up,Contango
+2023-09-29,3775.5,-153.0,17.0,High,Flat,Contango
+2023-10-02,3726.3333333333335,-160.0,-5.0,High,Small down,Contango
+2023-10-03,3726.0,-166.0,3.5,High,Flat,Contango
+2023-10-04,3734.1666666666665,-174.0,7.0,High,Flat,Contango
+2023-10-05,3633.6666666666665,-155.0,-10.0,High,Large down,Contango
+2023-10-06,3624.0,-128.0,-10.0,High,Flat,Contango
+2023-10-09,3629.8333333333335,-125.0,-12.0,High,Flat,Contango
+2023-10-10,3588.5,-107.0,-17.5,High,Small down,Contango
+2023-10-11,3564.8333333333335,-77.0,-9.5,High,Flat,Contango
+2023-10-12,3646.8333333333335,-75.0,-6.5,High,Large up,Contango
+2023-10-13,3737.6666666666665,-102.0,12.5,High,Large up,Contango
+2023-10-16,3780.6666666666665,-63.0,19.0,High,Large up,Contango
+2023-10-17,3782.3333333333335,-72.0,15.5,High,Flat,Contango
+2023-10-18,3808.3333333333335,-65.0,20.0,High,Small up,Contango
+2023-10-19,3762.6666666666665,-56.0,14.0,High,Small down,Contango
+2023-10-20,3771.5,-79.0,20.5,High,Flat,Contango
+2023-10-23,3753.0,-90.0,27.0,High,Small down,Contango
+2023-10-24,3666.5,-88.0,27.5,High,Large down,Contango
+2023-10-25,3680.0,-108.0,32.0,High,Flat,Contango
+2023-10-26,3751.5,-131.0,47.0,High,Small up,Contango
+2023-10-27,3769.3333333333335,-138.0,44.0,High,Flat,Contango
+2023-10-30,3726.3333333333335,-140.0,53.0,High,Small down,Contango
+2023-10-31,3669.1666666666665,-143.0,47.0,High,Large down,Contango
+2023-11-01,3684.3333333333335,-126.0,35.0,High,Small up,Contango
+2023-11-02,3769.6666666666665,-155.0,60.5,High,Large up,Contango
+2023-11-03,3754.5,-147.0,50.0,High,Flat,Contango
+2023-11-06,3744.8333333333335,-159.0,52.5,High,Flat,Contango
+2023-11-07,3715.5,-156.0,47.5,High,Small down,Contango
+2023-11-08,3756.6666666666665,-171.0,55.5,High,Small up,Contango
+2023-11-09,3738.3333333333335,-159.0,49.0,High,Flat,Contango
+2023-11-10,3793.8333333333335,-175.0,57.5,High,Small up,Contango
+2023-11-14,3890.6666666666665,-197.0,65.0,High,Large up,Contango
+2023-11-15,3959.3333333333335,-228.0,83.5,High,Small up,Contango
+2023-11-16,3973.5,-113.0,78.0,High,Large up,Contango
+2023-11-17,3908.3333333333335,-117.0,70.5,High,Large down,Contango
+2023-11-20,3914.8333333333335,-136.0,75.0,High,Flat,Contango
+2023-11-21,3928.5,-127.0,79.5,High,Flat,Contango
+2023-11-22,3964.5,-123.0,88.0,High,Small up,Contango
+2023-11-23,3928.8333333333335,-114.0,76.5,High,Small down,Contango
+2023-11-24,3870.8333333333335,-102.0,65.5,High,Small down,Contango
+2023-11-27,3866.5,-121.0,71.5,High,Flat,Contango
+2023-11-28,3872.0,-140.0,78.5,High,Flat,Contango
+2023-11-29,3847.3333333333335,-146.0,73.5,High,Small down,Contango
+2023-11-30,3872.6666666666665,-146.0,80.5,High,Small up,Contango
+2023-12-01,3849.0,-144.0,79.0,High,Small down,Contango
+2023-12-04,3800.0,-153.0,81.0,High,Small down,Contango
+2023-12-05,3758.0,-161.0,79.0,High,Small down,Contango
+2023-12-06,3706.5,-133.0,64.0,High,Small down,Contango
+2023-12-07,3683.8333333333335,-136.0,69.0,High,Small down,Contango
+2023-12-08,3720.1666666666665,-155.0,76.5,High,Small up,Contango
+2023-12-11,3720.8333333333335,-139.0,73.0,High,Flat,Contango
+2023-12-12,3716.8333333333335,-137.0,73.5,High,Flat,Contango
+2023-12-13,3659.5,-103.0,52.0,High,Small down,Contango
+2023-12-14,3674.5,-114.0,60.0,High,Flat,Contango
+2023-12-15,3696.0,-27.0,41.5,High,Large up,Contango
+2023-12-18,3720.5,-14.0,50.5,High,Small up,Contango
+2023-12-19,3730.5,-2.0,50.0,High,Flat,Contango
+2023-12-20,3745.5,-2.0,58.5,High,Flat,Contango
+2023-12-21,3713.0,-17.0,56.0,High,Small down,Contango
+2023-12-22,3710.3333333333335,-5.0,56.5,High,Flat,Contango
+2023-12-26,3735.3333333333335,-11.0,56.5,High,Small up,Contango
+2023-12-27,3741.5,-16.0,58.0,High,Flat,Contango
+2023-12-28,3711.1666666666665,-32.0,65.5,High,Small down,Contango
+2023-12-29,3717.6666666666665,-25.0,58.0,High,Flat,Contango
+2024-01-02,3644.3333333333335,27.0,31.0,High,Small down,Contango
+2024-01-03,3614.1666666666665,81.0,7.0,High,Flat,Contango
+2024-01-04,3645.5,85.0,8.0,High,Small up,Contango
+2024-01-05,3659.1666666666665,46.0,35.0,High,Small down,Contango
+2024-01-08,3672.5,47.0,34.0,High,Flat,Contango
+2024-01-09,3704.3333333333335,31.0,54.5,High,Flat,Contango
+2024-01-10,3729.3333333333335,60.0,48.0,High,Small up,Contango
+2024-01-11,3754.3333333333335,35.0,78.5,High,Flat,Contango
+2024-01-12,3803.5,22.0,98.0,High,Small up,Contango
+2024-01-15,3771.3333333333335,54.0,87.0,High,Flat,Contango
+2024-01-16,3807.8333333333335,214.0,60.0,High,Large up,Transition
+2024-01-17,3776.1666666666665,203.0,41.0,High,Small down,Transition
+2024-01-18,3852.5,210.0,51.0,High,Large up,Transition
+2024-01-19,3894.5,198.0,53.0,High,Small up,Transition
+2024-01-22,3861.6666666666665,192.0,53.0,High,Small down,Transition
+2024-01-23,3903.3333333333335,177.0,56.5,High,Small up,Transition
+2024-01-24,3945.5,162.0,57.0,High,Small up,Transition
+2024-01-26,3966.5,175.0,64.5,High,Small up,Transition
+2024-01-29,3898.8333333333335,168.0,58.5,High,Large down,Transition
+2024-01-30,3804.0,164.0,35.0,High,Large down,Transition
+2024-01-31,3762.3333333333335,140.0,32.5,High,Small down,Transition
+2024-02-02,3729.5,150.0,26.0,High,Small down,Transition
+2024-02-05,3764.0,159.0,28.0,High,Small up,Transition
+2024-02-06,3798.3333333333335,176.0,38.0,High,Small up,Transition
+2024-02-07,3830.0,235.0,30.0,High,Large up,Transition
+2024-02-08,3822.1666666666665,224.0,45.0,High,Small down,Transition
+2024-02-09,3837.3333333333335,200.0,34.0,High,Flat,Transition
+2024-02-13,3854.1666666666665,173.0,48.5,High,Flat,Transition
+2024-02-14,3905.5,201.0,45.0,High,Large up,Transition
+2024-02-15,3788.1666666666665,276.0,2.5,High,Small down,Transition
+2024-02-16,3774.1666666666665,266.0,-1.5,High,Flat,Transition
+2024-02-19,3829.3333333333335,265.0,2.5,High,Small up,Transition
+2024-02-20,3833.6666666666665,279.0,-10.5,High,Flat,Transition
+2024-02-21,3831.6666666666665,278.0,6.0,High,Flat,Transition
+2024-02-22,3810.6666666666665,278.0,-7.0,High,Flat,Transition
+2024-02-23,3822.5,277.0,-8.0,High,Flat,Transition
+2024-02-26,3834.8333333333335,300.0,-4.0,High,Small up,Transition
+2024-02-27,3885.5,280.0,8.0,High,Small up,Transition
+2024-02-28,3868.3333333333335,256.0,13.5,High,Small down,Transition
+2024-02-29,3922.5,248.0,31.5,High,Small up,Transition
+2024-03-01,3913.8333333333335,256.0,32.0,High,Flat,Transition
+2024-03-04,3890.6666666666665,278.0,26.0,High,Flat,Transition
+2024-03-05,3928.8333333333335,290.0,43.0,High,Small up,Transition
+2024-03-06,4014.3333333333335,316.0,51.5,High,Large up,Transition
+2024-03-07,3932.1666666666665,381.0,-21.5,High,Flat,Transition
+2024-03-08,4013.5,387.0,45.5,High,Small up,Transition
+2024-03-11,4052.8333333333335,340.0,68.5,High,Flat,Transition
+2024-03-12,4066.1666666666665,329.0,56.0,High,Flat,Transition
+2024-03-13,4133.5,292.0,61.5,High,Small up,Transition
+2024-03-14,4223.666666666667,298.0,77.0,High,Large up,Transition
+2024-03-15,4226.666666666667,290.0,78.5,High,Flat,Transition
+2024-03-18,4178.5,329.0,37.5,High,Flat,Transition
+2024-03-19,4150.833333333333,312.0,22.0,High,Small down,Transition
+2024-03-20,4210.666666666667,341.0,35.5,High,Large up,Transition
+2024-03-21,4191.5,353.0,31.0,High,Flat,Transition
+2024-03-22,4139.0,348.0,15.0,High,Small down,Transition
+2024-03-25,4189.166666666667,357.0,26.5,High,Small up,Transition
+2024-03-26,4177.333333333333,342.0,30.0,High,Flat,Transition
+2024-03-27,4084.1666666666665,359.0,13.5,Mid,Large down,Transition
+2024-03-29,4151.833333333333,357.0,5.5,Mid,Large up,Transition
+2024-04-01,4224.333333333333,384.0,0.5,Mid,Large up,Transition
+2024-04-02,4268.0,386.0,-1.0,Mid,Small up,Transition
+2024-04-03,4372.166666666667,381.0,-20.0,Mid,Large up,Transition
+2024-04-04,4372.166666666667,383.0,-22.5,Mid,Flat,Transition
+2024-04-05,4323.333333333333,432.0,-40.5,Mid,Flat,Transition
+2024-04-08,4274.666666666667,440.0,-37.5,Mid,Small down,Transition
+2024-04-09,4294.833333333333,407.0,-32.5,Mid,Flat,Transition
+2024-04-12,4263.666666666667,419.0,-47.0,Mid,Flat,Transition
+2024-04-15,4185.666666666667,385.0,-42.0,Mid,Large down,Transition
+2024-04-16,4061.0,260.0,-39.0,Mid,Large down,Transition
+2024-04-17,4007.6666666666665,246.0,-46.5,Mid,Small down,Transition
+2024-04-18,3978.8333333333335,250.0,-42.5,Mid,Small down,Transition
+2024-04-19,3924.6666666666665,218.0,-45.0,Mid,Large down,Transition
+2024-04-22,3946.3333333333335,196.0,-54.5,Mid,Flat,Transition
+2024-04-23,3969.0,167.0,-41.0,Mid,Flat,Transition
+2024-04-24,3949.6666666666665,137.0,-46.0,Mid,Small down,Transition
+2024-04-25,3879.5,116.0,-38.0,Mid,Large down,Transition
+2024-04-26,3896.1666666666665,55.0,-15.5,Mid,Small down,Contango
+2024-04-29,3924.0,65.0,-21.0,Mid,Small up,Contango
+2024-04-30,3817.6666666666665,65.0,-28.0,Mid,Large down,Contango
+2024-05-02,3849.8333333333335,65.0,-25.0,Mid,Small up,Contango
+2024-05-03,3845.5,53.0,-17.5,Mid,Flat,Contango
+2024-05-06,3870.0,59.0,-21.5,Mid,Small up,Contango
+2024-05-07,3933.0,36.0,-15.5,Mid,Small up,Contango
+2024-05-08,3882.5,96.0,-43.0,Mid,Flat,Transition
+2024-05-09,3845.6666666666665,67.0,-38.0,Mid,Small down,Contango
+2024-05-10,3821.3333333333335,35.0,-22.5,Mid,Small down,Contango
+2024-05-13,3877.3333333333335,26.0,-22.5,Mid,Small up,Contango
+2024-05-14,3816.6666666666665,-25.0,0.0,Mid,Large down,Contango
+2024-05-15,3847.1666666666665,-56.0,23.0,Mid,Flat,Contango
+2024-05-16,3812.5,-3.0,-19.5,Mid,Small up,Contango
+2024-05-17,3894.1666666666665,-7.0,-9.0,Mid,Large up,Contango
+2024-05-20,3920.8333333333335,-43.0,3.0,Mid,Flat,Contango
+2024-05-21,3866.3333333333335,-62.0,3.5,Mid,Large down,Contango
+2024-05-23,3891.6666666666665,-70.0,10.0,Mid,Flat,Contango
+2024-05-24,3889.6666666666665,-49.0,-1.5,Mid,Flat,Contango
+2024-05-27,3876.8333333333335,-31.0,-4.5,Mid,Flat,Contango
+2024-05-28,3962.1666666666665,-21.0,1.0,Mid,Large up,Contango
+2024-05-29,4035.5,-9.0,-2.5,Mid,Large up,Contango
+2024-05-30,3989.8333333333335,-15.0,9.0,Mid,Small down,Contango
+2024-05-31,4069.5,12.0,10.5,Mid,Large up,Contango
+2024-06-04,3912.0,-47.0,20.0,Mid,Large down,Contango
+2024-06-05,3899.8333333333335,-59.0,21.5,Mid,Small down,Contango
+2024-06-06,3955.1666666666665,-49.0,17.0,Mid,Large up,Contango
+2024-06-07,3970.5,-34.0,16.5,Mid,Small up,Contango
+2024-06-10,3921.3333333333335,-8.0,-8.5,Mid,Small down,Contango
+2024-06-11,3922.5,-31.0,23.5,Mid,Small down,Contango
+2024-06-12,3965.0,41.0,-17.5,Mid,Large up,Contango
+2024-06-13,3938.3333333333335,15.0,-1.5,Mid,Small down,Contango
+2024-06-14,3942.5,80.0,-13.0,Mid,Small up,Transition
+2024-06-18,3889.5,58.0,-32.5,Mid,Small down,Transition
+2024-06-19,3924.1666666666665,42.0,-27.0,Mid,Small up,Transition
+2024-06-20,3961.3333333333335,17.0,-18.5,Mid,Small up,Contango
+2024-06-21,3905.8333333333335,14.0,-25.5,Mid,Small down,Contango
+2024-06-24,3904.5,36.0,-27.0,Mid,Flat,Contango
+2024-06-25,3866.5,22.0,-30.0,Mid,Small down,Contango
+2024-06-26,3888.3333333333335,34.0,-36.0,Mid,Small up,Contango
+2024-06-27,3907.1666666666665,48.0,-38.0,Mid,Small up,Transition
+2024-06-28,3924.0,64.0,-33.0,Mid,Small up,Transition
+2024-07-01,3983.3333333333335,61.0,-18.0,Mid,Small up,Transition
+2024-07-02,4086.0,85.0,-18.0,Mid,Large up,Transition
+2024-07-03,4080.6666666666665,84.0,-20.0,Mid,Flat,Transition
+2024-07-04,4064.0,84.0,-16.0,Mid,Flat,Transition
+2024-07-05,4037.1666666666665,52.0,-11.5,Mid,Small down,Transition
+2024-07-09,3966.1666666666665,65.0,-31.5,Mid,Small down,Transition
+2024-07-10,3927.8333333333335,103.0,-41.0,Mid,Flat,Transition
+2024-07-11,3938.1666666666665,102.0,-33.5,Mid,Flat,Transition
+2024-07-12,3918.6666666666665,87.0,-33.0,Mid,Small down,Transition
+2024-07-15,3886.0,36.0,-33.0,Mid,Small down,Transition
+2024-07-16,3934.6666666666665,31.0,-27.0,Mid,Small up,Contango
+2024-07-17,3939.3333333333335,47.0,-26.5,Mid,Flat,Transition
+2024-07-18,3945.1666666666665,50.0,-29.0,Mid,Flat,Transition
+2024-07-19,3967.3333333333335,54.0,-29.0,Mid,Small up,Transition
+2024-07-22,3991.6666666666665,58.0,-26.5,Mid,Small up,Transition
+2024-07-23,3972.8333333333335,49.0,-26.5,Mid,Small down,Transition
+2024-07-24,3937.0,66.0,-39.5,Mid,Flat,Transition
+2024-07-25,3932.1666666666665,88.0,-50.0,Mid,Flat,Transition
+2024-07-26,3956.1666666666665,105.0,-50.5,Mid,Small up,Transition
+2024-07-29,3921.3333333333335,134.0,-54.5,Mid,Flat,Transition
+2024-07-30,3931.3333333333335,148.0,-59.0,Mid,Flat,Transition
+2024-07-31,3921.6666666666665,145.0,-54.0,Mid,Flat,Transition
+2024-08-01,3877.3333333333335,171.0,-47.0,Mid,Small down,Transition
+2024-08-02,3916.5,172.0,-35.0,Mid,Small up,Transition
+2024-08-05,3799.3333333333335,194.0,-63.5,Mid,Large down,Transition
+2024-08-06,3718.6666666666665,155.0,-57.5,Mid,Large down,Transition
+2024-08-07,3713.3333333333335,120.0,-55.0,Mid,Small down,Transition
+2024-08-08,3715.1666666666665,101.0,-44.5,Mid,Flat,Transition
+2024-08-09,3757.6666666666665,105.0,-44.0,Mid,Small up,Transition
+2024-08-12,3723.0,146.0,-59.5,Mid,Flat,Transition
+2024-08-13,3712.3333333333335,174.0,-78.5,Mid,Flat,Transition
+2024-08-14,3738.1666666666665,192.0,-59.5,Mid,Small up,Transition
+2024-08-15,3723.6666666666665,190.0,-84.0,Mid,Flat,Transition
+2024-08-16,3711.1666666666665,216.0,-94.5,Mid,Flat,Transition
+2024-08-19,3746.1666666666665,260.0,-93.5,Mid,Small up,Transition
+2024-08-20,3735.5,189.0,-69.0,Mid,Large down,Transition
+2024-08-21,3771.3333333333335,169.0,-58.0,Mid,Flat,Transition
+2024-08-22,3840.1666666666665,130.0,-43.0,Mid,Small up,Transition
+2024-08-23,3883.1666666666665,142.0,-47.5,Mid,Small up,Transition
+2024-08-26,3933.6666666666665,124.0,-45.5,Mid,Small up,Transition
+2024-08-27,3925.5,122.0,-31.5,Mid,Flat,Transition
+2024-08-28,3924.1666666666665,144.0,-35.5,Mid,Flat,Transition
+2024-08-29,3945.5,156.0,-42.0,Mid,Small up,Transition
+2024-08-30,3975.0,166.0,-31.0,Mid,Small up,Transition
+2024-09-02,3931.6666666666665,161.0,-34.0,Mid,Small down,Transition
+2024-09-03,3930.6666666666665,142.0,-31.0,Mid,Flat,Transition
+2024-09-04,3893.0,152.0,-47.5,Mid,Small down,Transition
+2024-09-05,3918.6666666666665,130.0,-30.0,Mid,Flat,Transition
+2024-09-06,3902.1666666666665,122.0,-31.0,Mid,Small down,Transition
+2024-09-09,3897.0,148.0,-40.0,Mid,Flat,Transition
+2024-09-10,3878.3333333333335,159.0,-28.5,Mid,Small down,Transition
+2024-09-11,3886.6666666666665,129.0,-7.5,Mid,Small down,Transition
+2024-09-12,3861.0,246.0,-69.5,Mid,Large up,Transition
+2024-09-13,3819.5,187.0,-42.0,Mid,Large down,Transition
+2024-09-17,3743.1666666666665,151.0,-48.5,Mid,Large down,Transition
+2024-09-18,3845.5,132.0,-23.5,Mid,Large up,Transition
+2024-09-19,3871.6666666666665,137.0,-10.0,Mid,Small up,Transition
+2024-09-20,3945.8333333333335,145.0,-21.5,Mid,Large up,Transition
+2024-09-23,3969.0,143.0,-14.0,Mid,Flat,Transition
+2024-09-24,3980.8333333333335,172.0,-17.5,Mid,Small up,Transition
+2024-09-25,4029.3333333333335,182.0,-9.5,Mid,Small up,Transition
+2024-09-26,4138.0,189.0,-7.5,Mid,Large up,Transition
+2024-09-27,4040.0,220.0,-17.0,Mid,Large down,Transition
+2024-09-30,3988.3333333333335,241.0,-27.5,High,Small down,Transition
+2024-10-01,4002.1666666666665,267.0,-39.5,High,Small up,Transition
+2024-10-02,4166.0,271.0,1.5,High,Large up,Transition
+2024-10-03,4154.166666666667,233.0,7.5,High,Small down,Transition
+2024-10-04,4272.5,269.0,12.0,High,Large up,Transition
+2024-10-07,4309.333333333333,221.0,32.0,High,Flat,Transition
+2024-10-08,4249.0,216.0,2.0,High,Small down,Transition
+2024-10-09,4233.166666666667,202.0,-5.5,High,Flat,Transition
+2024-10-10,4226.333333333333,211.0,-28.5,High,Flat,Transition
+2024-10-11,4309.0,45.0,72.5,High,Large down,Transition
+2024-10-14,4294.666666666667,155.0,11.0,High,Large up,Transition
+2024-10-15,4255.833333333333,183.0,-5.5,High,Flat,Transition
+2024-10-16,4289.5,173.0,11.0,High,Flat,Transition
+2024-10-17,4254.0,173.0,8.5,High,Small down,Transition
+2024-10-18,4236.166666666667,165.0,6.5,High,Flat,Transition
+2024-10-21,4276.333333333333,185.0,8.5,High,Small up,Transition
+2024-10-22,4357.166666666667,201.0,17.0,High,Large up,Transition
+2024-10-23,4454.5,224.0,15.5,High,Large up,Transition
+2024-10-24,4566.5,254.0,20.0,High,Large up,Transition
+2024-10-25,4500.666666666667,276.0,14.5,Mid,Small down,Transition
+2024-10-28,4491.333333333333,296.0,16.5,Mid,Flat,Transition
+2024-10-29,4588.5,328.0,31.5,Mid,Large up,Transition
+2024-10-30,4652.833333333333,321.0,27.5,Mid,Small up,Transition
+2024-11-01,4819.166666666667,331.0,34.0,Mid,Large up,Transition
+2024-11-04,4842.833333333333,325.0,42.0,Mid,Flat,Transition
+2024-11-05,4760.0,342.0,31.5,Mid,Small down,Transition
+2024-11-06,4865.0,314.0,56.0,Mid,Large up,Transition
+2024-11-07,4895.5,367.0,49.5,Mid,Small up,Backwardation
+2024-11-08,5033.333333333333,327.0,83.5,Mid,Large up,Transition
+2024-11-11,5128.833333333333,367.0,79.5,Mid,Large up,Backwardation
+2024-11-12,4981.0,496.0,20.5,Mid,Small down,Backwardation
+2024-11-13,4952.166666666667,469.0,0.5,Mid,Small down,Backwardation
+2024-11-14,4913.833333333333,336.0,60.0,Mid,Large down,Transition
+2024-11-15,4953.833333333333,426.0,94.0,Mid,Small up,Backwardation
+2024-11-18,4815.333333333333,391.0,81.5,Mid,Large down,Backwardation
+2024-11-19,4847.5,396.0,60.5,Mid,Small up,Backwardation
+2024-11-20,4749.166666666667,399.0,45.0,Mid,Large down,Backwardation
+2024-11-21,4706.0,417.0,32.0,Mid,Small down,Backwardation
+2024-11-22,4585.666666666667,414.0,12.5,Mid,Large down,Backwardation
+2024-11-25,4639.166666666667,400.0,21.0,Mid,Small up,Backwardation
+2024-11-26,4680.666666666667,366.0,25.0,Mid,Flat,Backwardation
+2024-11-27,4738.333333333333,403.0,27.5,Mid,Large up,Backwardation
+2024-11-28,4829.333333333333,469.0,20.0,Mid,Large up,Backwardation
+2024-11-29,4950.0,594.0,24.0,Mid,Large up,Backwardation
+2024-12-02,4888.5,655.0,1.5,Mid,Flat,Backwardation
+2024-12-03,4990.333333333333,723.0,20.0,Mid,Large up,Backwardation
+2024-12-04,4952.166666666667,692.0,17.5,Mid,Small down,Backwardation
+2024-12-05,5031.666666666667,675.0,60.0,Mid,Small up,Backwardation
+2024-12-06,5032.0,672.0,57.0,Mid,Flat,Backwardation
+2024-12-09,5022.0,643.0,67.0,Mid,Small down,Backwardation
+2024-12-10,4875.0,709.0,14.0,Mid,Large down,Backwardation
+2024-12-11,4793.166666666667,624.0,-3.5,Mid,Large down,Backwardation
+2024-12-12,4859.333333333333,575.0,18.5,Mid,Small up,Backwardation
+2024-12-13,4853.666666666667,576.0,2.5,Mid,Flat,Backwardation
+2024-12-16,4677.166666666667,482.0,41.0,Mid,Large down,Backwardation
+2024-12-17,4663.0,461.0,15.5,Mid,Flat,Backwardation
+2024-12-18,4482.666666666667,431.0,-9.5,Mid,Large down,Backwardation
+2024-12-19,4461.666666666667,567.0,-25.5,Mid,Small up,Backwardation
+2024-12-20,4405.166666666667,615.0,-88.0,Mid,Flat,Backwardation
+2024-12-23,4520.166666666667,663.0,-98.0,Mid,Large up,Backwardation
+2024-12-24,4522.5,654.0,-86.5,Mid,Flat,Backwardation
+2024-12-26,4510.833333333333,673.0,-89.5,Mid,Flat,Backwardation
+2024-12-27,4569.666666666667,733.0,-71.0,Mid,Large up,Backwardation
+2024-12-30,4508.0,739.0,-87.5,Mid,Small down,Backwardation
+2024-12-31,4427.833333333333,725.0,-126.5,Low,Small down,Backwardation
+2025-01-02,4325.666666666667,591.0,-113.5,Low,Large down,Backwardation
+2025-01-03,4357.0,609.0,-108.0,Low,Small up,Backwardation
+2025-01-06,4337.0,578.0,-112.5,Low,Small down,Backwardation
+2025-01-07,4368.166666666667,525.0,-99.0,Low,Flat,Backwardation
+2025-01-08,4366.0,534.0,-125.0,Low,Flat,Backwardation
+2025-01-09,4293.0,562.0,-113.5,Low,Small down,Backwardation
+2025-01-10,4388.166666666667,530.0,-94.0,Low,Small up,Backwardation
+2025-01-13,4489.0,571.0,-80.5,Low,Large up,Backwardation
+2025-01-14,4400.5,431.0,-6.0,Low,Large down,Backwardation
+2025-01-15,4352.166666666667,546.0,-90.5,Low,Small up,Backwardation
+2025-01-16,4187.5,437.0,-110.5,Low,Large down,Backwardation
+2025-01-17,4199.666666666667,371.0,-97.5,Low,Small down,Transition
+2025-01-20,4219.166666666667,379.0,-107.5,Low,Small up,Transition
+2025-01-21,4266.5,376.0,-96.5,Low,Small up,Transition
+2025-01-22,4217.166666666667,385.0,-100.5,Low,Small down,Backwardation
+2025-01-23,4191.333333333333,442.0,-104.0,Low,Flat,Backwardation
+2025-01-24,4203.5,469.0,-94.0,Low,Flat,Backwardation
+2025-01-27,4207.333333333333,495.0,-93.0,Low,Flat,Backwardation
+2025-01-28,4272.333333333333,434.0,-80.0,Low,Small up,Backwardation
+2025-01-31,4280.0,452.0,-79.5,Low,Flat,Backwardation
+2025-02-03,4358.833333333333,453.0,-74.0,Low,Large up,Backwardation
+2025-02-04,4303.666666666667,466.0,-94.5,Low,Small down,Backwardation
+2025-02-05,4323.0,487.0,-80.5,Low,Small up,Backwardation
+2025-02-06,4387.666666666667,497.0,-69.0,Low,Small up,Backwardation
+2025-02-07,4481.0,522.0,-62.5,Low,Large up,Backwardation
+2025-02-10,4558.833333333333,496.0,-29.0,Low,Small up,Backwardation
+2025-02-12,4590.5,520.0,-36.5,Low,Small up,Backwardation
+2025-02-13,4503.833333333333,424.0,14.0,Low,Large down,Backwardation
+2025-02-14,4542.333333333333,401.0,24.0,Low,Flat,Backwardation
+2025-02-17,4502.5,432.0,-28.0,Low,Flat,Backwardation
+2025-02-18,4465.5,435.0,-17.5,Low,Small down,Backwardation
+2025-02-19,4616.166666666667,459.0,-1.0,Low,Large up,Backwardation
+2025-02-20,4589.333333333333,464.0,0.0,Low,Small down,Backwardation
+2025-02-21,4602.833333333333,470.0,6.5,Low,Flat,Backwardation
+2025-02-24,4501.5,468.0,1.0,Low,Large down,Backwardation
+2025-02-25,4513.833333333333,409.0,-6.0,Low,Flat,Backwardation
+2025-02-26,4547.166666666667,389.0,24.0,Low,Flat,Backwardation
+2025-02-27,4469.833333333333,431.0,-20.5,Low,Small down,Backwardation
+2025-02-28,4508.333333333333,429.0,-12.5,Low,Small up,Backwardation
+2025-03-03,4442.666666666667,451.0,-23.5,Low,Small down,Backwardation
+2025-03-04,4323.833333333333,478.0,-62.5,Low,Large down,Backwardation
+2025-03-05,4391.5,458.0,-47.0,Low,Small up,Backwardation
+2025-03-06,4449.833333333333,521.0,-52.0,Low,Large up,Backwardation
+2025-03-07,4565.833333333333,508.0,2.5,Low,Large up,Backwardation
+2025-03-10,4460.666666666667,536.0,-43.0,Low,Small down,Backwardation
+2025-03-11,4445.833333333333,486.0,-26.5,Low,Small down,Backwardation
+2025-03-12,4454.166666666667,547.0,-52.0,Low,Small up,Backwardation
+2025-03-13,4508.666666666667,501.0,-40.5,Low,Small up,Backwardation
+2025-03-14,4526.833333333333,424.0,9.5,Low,Small down,Backwardation
+2025-03-17,4346.166666666667,442.0,-60.5,Low,Large down,Backwardation
+2025-03-19,4364.833333333333,459.0,-67.0,Low,Small up,Backwardation
+2025-03-20,4383.666666666667,501.0,-59.5,Low,Small up,Backwardation
+2025-03-21,4349.5,526.0,-69.5,Low,Flat,Backwardation
+2025-03-24,4289.0,512.0,-86.5,Low,Small down,Backwardation
+2025-03-25,4243.166666666667,522.0,-106.5,Low,Small down,Backwardation
+2025-03-26,4263.333333333333,525.0,-115.5,Low,Small up,Backwardation
+2025-03-27,4319.333333333333,595.0,-141.5,Low,Large up,Backwardation
+2025-03-28,4413.166666666667,559.0,-114.0,Low,Small up,Backwardation
+2025-04-02,4505.166666666667,559.0,-98.5,Low,Large up,Backwardation
+2025-04-03,4475.666666666667,557.0,-95.5,Low,Small down,Backwardation
+2025-04-04,4336.833333333333,576.0,-133.0,Low,Large down,Backwardation
+2025-04-07,4200.666666666667,555.0,-149.5,Low,Large down,Backwardation
+2025-04-08,4208.0,500.0,-141.5,Low,Small down,Backwardation
+2025-04-09,4153.0,439.0,-99.0,Low,Large down,Backwardation
+2025-04-10,4199.333333333333,381.0,-74.0,Low,Flat,Backwardation
+2025-04-11,4221.166666666667,382.0,-88.0,Low,Small up,Backwardation
+2025-04-14,4172.666666666667,302.0,-58.0,Low,Large down,Transition
+2025-04-15,4115.166666666667,336.0,-76.5,Low,Small down,Transition
+2025-04-16,4032.6666666666665,230.0,-88.5,Low,Large down,Transition
+2025-04-17,4031.0,222.0,-78.0,Low,Flat,Transition
+2025-04-18,3999.0,155.0,-72.0,Low,Large down,Transition
+2025-04-21,3934.0,189.0,-72.0,Low,Small down,Transition
+2025-04-22,3988.3333333333335,167.0,-65.0,Low,Small up,Transition
+2025-04-23,4050.5,131.0,-47.0,Low,Small up,Transition
+2025-04-24,4050.5,118.0,-44.5,Low,Flat,Transition
+2025-04-25,4069.0,98.0,-32.5,Low,Flat,Transition
+2025-04-28,3975.1666666666665,97.0,-38.0,Low,Large down,Transition
+2025-04-29,3950.6666666666665,87.0,-29.5,Low,Small down,Transition
+2025-04-30,3921.0,69.0,-29.5,Mid,Small down,Transition
+2025-05-02,3893.6666666666665,32.0,-24.0,Mid,Small down,Contango
+2025-05-05,3839.5,67.0,-30.5,Mid,Small down,Transition
+2025-05-06,3793.1666666666665,7.0,1.0,Mid,Large down,Contango
+2025-05-07,3731.5,-49.0,2.5,Mid,Large down,Contango
+2025-05-08,3809.1666666666665,-75.0,1.0,Mid,Large up,Contango
+2025-05-09,3825.0,-68.0,-1.0,Mid,Small up,Contango
+2025-05-13,3885.6666666666665,-75.0,31.0,Mid,Small up,Contango
+2025-05-14,3920.0,28.0,1.5,Mid,Large up,Contango
+2025-05-15,3851.8333333333335,-20.0,17.0,Mid,Large down,Contango
+2025-05-16,3818.0,22.0,-18.5,Mid,Flat,Contango
+2025-05-19,3883.5,15.0,-4.0,Mid,Small up,Contango
+2025-05-20,3906.5,24.0,-4.5,Mid,Small up,Transition
+2025-05-21,3889.3333333333335,10.0,4.5,Mid,Small down,Contango
+2025-05-22,3816.3333333333335,10.0,-2.5,Mid,Large down,Contango
+2025-05-23,3829.0,-2.0,-5.5,Mid,Flat,Contango
+2025-05-26,3831.1666666666665,-1.0,-6.5,Mid,Flat,Contango
+2025-05-27,3866.8333333333335,2.0,-2.0,Mid,Small up,Contango
+2025-05-28,3895.6666666666665,7.0,-1.0,Mid,Small up,Contango
+2025-05-29,3927.6666666666665,7.0,3.5,Mid,Small up,Contango
+2025-05-30,3878.5,14.0,-7.0,Mid,Small down,Contango
+2025-06-03,3929.0,22.0,2.0,Mid,Small up,Transition
+2025-06-04,3943.6666666666665,15.0,6.5,Mid,Flat,Transition
+2025-06-05,3900.6666666666665,8.0,3.0,Mid,Small down,Transition
+2025-06-06,3910.3333333333335,11.0,8.5,Mid,Flat,Transition
+2025-06-09,3917.3333333333335,17.0,9.0,Mid,Flat,Transition
+2025-06-10,3865.1666666666665,15.0,-6.5,Mid,Small down,Contango
+2025-06-11,3845.1666666666665,24.0,-19.5,Mid,Flat,Contango
+2025-06-12,3846.1666666666665,41.0,-21.5,Mid,Flat,Transition
+2025-06-13,3919.0,11.0,-4.0,Mid,Small up,Contango
+2025-06-16,4086.0,19.0,0.0,Mid,Large up,Transition
+2025-06-17,4061.6666666666665,9.0,-2.0,Mid,Small down,Transition
+2025-06-18,4094.3333333333335,-7.0,7.5,Mid,Flat,Contango
+2025-06-19,4097.0,-30.0,8.5,Mid,Flat,Contango
+2025-06-20,4106.666666666667,-57.0,18.0,Mid,Flat,Contango
+2025-06-23,4118.5,-55.0,13.5,Mid,Flat,Contango
+2025-06-24,3982.5,-33.0,4.5,Mid,Large down,Contango
+2025-06-25,3966.0,-57.0,0.5,Mid,Small down,Contango
+2025-06-26,4011.1666666666665,-35.0,3.0,Mid,Small up,Contango
+2025-06-30,3986.0,-50.0,4.0,High,Small down,Contango
+2025-07-01,3968.8333333333335,-67.0,10.5,High,Small down,Contango
+2025-07-02,4055.5,-64.0,21.0,High,Large up,Contango
+2025-07-03,4080.5,-62.0,29.0,High,Small up,Contango
+2025-07-04,4051.1666666666665,-78.0,29.5,High,Small down,Contango
+2025-07-07,4060.3333333333335,-63.0,28.0,High,Flat,Contango
+2025-07-08,4128.5,-87.0,48.0,High,Small up,Contango
+2025-07-09,4135.0,-95.0,55.5,High,Flat,Contango
+2025-07-10,4133.333333333333,-52.0,28.5,High,Small up,Contango
+2025-07-11,4161.0,-61.0,31.5,High,Small up,Contango
+2025-07-14,4225.833333333333,-49.0,32.0,High,Large up,Contango
+2025-07-15,4153.833333333333,-57.0,30.0,High,Large down,Contango
+2025-07-16,4214.0,-75.0,35.0,High,Small up,Contango
+2025-07-17,4195.166666666667,-68.0,44.0,High,Flat,Contango
+2025-07-18,4292.333333333333,-12.0,44.5,High,Large up,Contango
+2025-07-21,4215.5,-52.0,30.0,High,Large down,Contango
+2025-07-22,4250.5,-66.0,37.5,High,Small up,Contango
+2025-07-23,4300.5,-65.0,41.0,High,Small up,Contango
+2025-07-24,4313.666666666667,-62.0,43.5,High,Flat,Contango
+2025-07-25,4271.5,-72.0,24.0,High,Small down,Contango
+2025-07-28,4230.333333333333,-113.0,41.0,High,Large down,Contango
+2025-07-29,4251.333333333333,-95.0,25.0,High,Small up,Contango
+2025-07-30,4273.5,-98.0,27.5,High,Flat,Contango
+2025-07-31,4230.166666666667,-98.0,19.5,High,Small down,Contango
+2025-08-01,4253.5,-84.0,4.0,High,Small up,Contango
+2025-08-04,4191.333333333333,-58.0,-1.5,High,Small down,Contango
+2025-08-05,4287.0,-58.0,16.0,High,Large up,Contango
+2025-08-06,4265.666666666667,-73.0,16.5,High,Small down,Contango
+2025-08-07,4245.0,-78.0,7.0,High,Flat,Contango
+2025-08-08,4257.5,-75.0,14.0,High,Flat,Contango
+2025-08-11,4385.333333333333,-61.0,12.0,High,Large up,Contango
+2025-08-12,4408.0,-72.0,10.0,High,Flat,Contango
+2025-08-13,4446.666666666667,-70.0,2.5,High,Small up,Contango
+2025-08-14,4422.166666666667,-75.0,50.0,High,Small down,Contango
+2025-08-15,4498.833333333333,-81.0,56.0,High,Large up,Contango
+2025-08-18,4540.833333333333,-74.0,56.5,High,Small up,Contango
+2025-08-19,4502.666666666667,-55.0,48.5,High,Small down,Contango
+2025-08-20,4481.5,-62.0,49.0,High,Small down,Contango
+2025-08-21,4450.666666666667,-71.0,43.0,High,Small down,Contango
+2025-08-22,4516.833333333333,-74.0,50.5,High,Small up,Contango
+2025-08-25,4480.5,-68.0,54.0,High,Small down,Contango
+2025-08-26,4460.0,-79.0,42.0,High,Flat,Contango
+2025-08-27,4482.5,-96.0,41.0,High,Flat,Contango
+2025-08-28,4443.5,-99.0,36.5,High,Small down,Contango
+2025-08-29,4380.666666666667,-100.0,24.5,High,Small down,Contango
+2025-09-02,4465.833333333333,-110.0,46.0,High,Large up,Contango
+2025-09-03,4439.333333333333,-115.0,36.0,High,Small down,Contango
+2025-09-04,4448.0,-102.0,30.5,High,Flat,Contango
+2025-09-08,4484.666666666667,-127.0,41.5,High,Flat,Contango
+2025-09-09,4476.0,-142.0,44.0,High,Flat,Contango
+2025-09-10,4416.0,-120.0,30.0,High,Small down,Contango
+2025-09-11,4458.333333333333,-57.0,13.5,High,Large up,Contango
+2025-09-12,4454.833333333333,-30.0,50.5,High,Flat,Contango
+2025-09-17,4456.166666666667,-26.0,53.0,High,Flat,Contango
+2025-09-18,4417.0,-41.0,52.5,High,Small down,Contango
+2025-09-19,4410.166666666667,-40.0,50.0,High,Flat,Contango
+2025-09-22,4433.166666666667,-51.0,44.0,High,Flat,Contango
+2025-09-23,4335.833333333333,-42.0,29.5,High,Large down,Contango
+2025-09-24,4373.666666666667,-48.0,35.0,High,Small up,Contango
+2025-09-25,4427.333333333333,-71.0,48.5,High,Small up,Contango
+2025-09-26,4388.833333333333,-88.0,43.5,High,Small down,Contango
+2025-09-29,4379.833333333333,-81.0,38.0,High,Flat,Contango
+2025-09-30,4351.166666666667,-66.0,25.0,High,Flat,Contango
+2025-10-01,4383.0,-28.0,30.0,High,Small up,Contango
+2025-10-02,4440.333333333333,-28.0,37.5,High,Small up,Contango
+2025-10-03,4427.833333333333,-28.0,47.0,High,Flat,Contango
+2025-10-06,4425.666666666667,-40.0,40.0,High,Flat,Contango
+2025-10-07,4460.5,-55.0,48.0,High,Flat,Contango
+2025-10-08,4523.333333333333,-54.0,67.0,High,Small up,Contango
+2025-10-09,4571.833333333333,-71.0,70.5,High,Small up,Contango
+2025-10-10,4528.833333333333,-59.0,54.0,High,Small down,Contango
+2025-10-13,4485.166666666667,-83.0,46.5,High,Small down,Contango
+2025-10-14,4449.666666666667,-137.0,59.0,High,Large down,Contango
+2025-10-15,4453.5,-199.0,92.5,High,Small down,Contango
+2025-10-16,4494.666666666667,-65.0,64.5,High,Large up,Contango
+2025-10-17,4495.166666666667,-57.0,52.5,High,Flat,Contango
+2025-10-21,4488.0,-31.0,48.0,High,Flat,Transition
+2025-10-22,4442.5,-46.0,36.0,High,Small down,Contango
+2025-10-23,4460.833333333333,-33.0,28.5,High,Small up,Transition
+2025-10-24,4414.666666666667,-39.0,26.5,High,Small down,Contango
+2025-10-27,4367.833333333333,-41.0,24.5,High,Small down,Contango
+2025-10-28,4312.666666666667,-33.0,16.5,High,Small down,Contango
+2025-10-29,4250.166666666667,-53.0,19.5,High,Large down,Contango
+2025-10-30,4257.5,-58.0,22.0,High,Flat,Contango
+2025-10-31,4209.166666666667,-31.0,8.0,High,Small down,Transition
+2025-11-03,4120.166666666667,-58.0,9.5,High,Large down,Contango
+2025-11-04,4152.166666666667,-75.0,8.5,High,Small up,Contango
+2025-11-05,4122.5,-97.0,0.5,High,Small down,Contango
+2025-11-06,4160.0,-94.0,7.0,High,Small up,Contango
+2025-11-07,4122.0,-89.0,0.0,High,Small down,Contango
+2025-11-10,4123.333333333333,-86.0,3.0,High,Flat,Contango
+2025-11-11,4139.333333333333,-119.0,25.5,High,Flat,Contango
+2025-11-12,4101.833333333333,-278.0,100.0,High,Large down,Contango
+2025-11-13,4108.333333333333,-247.0,82.0,High,Small up,Contango
+2025-11-14,4142.333333333333,-65.0,21.0,High,Large up,Contango
+2025-11-17,4144.833333333333,-35.0,18.5,High,Flat,Transition
+2025-11-18,4204.666666666667,-33.0,20.0,High,Small up,Transition
+2025-11-19,4222.166666666667,-62.0,23.5,High,Flat,Contango
+2025-11-20,4154.166666666667,-62.0,17.5,High,Large down,Contango
+2025-11-21,4071.0,-33.0,5.5,High,Large down,Transition
+2025-11-24,4057.0,-25.0,6.5,High,Flat,Transition
+2025-11-25,3995.0,-37.0,5.0,High,Large down,Contango
+2025-11-26,4025.8333333333335,-43.0,10.5,High,Small up,Contango
+2025-11-27,4088.0,-49.0,20.0,High,Small up,Contango
+2025-11-28,4116.833333333333,-24.0,7.0,High,Small up,Transition
+2025-12-01,4093.1666666666665,-45.0,15.5,High,Small down,Transition
+2025-12-02,4153.0,-73.0,28.0,High,Small up,Contango
+2025-12-03,4153.333333333333,-47.0,20.0,High,Flat,Contango
+2025-12-04,4106.333333333333,-43.0,12.0,High,Small down,Contango
+2025-12-05,4146.333333333333,-76.0,29.5,High,Flat,Contango
+2025-12-08,4094.8333333333335,-60.0,17.0,High,Small down,Contango
+2025-12-09,4098.166666666667,-92.0,36.0,High,Small down,Contango
+2025-12-10,4065.6666666666665,-69.0,12.0,High,Flat,Contango
+2025-12-11,4063.5,-47.0,11.5,High,Flat,Contango
+2025-12-12,4018.1666666666665,-46.0,9.5,High,Small down,Contango
+2025-12-15,4006.8333333333335,-14.0,1.5,High,Flat,Transition
+2025-12-16,3961.5,-17.0,9.5,High,Small down,Transition
+2025-12-17,3963.0,-12.0,12.5,High,Flat,Transition
+2025-12-18,3977.0,-21.0,14.0,High,Flat,Transition
+2025-12-19,3907.8333333333335,-23.0,5.5,High,Large down,Transition
+2025-12-22,3983.6666666666665,-10.0,11.0,High,Large up,Transition
+2025-12-23,4024.6666666666665,-3.0,25.0,High,Small up,Transition
+2025-12-24,4024.1666666666665,-2.0,24.0,High,Flat,Transition
+2025-12-26,4070.5,10.0,31.5,High,Small up,Transition
+2025-12-29,4035.3333333333335,-18.0,32.5,High,Small down,Transition
+2025-12-30,4055.1666666666665,-43.0,43.5,High,Flat,Transition
+2025-12-31,4039.0,-43.0,33.5,High,Flat,Contango
+2026-01-02,3986.3333333333335,-40.0,20.5,High,Small down,Contango
+2026-01-05,4005.6666666666665,-84.0,34.5,High,Flat,Contango
+2026-01-06,3982.6666666666665,-56.0,34.0,High,Flat,Contango
+2026-01-07,4018.1666666666665,-90.0,51.5,High,Flat,Contango
+2026-01-08,4036.0,-64.0,33.5,High,Small up,Contango
+2026-01-09,4028.5,-73.0,38.0,High,Flat,Contango
+2026-01-12,4070.8333333333335,-128.0,62.0,High,Flat,Contango
+2026-01-13,4050.1666666666665,-108.0,48.0,High,Flat,Contango
+2026-01-14,4049.6666666666665,-63.0,33.0,High,Small up,Contango
+2026-01-15,3981.3333333333335,-51.0,11.0,High,Small down,Contango
+2026-01-16,4064.6666666666665,-48.0,24.0,High,Large up,Contango
+2026-01-19,4062.6666666666665,-36.0,20.0,High,Flat,Transition
+2026-01-20,4085.8333333333335,-19.0,21.0,High,Small up,Transition
+2026-01-21,4141.666666666667,-28.0,27.5,High,Small up,Transition
+2026-01-22,4179.5,-33.0,38.5,High,Small up,Transition
+2026-01-23,4156.5,-24.0,40.0,High,Flat,Transition
+2026-01-26,4199.333333333333,-3.0,46.5,High,Small up,Transition
+2026-01-27,4229.0,-28.0,58.0,High,Flat,Transition
+2026-01-28,4243.0,-25.0,57.5,High,Flat,Transition
+2026-01-29,4286.833333333333,-50.0,71.5,High,Small up,Transition
+2026-01-30,4209.166666666667,-15.0,41.5,High,Small down,Transition
+2026-02-03,4190.5,-55.0,56.0,High,Small down,Contango
+2026-02-04,4198.333333333333,-55.0,56.5,High,Flat,Contango
+2026-02-05,4187.0,-77.0,53.5,High,Small down,Contango
+2026-02-06,4137.833333333333,-69.0,41.5,High,Small down,Contango
+2026-02-09,4145.166666666667,-49.0,40.0,High,Flat,Contango
+2026-02-10,4085.3333333333335,-41.0,29.5,High,Small down,Contango
+2026-02-11,4051.6666666666665,-70.0,31.5,High,Small down,Contango
+2026-02-12,4027.8333333333335,-33.0,25.0,High,Flat,Contango
+2026-02-13,4026.3333333333335,-85.0,55.5,High,Small down,Contango
+2026-02-16,4012.5,-1.0,1.0,High,Large up,Transition
+2026-02-19,4109.833333333333,-13.0,15.5,High,Large up,Transition
+2026-02-20,4088.1666666666665,-35.0,10.5,High,Small down,Transition
+2026-02-23,4075.8333333333335,-20.0,18.5,High,Flat,Transition
+2026-02-24,4046.0,-32.0,20.5,High,Small down,Transition
+2026-02-25,4043.1666666666665,-24.0,22.0,High,Flat,Transition
+2026-02-26,3993.5,-42.0,30.0,High,Large down,Transition
+2026-02-27,4030.5,-51.0,30.0,High,Small up,Contango
+2026-03-02,4128.0,-92.0,51.5,High,Large up,Contango
+2026-03-03,4164.666666666667,-114.0,63.5,High,Flat,Contango
+2026-03-04,4159.666666666667,-110.0,57.5,High,Flat,Contango
+2026-03-05,4184.166666666667,-130.0,68.0,High,Flat,Contango
+2026-03-06,4336.166666666667,-105.0,76.5,High,Large up,Contango
+2026-03-16,4615.333333333333,81.0,54.0,High,Large up,Transition
+2026-03-17,4542.0,72.0,54.0,High,Large down,Transition
+2026-03-18,4493.666666666667,76.0,51.0,High,Small down,Transition
+2026-03-19,4573.333333333333,77.0,52.5,High,Large up,Transition
+2026-03-24,4504.166666666667,49.0,50.0,High,Large down,Transition
+2026-03-25,4469.833333333333,4.0,44.5,High,Small down,Transition
+2026-03-26,4547.5,-21.0,64.0,High,Small up,Transition
+2026-03-27,4595.833333333333,-37.0,71.0,High,Small up,Transition
+2026-03-30,4736.0,-49.0,80.5,High,Large up,Transition
+2026-03-31,4794.666666666667,-48.0,78.0,High,Small up,Contango
+2026-04-01,4732.166666666667,-53.0,82.5,High,Small down,Contango
+2026-04-02,4758.666666666667,-38.0,78.5,High,Small up,Contango
+2026-04-03,4806.5,-45.0,74.0,High,Small up,Contango
+2026-04-06,4785.333333333333,-24.0,64.0,High,Flat,Transition
+2026-04-07,4743.166666666667,-31.0,56.0,High,Small down,Contango
+2026-04-08,4562.0,-39.0,60.0,High,Large down,Contango
+2026-04-09,4621.666666666667,-30.0,47.5,High,Large up,Transition
+2026-04-10,4520.0,-25.0,38.0,High,Large down,Contango
+2026-04-13,4540.666666666667,-64.0,47.5,High,Flat,Contango
+2026-04-14,4454.833333333333,-98.0,51.0,High,Large down,Contango
+2026-04-15,4473.333333333333,-36.0,50.0,High,Small up,Transition
+2026-04-16,4476.0,-21.0,41.5,High,Flat,Transition
+2026-04-17,4433.0,-49.0,44.0,High,Small down,Contango
+2026-04-20,4482.833333333333,-19.0,32.5,High,Large up,Transition
+2026-04-21,4542.666666666667,-54.0,43.0,High,Small up,Contango
+2026-04-22,4612.166666666667,-77.0,43.5,High,Small up,Contango
+2026-04-23,4569.666666666667,-84.0,41.0,High,Small down,Contango
+2026-04-24,4588.666666666667,-111.0,40.0,High,Flat,Contango
+2026-04-27,4537.0,-118.0,24.5,High,Small down,Contango
+2026-04-28,4537.833333333333,-108.0,26.0,High,Flat,Contango
+2026-04-29,4578.166666666667,-128.0,27.0,High,Small up,Contango
+2026-04-30,4569.666666666667,-107.0,24.0,High,Flat,Contango
+2026-05-04,4617.666666666667,-92.0,23.5,High,Small up,Contango
+2026-05-05,4698.833333333333,-81.0,37.0,High,Large up,Contango
+2026-05-06,4570.833333333333,-60.0,22.0,High,Large down,Contango
+2026-05-07,4533.833333333333,-71.0,19.5,High,Small down,Contango
+2026-05-08,4502.0,-50.0,2.0,High,Flat,Contango
+2026-05-11,4520.333333333333,-55.0,2.5,High,Flat,Contango
+2026-05-12,4489.666666666667,-74.0,6.0,High,Small down,Contango
+2026-05-13,4443.166666666667,-100.0,9.5,High,Small down,Contango
+2026-05-14,4419.166666666667,-105.0,4.5,High,Small down,Contango
+2026-05-15,4420.166666666667,-81.0,4.0,High,Flat,Contango
+2026-05-18,4532.333333333333,-69.0,11.0,High,Large up,Contango
+2026-05-19,4582.166666666667,-67.0,13.0,High,Small up,Contango
+2026-05-20,4584.333333333333,-121.0,15.0,High,Small down,Contango
+2026-05-21,4469.5,-134.0,-1.5,High,Large down,Contango
+2026-05-22,4491.833333333333,-123.0,4.0,High,Small up,Contango
+2026-05-25,4480.166666666667,-135.0,7.0,High,Flat,Contango
+2026-05-26,4507.5,-151.0,5.0,High,Flat,Contango
+2026-05-28,4542.833333333333,-149.0,12.0,High,Small up,Contango
+2026-05-29,4549.0,-143.0,-2.0,High,Flat,Contango
+2026-06-03,4687.333333333333,-152.0,4.0,Unknown,Large up,Contango
+2026-06-04,4613.5,-150.0,4.0,Unknown,Large down,Contango
+2026-06-05,4568.666666666667,-156.0,-1.0,Unknown,Small down,Contango
+2026-06-08,4587.666666666667,-173.0,4.5,Unknown,Flat,Contango
+2026-06-09,4547.166666666667,-184.0,0.0,Unknown,Small down,Contango
+2026-06-10,4557.0,-202.0,9.0,Unknown,Flat,Contango
+2026-06-11,4589.333333333333,-189.0,6.5,Unknown,Small up,Contango
