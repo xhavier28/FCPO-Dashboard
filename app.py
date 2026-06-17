@@ -169,6 +169,8 @@ def build_term_table(contracts):
         records.append(row)
 
     df = pd.DataFrame(records)
+    # Interpolate missing tenors row-wise (linear between nearest neighbours)
+    df[col_names] = df[col_names].astype(float).interpolate(axis=1, limit_area="inside").round(0)
     df["_sort"] = (
         pd.to_datetime(df["Week"].str.extract(r'(\w+ \d{4})')[0], format="%b %Y")
         + pd.to_timedelta((df["Week"].str.extract(r'(W\d)')[0].str[1].astype(int) - 1) * 7, unit='d')
@@ -196,6 +198,9 @@ def build_daily_table(contracts):
     # Fill missing Current with +1M on roll days (contract expiry gap ~13th–15th)
     roll_mask = df["Current"].isnull() & df["+1M"].notnull()
     df.loc[roll_mask, "Current"] = df.loc[roll_mask, "+1M"]
+
+    # Interpolate missing tenors row-wise (linear between nearest neighbours)
+    df[col_names] = df[col_names].astype(float).interpolate(axis=1, limit_area="inside").round(0)
 
     df["Date"] = pd.to_datetime(df["Date"]).dt.strftime("%d %b %Y")
     return df
