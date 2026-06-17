@@ -91,7 +91,7 @@ def load_data(spot_dir):
     df = df.sort_values("date").groupby("date", as_index=False).last()
     df["year"] = df["date"].dt.year
     df["doy"] = df["date"].dt.dayofyear
-    df = df[df["year"] >= 2015]
+    df = df[df["year"] >= 2008]
     return df[["date", "year", "doy", "open", "high", "low", "close", "Volume"]]
 
 
@@ -142,7 +142,7 @@ def add_months(ym, n):
 def build_term_table(contracts):
     all_dates = sorted(set(d for s in contracts.values() for d in s.index))
     today = pd.Timestamp.today().normalize()
-    all_dates = [d for d in all_dates if pd.Timestamp("2020-01-01") <= d <= today]
+    all_dates = [d for d in all_dates if pd.Timestamp("2008-01-01") <= d <= today]
 
     def week_label(d):
         w = ["W1", "W2", "W3", "W4"][(d.day - 1) // 7 if d.day <= 28 else 3]
@@ -179,7 +179,7 @@ def build_term_table(contracts):
 def build_daily_table(contracts):
     all_dates = sorted(set(d for s in contracts.values() for d in s.index))
     today = pd.Timestamp.today().normalize()
-    all_dates = [d for d in all_dates if pd.Timestamp("2020-01-01") <= d <= today]
+    all_dates = [d for d in all_dates if pd.Timestamp("2008-01-01") <= d <= today]
 
     col_names = ["Current"] + [f"+{i}M" for i in range(1, 12)]
     records = []
