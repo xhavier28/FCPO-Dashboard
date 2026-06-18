@@ -1,0 +1,86 @@
+======================================================================
+FCPO PHASE 2.1 — NORMALISATION, SEASONALITY, CONFIDENCE GRID, MULTI-HORIZON
+======================================================================
+
+--- PART 1: PERCENTAGE-NORMALISED CLUSTERING ---
+Best k: 3 (silhouette = 0.5357)
+Original std-normalised silhouette for comparison: 0.5912 (k=3)
+
+Percentage-normalised centroids (% of M1):
+               M1      M2      M3      M4      M5      M6
+PctShape 0  100.0   99.85   99.60   99.41   99.25   99.11
+PctShape 1  100.0  102.27  103.88  105.26  106.38  107.13
+PctShape 2  100.0   96.84   93.86   91.66   89.98   88.71
+
+Stability distances:
+  PctShape 0: 9.415 -> UNSTABLE
+  PctShape 1: 4.890 -> UNSTABLE
+  PctShape 2: 6.167 -> UNSTABLE
+
+VERDICT: Check whether percentage normalisation resolved the worst-case instability.
+
+--- PART 2: SEASONAL CONDITIONING ---
+Average 5-day diagonal (persistence) by season:
+  Shoulder (Feb-Mar, Aug-Sep): 61.2%
+  Low production (Apr-Jul): 61.5%
+  Peak production (Oct-Jan): 59.1%
+
+Range across seasons: 2.4pp
+VERDICT: Seasonal effect is weak (<5pp range).
+
+--- PART 3: CONFIDENCE-GRADED MOVEMENT GRID (M1-M2) ---
+stock   spot_cat  mean_3d_MYR direction   n  snr_unfiltered  snr_z_filtered regime_consistent confidence
+  Low Large down        -7.91  COMPRESS 105           0.147           0.545              True       HIGH
+  Low Small down         0.45      FLAT  86           0.006           0.095             False        LOW
+  Low       Flat         5.80     WIDEN 111           0.077           0.189              None     MEDIUM
+  Low   Small up        -5.86  COMPRESS 107           0.093           0.205              True       HIGH
+  Low   Large up         2.05     WIDEN 117           0.031           0.262              None     MEDIUM
+  Mid Large down        -1.56  COMPRESS  97           0.033           0.402             False     MEDIUM
+  Mid Small down        -7.06  COMPRESS 142           0.191           0.642              True       HIGH
+  Mid       Flat         3.10     WIDEN 195           0.093           0.004              True       HIGH
+  Mid   Small up         4.03     WIDEN 152           0.123           0.217             False        LOW
+  Mid   Large up        -6.90  COMPRESS 112           0.153           0.675             False     MEDIUM
+ High Large down         7.06     WIDEN  79           0.168           0.359              True       HIGH
+ High Small down         0.73      FLAT 147           0.018           0.325             False     MEDIUM
+ High       Flat         3.96     WIDEN 185           0.117           0.346              True       HIGH
+ High   Small up         0.14      FLAT 137           0.004           0.307             False     MEDIUM
+ High   Large up        -3.28  COMPRESS  95           0.107           0.001              True       HIGH
+
+--- PART 4: MULTI-HORIZON TRANSITION MATRIX ---
+Persistence decay by shape across 5/10/20 day horizons:
+shape   5d  10d  20d
+  0.0 77.3 71.0 64.4
+  0.1 54.5 45.2 31.0
+  0.2 44.7 33.6 22.4
+    1 80.6 75.1 68.7
+    2 56.7 47.8 35.2
+
+
+From Shape 0.0:
+  5d:  0.0=77.3%  0.1=10.4%  0.2=8.0%  1=1.6%  2=2.8%
+  10d:  0.0=71.0%  0.1=12.1%  0.2=9.9%  1=3.8%  2=3.2%
+  20d:  0.0=64.4%  0.1=12.0%  0.2=11.9%  1=7.5%  2=4.1%
+
+From Shape 0.1:
+  5d:  0.0=31.2%  0.1=54.5%  0.2=1.2%  1=2.3%  2=10.9%
+  10d:  0.0=37.5%  0.1=45.2%  0.2=2.5%  1=3.5%  2=11.4%
+  20d:  0.0=44.3%  0.1=31.0%  0.2=3.5%  1=4.6%  2=16.6%
+
+From Shape 0.2:
+  5d:  0.0=25.8%  0.1=2.7%  0.2=44.7%  1=21.4%  2=5.4%
+  10d:  0.0=31.2%  0.1=2.7%  0.2=33.6%  1=25.4%  2=7.1%
+  20d:  0.0=31.9%  0.1=5.8%  0.2=22.4%  1=33.2%  2=6.8%
+
+From Shape 1:
+  5d:  0.0=1.5%  0.1=1.9%  0.2=3.9%  1=80.6%  2=12.0%
+  10d:  0.0=3.5%  0.1=2.7%  0.2=3.3%  1=75.1%  2=15.4%
+  20d:  0.0=3.4%  0.1=5.9%  0.2=3.5%  1=68.7%  2=18.4%
+
+From Shape 2:
+  5d:  0.0=4.2%  0.1=16.1%  0.2=1.4%  1=21.7%  2=56.7%
+  10d:  0.0=5.0%  0.1=19.4%  0.2=2.8%  1=25.0%  2=47.8%
+  20d:  0.0=11.6%  0.1=25.8%  0.2=2.4%  1=25.0%  2=35.2%
+
+======================================================================
+END — copy all text above for discussion and PDF generation
+======================================================================

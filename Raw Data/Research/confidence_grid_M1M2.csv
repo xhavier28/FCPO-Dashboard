@@ -1,0 +1,16 @@
+stock,spot_cat,mean_3d_MYR,direction,n,snr_unfiltered,snr_z_filtered,regime_consistent,confidence
+Low,Large down,-7.91,COMPRESS,105,0.147,0.545,True,HIGH
+Low,Small down,0.45,FLAT,86,0.006,0.095,False,LOW
+Low,Flat,5.8,WIDEN,111,0.077,0.189,,MEDIUM
+Low,Small up,-5.86,COMPRESS,107,0.093,0.205,True,HIGH
+Low,Large up,2.05,WIDEN,117,0.031,0.262,,MEDIUM
+Mid,Large down,-1.56,COMPRESS,97,0.033,0.402,False,MEDIUM
+Mid,Small down,-7.06,COMPRESS,142,0.191,0.642,True,HIGH
+Mid,Flat,3.1,WIDEN,195,0.093,0.004,True,HIGH
+Mid,Small up,4.03,WIDEN,152,0.123,0.217,False,LOW
+Mid,Large up,-6.9,COMPRESS,112,0.153,0.675,False,MEDIUM
+High,Large down,7.06,WIDEN,79,0.168,0.359,True,HIGH
+High,Small down,0.73,FLAT,147,0.018,0.325,False,MEDIUM
+High,Flat,3.96,WIDEN,185,0.117,0.346,True,HIGH
+High,Small up,0.14,FLAT,137,0.004,0.307,False,MEDIUM
+High,Large up,-3.28,COMPRESS,95,0.107,0.001,True,HIGH
