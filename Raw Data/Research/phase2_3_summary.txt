@@ -1,0 +1,43 @@
+======================================================================
+FCPO PHASE 2.3 — CALENDAR MAP, TRADE FRAMEWORK, AND PREDICTION MODEL
+======================================================================
+
+--- PART A: CALENDAR SHAPE MAP ---
+ month  n_days dominant_shape  dominant_pct  flicker_pct
+     1     192            0.1          33.3         70.8
+     2     162            0.0          42.6         55.6
+     3     176            0.0          54.5         39.8
+     4     190            0.0          64.2         35.8
+     5     182            0.0          41.8         37.4
+     6     157            0.0          35.7         28.0
+     7     172              1          39.0         51.7
+     8     177              1          57.6         26.6
+     9     162              1          51.9         22.8
+    10     179              1          50.8         60.3
+    11     183              1          37.7         62.8
+    12     156            0.0          32.7         61.5
+
+--- PART B: TWO-BUCKET TRADE FRAMEWORK ---
+
+Shape 0.0 -> MEAN_REVERSION (resting state) (20d survival = 37.2%)
+
+Shape 0.1 -> TREND_FOLLOWING (transitional state) (20d survival = 0.4%)
+  Likely next shape: {'0.0': 100.0}
+
+Shape 0.2 -> TREND_FOLLOWING (transitional state) (20d survival = 0.0%)
+  Likely next shape: {}
+
+Shape 1 -> MEAN_REVERSION (resting state) (20d survival = 54.8%)
+
+Shape 2 -> TREND_FOLLOWING (transitional state) (20d survival = 0.0%)
+  Likely next shape: {}
+
+--- PART C: PREDICTION MODEL ---
+Rows used: 1864
+Train accuracy: 76.5%
+Test accuracy: 72.9%
+Naive baseline: 70.2%
+
+======================================================================
+END — copy all text above for discussion
+======================================================================
