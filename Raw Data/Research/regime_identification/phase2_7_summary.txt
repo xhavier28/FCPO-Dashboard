@@ -1,0 +1,17 @@
+======================================================================
+FCPO PHASE 2.7 — ACTUAL THRESHOLDS AND BUCKETING VALIDATION
+======================================================================
+
+--- PART L: ACTUAL NUMERIC THRESHOLDS ---
+Stock tercile boundaries (full population): Low<=0.392, Mid<=0.677, High above
+Spot momentum boundaries (fixed): Down<-1%, Flat=-1% to +1%, Up>+1%
+Actual spot momentum spread: 25th=-2.26%, median=0.26%, 75th=2.59%
+
+--- PART M: DOES BUCKETING BEAT UNBUCKETED TRADING? ---
+Unbucketed SNR: 0.098 (n=442)
+Bucketed reversion-leg SNR: 0.234 (n=355)
+Bucketed trend-leg SNR: 0.217 (n=657)
+
+======================================================================
+END — copy all text above for discussion
+======================================================================
