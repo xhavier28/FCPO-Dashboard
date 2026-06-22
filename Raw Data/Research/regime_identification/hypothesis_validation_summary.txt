@@ -4,11 +4,11 @@ For discussion and vendor brief development
 ======================================================================
 
 --- SECTION 1: VARIANCE DECOMPOSITION ---
-Total observations: 2043
-Date range: 2017-02-07 to 2026-06-11
+Total observations: 3872
+Date range: 2007-03-21 to 2026-06-11
 
-Parallel shift explains: 90.5% of curve movement variance
-Twist (M1 vs M6) explains: 9.1% of curve movement variance
+Parallel shift explains: 92.5% of curve movement variance
+Twist (M1 vs M6) explains: 7.2% of curve movement variance
 Butterfly explains: 0.3% of curve movement variance
 
 VERDICT: Twist is low (<10%). The curve mostly shifts in parallel.
@@ -18,89 +18,89 @@ Consider whether shape clustering adds value beyond regime labels.
 Deformation by regime:
                parallel   twist  butterfly
 regime                                    
-Backwardation   3923.07  492.43     -52.02
-Contango        3528.09  -91.38      23.60
-Transition      3887.59  161.08     -14.23
-Unknown         2428.81  -56.54      14.87
+Backwardation   3400.67  329.19     -37.15
+Contango        2984.27  -93.78      16.29
+Transition      3089.18   76.38      -8.51
+Unknown         2605.48   41.78      -7.72
 
 Deformation by stock level:
              parallel   twist  butterfly
 stock_level                             
-High          4084.41  -20.90      33.66
-Low           3676.11  422.76     -53.03
-Mid           3405.05  106.24     -12.55
-Unknown       2532.24  -19.89      13.85
+High          3653.58  -55.52      32.29
+Low           3726.13  435.55     -53.41
+Mid           3410.67  128.85     -19.80
+Unknown       2643.71   21.13      -4.03
 
 --- SECTION 2: CLUSTERING RESULTS ---
 Best number of clusters: 3
-Silhouette score: 0.5912
+Silhouette score: 0.5571
 
 VERDICT: Strong clustering (>0.35). Shapes are well-separated.
 
 All silhouette scores:
-  k=3: 0.5912
-  k=4: 0.5212
-  k=5: 0.5308
-  k=6: 0.4969
-  k=7: 0.4177
+  k=3: 0.5571
+  k=4: 0.3896
+  k=5: 0.4174
+  k=6: 0.4053
+  k=7: 0.3656
 
 Cluster centroids (normalised shape):
             M1     M2     M3     M4     M5     M6
-Shape 0  1.269  0.765  0.173 -0.331 -0.760 -1.116
-Shape 1 -1.683 -0.037  0.579  0.731  0.473 -0.062
-Shape 2 -1.333 -0.702 -0.198  0.283  0.755  1.194
+Shape 0  1.364  0.679  0.042 -0.393 -0.734 -0.959
+Shape 1 -1.253 -0.692 -0.225  0.248  0.751  1.171
+Shape 2 -1.640  0.110  0.603  0.653  0.365 -0.092
 
 Shape sizes:
-  Shape 0: 1096 days (53.6% of history)
-  Shape 1: 358 days (17.5% of history)
-  Shape 2: 589 days (28.8% of history)
+  Shape 0: 2169 days (56.0% of history)
+  Shape 1: 1126 days (29.1% of history)
+  Shape 2: 577 days (14.9% of history)
 
 --- SECTION 3: STABILITY TEST ---
 Distance between first-half and second-half centroids:
 (< 0.3 = very stable, 0.3-0.6 = moderate, > 0.6 = unstable)
               Second-Shape0  Second-Shape1  Second-Shape2
-First-Shape0          2.465          1.947          3.448
-First-Shape1          3.916          0.125          4.232
-First-Shape2          1.480          4.085          0.116
-  First-Shape 0 best match distance: 1.947 -> UNSTABLE
-  First-Shape 1 best match distance: 0.125 -> STABLE
-  First-Shape 2 best match distance: 0.116 -> STABLE
+First-Shape0          0.851          3.965          3.995
+First-Shape1          0.979          3.200          3.941
+First-Shape2          3.892          1.243          0.459
+  First-Shape 0 best match distance: 0.851 -> UNSTABLE
+  First-Shape 1 best match distance: 0.979 -> UNSTABLE
+  First-Shape 2 best match distance: 0.459 -> MODERATE
 
 --- SECTION 4: SHAPE vs REGIME OVERLAP ---
 Row % -- what regime does each shape map to:
 regime    Backwardation  Contango  Transition  Unknown
 shape_id                                              
-0                  59.0       7.3        22.8     10.9
-1                   0.6      61.2        14.2     24.0
-2                   0.0      68.3         2.5     29.2
+0                  53.3       6.6        28.3     11.8
+1                   0.0      88.5         6.3      5.2
+2                   4.3      62.4        23.1     10.2
 
 Key question: Does any single Tier-1 regime split across multiple shapes?
 If yes -- those shapes are the Tier-2 sub-types you want to classify.
-  Backwardation: present in 1 shapes (max concentration 59%)
-  Contango: present in 2 shapes (max concentration 68%)
-  Transition: present in 0 shapes (max concentration 23%)
+  Backwardation: present in 1 shapes (max concentration 53%)
+  Contango: present in 2 shapes (max concentration 88%)
+  Transition: present in 0 shapes (max concentration 28%)
 
 --- SECTION 5: ENRICHED SHAPE PROFILES ---
 What fundamental conditions accompany each shape:
           parallel    twist  butterfly  stock_pct  spot_ret_1d
 shape_id                                                      
-0         3784.542  347.986    -34.225      0.328        0.127
-1         3577.035  -54.749     44.825      0.792       -0.044
-2         2945.614 -130.183      9.084      0.622        0.007
+0         3227.554  220.509    -28.023      0.336        0.105
+1         2743.244 -114.506      9.370      0.675       -0.076
+2         3294.677  -40.972     36.395      0.780        0.109
 
 Actual price levels by shape:
               M1      M2      M3      M4      M5      M6
 shape_id                                                
-0         3976.2  3892.1  3803.4  3732.5  3674.8  3628.2
-1         3524.3  3572.0  3593.2  3599.8  3593.9  3579.0
-2         2875.0  2909.1  2936.2  2962.2  2986.0  3005.2
+0         3352.6  3293.5  3236.1  3192.6  3158.3  3132.1
+1         2680.3  2711.1  2735.5  2758.4  2779.3  2794.8
+2         3253.5  3293.5  3308.8  3312.0  3305.8  3294.5
 
 Actual spread levels by shape:
           M1-M2  M2-M3  M3-M4  M4-M5  M5-M6
 shape_id                                   
-0          84.1   88.7   70.9   57.7   46.6
-1         -47.7  -21.2   -6.6    5.9   14.8
-2         -34.1  -27.1  -26.0  -23.8  -19.2
+0          59.1   57.4   43.5   34.3   26.2
+1         -30.8  -24.4  -22.8  -21.0  -15.5
+2         -40.0  -15.2   -3.3    6.3   11.3
 
 --- SECTION 6: HYPOTHESIS VERDICTS ---
 
@@ -109,7 +109,7 @@ HYPOTHESIS A -- Natural curve shapes exist:
   Rethink clustering approach before vendor engagement.
 
 HYPOTHESIS B prerequisite -- Do shapes add beyond regime labels?
-  LIKELY YES -- Average regime concentration per shape = 63%. Shapes are not just regime relabels.
+  LIKELY YES -- Average regime concentration per shape = 68%. Shapes are not just regime relabels.
   At least some regimes split across multiple shapes.
   Tier-2 sub-type clustering is justified.
 

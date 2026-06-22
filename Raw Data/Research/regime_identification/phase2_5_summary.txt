@@ -1,0 +1,40 @@
+======================================================================
+FCPO PHASE 2.5 — DISTRIBUTION CHECK, Z-OPTIMIZATION, TREND PLAYBOOK, MODEL INSIGHT
+======================================================================
+
+--- PART F: DISTRIBUTION CHECK ---
+(see printed output above — full mean/median/IQR/range per key cell)
+
+--- PART G: Z-THRESHOLD OPTIMIZATION ---
+Best threshold per shape + pair:
+shape  pair  best_threshold  best_snr  best_n  default_1.5_snr
+  0.0 M1-M2             2.5     0.591      53            0.357
+  0.0 M2-M3             2.5     0.475      76            0.272
+  0.0 M3-M4             2.5     0.359      45            0.152
+  0.0 M4-M5             2.0     0.161      76            0.153
+    1 M1-M2             2.5     1.016      20            0.195
+    1 M2-M3             2.5     0.402      28            0.113
+    1 M3-M4             2.5     0.526      29            0.208
+    1 M4-M5             2.5     0.566      12            0.222
+
+--- PART H: TREND-FOLLOWING PLAYBOOK ---
+Unconditioned baseline per shape:
+  Shape 0.1 (n=262): {'0.0': np.float64(53.4), '0.1': np.float64(29.8), '2': np.float64(11.1), '1': np.float64(4.2), '0.2': np.float64(1.5)}
+  Shape 0.2 (n=79): {'0.0': np.float64(41.8), '1': np.float64(36.7), '2': np.float64(8.9), '0.1': np.float64(6.3), '0.2': np.float64(6.3)}
+  Shape 2 (n=316): {'2': np.float64(42.1), '1': np.float64(30.1), '0.1': np.float64(20.6), '0.0': np.float64(6.3), '0.2': np.float64(0.9)}
+
+Full conditioned playbook saved to trend_playbook_conditioned.csv
+Total conditioned cells computed: 22
+Cells with HIGH confidence: 2
+Cells with INSUFFICIENT DATA: 2
+
+--- PART I: MODEL INSIGHT ---
+Predictors ranked by separation power (Shape 0.2 resolution):
+      predictor  spread_pp  n_total
+      month_val       61.5       79
+      stock_pct       50.0       60
+spot_mom_5d_val        4.0       74
+
+======================================================================
+END — copy all text above for discussion
+======================================================================

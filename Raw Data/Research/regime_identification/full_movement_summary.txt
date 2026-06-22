@@ -1,0 +1,327 @@
+======================================================================
+FCPO SPREAD MOVEMENT RESEARCH — FULL SUMMARY
+For discussion. All values are average 3-day forward spread change in MYR.
+Reliability: ROBUST=n>=30, USABLE=n>=15, WEAK=n>=8, SKIP=n<8
+======================================================================
+
+--- SECTION 1: DATA COVERAGE ---
+Total labelled observations: 1867
+
+Observations by regime:
+  Backwardation: 1180
+  Contango: 1501
+  Transition: 817
+
+Observations by stock level:
+  Low: 526
+  Mid: 698
+  High: 643
+
+Observations by regime + stock (top combinations):
+  Contango + High stock: 500
+  Backwardation + Low stock: 485
+  Contango + Mid stock: 322
+  Transition + Mid stock: 204
+  Backwardation + Mid stock: 172
+  Transition + High stock: 143
+  Transition + Low stock: 36
+  Contango + Low stock: 5
+
+--- SECTION 2: FULL MOVEMENT MAP (all regimes combined) ---
+Format: STOCK | SPOT MOVE | SPREAD: mean MYR (n=N) [DIRECTION/RELIABILITY]
+
+[LOW STOCK]
+  Large down     | M1-M2: -7.9 (n=105,ROBUST) | M2-M3: -7.0 (n=105,ROBUST) | M3-M4: -5.0 (n=105,ROBUST) | M4-M5: -4.7 (n=105,ROBUST) | M5-M6: -3.3 (n=105,ROBUST)
+  Small down     | M1-M2: +0.5 (n=86,ROBUST) | M2-M3: -0.7 (n=86,ROBUST) | M3-M4: +0.5 (n=86,ROBUST) | M4-M5: -0.6 (n=86,ROBUST) | M5-M6: -0.9 (n=86,ROBUST)
+  Flat           | M1-M2: +5.8 (n=111,ROBUST) | M2-M3: -3.3 (n=111,ROBUST) | M3-M4: -1.2 (n=111,ROBUST) | M4-M5: +0.9 (n=111,ROBUST) | M5-M6: +1.2 (n=111,ROBUST)
+  Small up       | M1-M2: -5.9 (n=107,ROBUST) | M2-M3: -3.0 (n=107,ROBUST) | M3-M4: -0.5 (n=107,ROBUST) | M4-M5: +0.8 (n=107,ROBUST) | M5-M6: +1.5 (n=107,ROBUST)
+  Large up       | M1-M2: +2.0 (n=117,ROBUST) | M2-M3: +4.8 (n=117,ROBUST) | M3-M4: -0.9 (n=117,ROBUST) | M4-M5: -3.3 (n=117,ROBUST) | M5-M6: -3.9 (n=117,ROBUST)
+
+[MID STOCK]
+  Large down     | M1-M2: -1.6 (n=97,ROBUST) | M2-M3: -6.2 (n=97,ROBUST) | M3-M4: -5.3 (n=97,ROBUST) | M4-M5: -3.8 (n=97,ROBUST) | M5-M6: -3.3 (n=97,ROBUST)
+  Small down     | M1-M2: -7.1 (n=142,ROBUST) | M2-M3: -1.2 (n=142,ROBUST) | M3-M4: +0.3 (n=142,ROBUST) | M4-M5: -0.1 (n=142,ROBUST) | M5-M6: -0.4 (n=142,ROBUST)
+  Flat           | M1-M2: +3.1 (n=195,ROBUST) | M2-M3: -0.3 (n=195,ROBUST) | M3-M4: -0.6 (n=195,ROBUST) | M4-M5: -0.6 (n=195,ROBUST) | M5-M6: -0.9 (n=195,ROBUST)
+  Small up       | M1-M2: +4.0 (n=152,ROBUST) | M2-M3: +3.1 (n=152,ROBUST) | M3-M4: +0.9 (n=152,ROBUST) | M4-M5: +1.3 (n=152,ROBUST) | M5-M6: +0.5 (n=152,ROBUST)
+  Large up       | M1-M2: -6.9 (n=112,ROBUST) | M2-M3: +2.3 (n=112,ROBUST) | M3-M4: +2.2 (n=112,ROBUST) | M4-M5: +1.0 (n=112,ROBUST) | M5-M6: +1.7 (n=112,ROBUST)
+
+[HIGH STOCK]
+  Large down     | M1-M2: +7.1 (n=79,ROBUST) | M2-M3: +1.7 (n=79,ROBUST) | M3-M4: +1.9 (n=79,ROBUST) | M4-M5: +0.4 (n=79,ROBUST) | M5-M6: +1.8 (n=79,ROBUST)
+  Small down     | M1-M2: +0.7 (n=147,ROBUST) | M2-M3: +0.4 (n=147,ROBUST) | M3-M4: +1.1 (n=147,ROBUST) | M4-M5: +0.6 (n=147,ROBUST) | M5-M6: +0.3 (n=147,ROBUST)
+  Flat           | M1-M2: +4.0 (n=185,ROBUST) | M2-M3: +2.4 (n=185,ROBUST) | M3-M4: +1.9 (n=185,ROBUST) | M4-M5: +1.7 (n=185,ROBUST) | M5-M6: +1.2 (n=185,ROBUST)
+  Small up       | M1-M2: +0.1 (n=137,ROBUST) | M2-M3: +1.5 (n=137,ROBUST) | M3-M4: +1.6 (n=137,ROBUST) | M4-M5: +1.2 (n=137,ROBUST) | M5-M6: +1.2 (n=137,ROBUST)
+  Large up       | M1-M2: -3.3 (n=95,ROBUST) | M2-M3: +0.6 (n=95,ROBUST) | M3-M4: +0.2 (n=95,ROBUST) | M4-M5: +2.1 (n=95,ROBUST) | M5-M6: +1.8 (n=95,ROBUST)
+
+
+--- SECTION 3: REGIME SPLIT FOR KEY CONDITIONS ---
+Showing conditions where n>=15 in at least one regime
+
+  High stock | Flat | M1-M2:
+    Backwardation   : — (n=0)
+    Contango        : +4.4 MYR (n=140, snr=0.126, ROBUST)
+    Transition      : +2.5 MYR (n=45, snr=0.086, ROBUST)
+
+  High stock | Flat | M5-M6:
+    Backwardation   : — (n=0)
+    Contango        : +1.6 MYR (n=140, snr=0.169, ROBUST)
+    Transition      : +0.2 MYR (n=45, snr=0.014, ROBUST)
+
+  High stock | Flat | M3-M4:
+    Backwardation   : — (n=0)
+    Contango        : +2.1 MYR (n=140, snr=0.182, ROBUST)
+    Transition      : +1.1 MYR (n=45, snr=0.086, ROBUST)
+
+  High stock | Flat | M2-M3:
+    Backwardation   : — (n=0)
+    Contango        : +2.4 MYR (n=140, snr=0.17, ROBUST)
+    Transition      : +2.2 MYR (n=45, snr=0.124, ROBUST)
+
+  High stock | Flat | M4-M5:
+    Backwardation   : — (n=0)
+    Contango        : +2.3 MYR (n=140, snr=0.22, ROBUST)
+    Transition      : -0.1 MYR (n=45, snr=0.012, ROBUST)
+
+  High stock | Small down | M3-M4:
+    Backwardation   : — (n=0)
+    Contango        : +1.5 MYR (n=123, snr=0.148, ROBUST)
+    Transition      : -1.4 MYR (n=24, snr=0.112, USABLE)
+
+  High stock | Small down | M5-M6:
+    Backwardation   : — (n=0)
+    Contango        : +0.6 MYR (n=123, snr=0.065, ROBUST)
+    Transition      : -1.3 MYR (n=24, snr=0.145, USABLE)
+
+  High stock | Small down | M1-M2:
+    Backwardation   : — (n=0)
+    Contango        : +4.0 MYR (n=123, snr=0.1, ROBUST)
+    Transition      : -16.0 MYR (n=24, snr=0.387, USABLE)
+
+  High stock | Small down | M4-M5:
+    Backwardation   : — (n=0)
+    Contango        : +0.8 MYR (n=123, snr=0.084, ROBUST)
+    Transition      : -0.2 MYR (n=24, snr=0.017, USABLE)
+
+  High stock | Small down | M2-M3:
+    Backwardation   : — (n=0)
+    Contango        : +0.6 MYR (n=123, snr=0.053, ROBUST)
+    Transition      : -0.5 MYR (n=24, snr=0.032, USABLE)
+
+  Low stock | Large up | M4-M5:
+    Backwardation   : -3.2 MYR (n=116, snr=0.143, ROBUST)
+    Contango        : — (n=0)
+    Transition      : — (n=1)
+
+  Low stock | Large up | M1-M2:
+    Backwardation   : +2.0 MYR (n=116, snr=0.029, ROBUST)
+    Contango        : — (n=0)
+    Transition      : — (n=1)
+
+  Low stock | Large up | M5-M6:
+    Backwardation   : -3.9 MYR (n=116, snr=0.185, ROBUST)
+    Contango        : — (n=0)
+    Transition      : — (n=1)
+
+  Low stock | Large up | M2-M3:
+    Backwardation   : +4.8 MYR (n=116, snr=0.124, ROBUST)
+    Contango        : — (n=0)
+    Transition      : — (n=1)
+
+  Low stock | Large up | M3-M4:
+    Backwardation   : -0.8 MYR (n=116, snr=0.034, ROBUST)
+    Contango        : — (n=0)
+    Transition      : — (n=1)
+
+  Low stock | Flat | M1-M2:
+    Backwardation   : +5.2 MYR (n=103, snr=0.071, ROBUST)
+    Contango        : — (n=1)
+    Transition      : — (n=7)
+
+  Low stock | Flat | M4-M5:
+    Backwardation   : +1.5 MYR (n=103, snr=0.085, ROBUST)
+    Contango        : — (n=1)
+    Transition      : — (n=7)
+
+  Low stock | Flat | M5-M6:
+    Backwardation   : +1.7 MYR (n=103, snr=0.126, ROBUST)
+    Contango        : — (n=1)
+    Transition      : — (n=7)
+
+  Low stock | Flat | M2-M3:
+    Backwardation   : -3.0 MYR (n=103, snr=0.086, ROBUST)
+    Contango        : — (n=1)
+    Transition      : — (n=7)
+
+  Low stock | Flat | M3-M4:
+    Backwardation   : -0.8 MYR (n=103, snr=0.032, ROBUST)
+    Contango        : — (n=1)
+    Transition      : — (n=7)
+
+  Mid stock | Flat | M4-M5:
+    Backwardation   : +0.2 MYR (n=43, snr=0.007, ROBUST)
+    Contango        : -1.2 MYR (n=86, snr=0.167, ROBUST)
+    Transition      : -0.4 MYR (n=66, snr=0.034, ROBUST)
+
+  Mid stock | Flat | M5-M6:
+    Backwardation   : -2.1 MYR (n=43, snr=0.087, ROBUST)
+    Contango        : -0.1 MYR (n=86, snr=0.023, ROBUST)
+    Transition      : -1.0 MYR (n=66, snr=0.089, ROBUST)
+
+  Mid stock | Flat | M1-M2:
+    Backwardation   : +10.6 MYR (n=43, snr=0.233, ROBUST)
+    Contango        : +2.4 MYR (n=86, snr=0.091, ROBUST)
+    Transition      : -0.8 MYR (n=66, snr=0.026, ROBUST)
+
+  Mid stock | Flat | M3-M4:
+    Backwardation   : +1.8 MYR (n=43, snr=0.073, ROBUST)
+    Contango        : -1.4 MYR (n=86, snr=0.196, ROBUST)
+    Transition      : -1.0 MYR (n=66, snr=0.097, ROBUST)
+
+  Mid stock | Flat | M2-M3:
+    Backwardation   : +5.4 MYR (n=43, snr=0.168, ROBUST)
+    Contango        : -3.0 MYR (n=86, snr=0.326, ROBUST)
+    Transition      : -0.4 MYR (n=66, snr=0.026, ROBUST)
+
+  Mid stock | Small down | M5-M6:
+    Backwardation   : +3.0 MYR (n=26, snr=0.156, USABLE)
+    Contango        : -1.6 MYR (n=69, snr=0.231, ROBUST)
+    Transition      : -0.6 MYR (n=47, snr=0.066, ROBUST)
+
+  Mid stock | Small down | M3-M4:
+    Backwardation   : +7.7 MYR (n=26, snr=0.294, USABLE)
+    Contango        : -1.2 MYR (n=69, snr=0.152, ROBUST)
+    Transition      : -1.6 MYR (n=47, snr=0.168, ROBUST)
+
+  Mid stock | Small down | M2-M3:
+    Backwardation   : +1.6 MYR (n=26, snr=0.052, USABLE)
+    Contango        : -2.2 MYR (n=69, snr=0.235, ROBUST)
+    Transition      : -1.4 MYR (n=47, snr=0.099, ROBUST)
+
+  Mid stock | Small down | M4-M5:
+    Backwardation   : +4.0 MYR (n=26, snr=0.208, USABLE)
+    Contango        : -0.6 MYR (n=69, snr=0.086, ROBUST)
+    Transition      : -1.7 MYR (n=47, snr=0.174, ROBUST)
+
+  Mid stock | Small down | M1-M2:
+    Backwardation   : -11.3 MYR (n=26, snr=0.214, USABLE)
+    Contango        : -8.0 MYR (n=69, snr=0.251, ROBUST)
+    Transition      : -3.4 MYR (n=47, snr=0.099, ROBUST)
+
+
+--- SECTION 4: CONDITIONS WHERE REGIME FLIPS DIRECTION ---
+These are the most important regime-conditional signals
+
+  High stock | Small down | M1-M2:
+    Contango        : +4.0 MYR
+    Transition      : -16.0 MYR
+
+  Low stock | Small down | M1-M2:
+    Backwardation   : +3.6 MYR
+    Transition      : -23.0 MYR
+
+  Low stock | Small up | M5-M6:
+    Backwardation   : +2.2 MYR
+    Transition      : -4.1 MYR
+
+  Mid stock | Flat | M2-M3:
+    Backwardation   : +5.4 MYR
+    Contango        : -3.0 MYR
+    Transition      : -0.4 MYR
+
+  Mid stock | Large down | M1-M2:
+    Backwardation   : -6.8 MYR
+    Contango        : +4.0 MYR
+    Transition      : -5.7 MYR
+
+  Mid stock | Large up | M1-M2:
+    Backwardation   : -15.2 MYR
+    Contango        : -14.6 MYR
+    Transition      : +20.8 MYR
+
+
+--- SECTION 5: Z-SCORE FILTER EFFECT BY SPREAD AND CONDITION ---
+Showing how much |Z|>=1.5 filter improves SNR for each spread pair
+
+[LOW STOCK]
+  Large down:
+    M1-M2: base snr=0.147 mean=-7.9 n=105 | with Z filter: -22.6 MYR snr=0.545 n=43 (lift=+271%)
+    M2-M3: base snr=0.179 mean=-7.0 n=105 | with Z filter: -6.2 MYR snr=0.153 n=43 (lift=-15%)
+    M3-M4: base snr=0.18 mean=-5.0 n=105 | with Z filter: -3.9 MYR snr=0.162 n=31 (lift=-10%)
+    M4-M5: base snr=0.237 mean=-4.7 n=105 | with Z filter: -9.3 MYR snr=0.545 n=19 (lift=+130%)
+    M5-M6: base snr=0.242 mean=-3.3 n=105 | with Z filter: +nan MYR snr=nan n=0 (lift=+nan%)
+  Large up:
+    M1-M2: base snr=0.031 mean=+2.0 n=117 | with Z filter: -18.8 MYR snr=0.262 n=48 (lift=+745%)
+    M2-M3: base snr=0.124 mean=+4.8 n=117 | with Z filter: -2.6 MYR snr=0.055 n=49 (lift=-56%)
+    M3-M4: base snr=0.04 mean=-0.9 n=117 | with Z filter: -4.7 MYR snr=0.166 n=51 (lift=+315%)
+    M4-M5: base snr=0.148 mean=-3.3 n=117 | with Z filter: -8.6 MYR snr=0.325 n=39 (lift=+120%)
+    M5-M6: base snr=0.187 mean=-3.9 n=117 | with Z filter: +nan MYR snr=nan n=0 (lift=+nan%)
+
+[MID STOCK]
+  Large down:
+    M1-M2: base snr=0.033 mean=-1.6 n=97 | with Z filter: -18.0 MYR snr=0.402 n=19 (lift=+1118%)
+    M2-M3: base snr=0.247 mean=-6.2 n=97 | with Z filter: -22.6 MYR snr=0.565 n=18 (lift=+129%)
+    M3-M4: base snr=0.245 mean=-5.3 n=97 | with Z filter: -3.8 MYR snr=0.152 n=22 (lift=-38%)
+    M4-M5: base snr=0.226 mean=-3.8 n=97 | with Z filter: -6.7 MYR snr=0.328 n=22 (lift=+45%)
+    M5-M6: base snr=0.231 mean=-3.3 n=97 | with Z filter: +nan MYR snr=nan n=0 (lift=+nan%)
+  Large up:
+    M1-M2: base snr=0.153 mean=-6.9 n=112 | with Z filter: -30.5 MYR snr=0.675 n=12 (lift=+341%)
+    M2-M3: base snr=0.1 mean=+2.3 n=112 | with Z filter: -7.4 MYR snr=0.214 n=24 (lift=+114%)
+    M3-M4: base snr=0.117 mean=+2.2 n=112 | with Z filter: +6.5 MYR snr=0.282 n=25 (lift=+141%)
+    M4-M5: base snr=0.067 mean=+1.0 n=112 | with Z filter: +3.2 MYR snr=0.163 n=29 (lift=+143%)
+    M5-M6: base snr=0.125 mean=+1.7 n=112 | with Z filter: +nan MYR snr=nan n=0 (lift=+nan%)
+
+[HIGH STOCK]
+  Large down:
+    M1-M2: base snr=0.168 mean=+7.1 n=79 | with Z filter: +17.6 MYR snr=0.359 n=23 (lift=+114%)
+    M2-M3: base snr=0.08 mean=+1.7 n=79 | with Z filter: -0.8 MYR snr=0.026 n=22 (lift=-68%)
+    M3-M4: base snr=0.145 mean=+1.9 n=79 | with Z filter: +2.2 MYR snr=0.133 n=21 (lift=-8%)
+    M4-M5: base snr=0.04 mean=+0.4 n=79 | with Z filter: -1.1 MYR snr=0.11 n=18 (lift=+175%)
+    M5-M6: base snr=0.176 mean=+1.8 n=79 | with Z filter: +nan MYR snr=nan n=0 (lift=+nan%)
+  Large up:
+    M1-M2: base snr=0.107 mean=-3.3 n=95 | with Z filter: -0.1 MYR snr=0.001 n=20 (lift=-99%)
+    M2-M3: base snr=0.048 mean=+0.6 n=95 | with Z filter: -2.1 MYR snr=0.187 n=20 (lift=+290%)
+    M3-M4: base snr=0.013 mean=+0.2 n=95 | with Z filter: -1.7 MYR snr=0.116 n=19 (lift=+792%)
+    M4-M5: base snr=0.181 mean=+2.1 n=95 | with Z filter: +3.9 MYR snr=0.305 n=17 (lift=+69%)
+    M5-M6: base snr=0.147 mean=+1.8 n=95 | with Z filter: +nan MYR snr=nan n=0 (lift=+nan%)
+
+
+--- SECTION 6: TOP CONDITIONS RANKED BY SNR (Z filter applied) ---
+Ranked by SNR with |Z|>=1.5 filter, n>=10 required
+
+   1. Mid stock | Large up     | M1-M2: SNR=0.675 mean=-30.5 MYR n=12
+   2. Mid stock | Large down   | M2-M3: SNR=0.565 mean=-22.6 MYR n=18
+   3. Low stock | Large down   | M1-M2: SNR=0.545 mean=-22.6 MYR n=43
+   4. Low stock | Large down   | M4-M5: SNR=0.545 mean=-9.3 MYR n=19
+   5. Mid stock | Large down   | M1-M2: SNR=0.402 mean=-18.0 MYR n=19
+   6. High stock | Large down   | M1-M2: SNR=0.359 mean=+17.6 MYR n=23
+   7. Mid stock | Large down   | M4-M5: SNR=0.328 mean=-6.7 MYR n=22
+   8. Low stock | Large up     | M4-M5: SNR=0.325 mean=-8.6 MYR n=39
+   9. High stock | Large up     | M4-M5: SNR=0.305 mean=+3.9 MYR n=17
+  10. Mid stock | Large up     | M3-M4: SNR=0.282 mean=+6.5 MYR n=25
+  11. Low stock | Large up     | M1-M2: SNR=0.262 mean=-18.8 MYR n=48
+  12. Mid stock | Large up     | M2-M3: SNR=0.214 mean=-7.4 MYR n=24
+  13. High stock | Large up     | M2-M3: SNR=0.187 mean=-2.1 MYR n=20
+  14. Low stock | Large up     | M3-M4: SNR=0.166 mean=-4.7 MYR n=51
+  15. Mid stock | Large up     | M4-M5: SNR=0.163 mean=+3.2 MYR n=29
+  16. Low stock | Large down   | M3-M4: SNR=0.162 mean=-3.9 MYR n=31
+  17. Low stock | Large down   | M2-M3: SNR=0.153 mean=-6.2 MYR n=43
+  18. Mid stock | Large down   | M3-M4: SNR=0.152 mean=-3.8 MYR n=22
+  19. High stock | Large down   | M3-M4: SNR=0.133 mean=+2.2 MYR n=21
+  20. High stock | Large up     | M3-M4: SNR=0.116 mean=-1.7 MYR n=19
+
+--- SECTION 7: SPOT SENSITIVITY DECAY ACROSS THE CURVE ---
+Average absolute 3-day response by spread position (all conditions)
+
+[LOW STOCK]
+  Large down: M1-M2=7.9(n=105) -> M2-M3=7.0(n=105) -> M3-M4=5.0(n=105) -> M4-M5=4.7(n=105) -> M5-M6=3.3(n=105)
+  Large up: M1-M2=2.0(n=117) -> M2-M3=4.8(n=117) -> M3-M4=0.9(n=117) -> M4-M5=3.3(n=117) -> M5-M6=3.9(n=117)
+
+[MID STOCK]
+  Large down: M1-M2=1.6(n=97) -> M2-M3=6.2(n=97) -> M3-M4=5.3(n=97) -> M4-M5=3.8(n=97) -> M5-M6=3.3(n=97)
+  Large up: M1-M2=6.9(n=112) -> M2-M3=2.3(n=112) -> M3-M4=2.2(n=112) -> M4-M5=1.0(n=112) -> M5-M6=1.7(n=112)
+
+[HIGH STOCK]
+  Large down: M1-M2=7.1(n=79) -> M2-M3=1.7(n=79) -> M3-M4=1.9(n=79) -> M4-M5=0.4(n=79) -> M5-M6=1.8(n=79)
+  Large up: M1-M2=3.3(n=95) -> M2-M3=0.6(n=95) -> M3-M4=0.2(n=95) -> M4-M5=2.1(n=95) -> M5-M6=1.8(n=95)
+
+======================================================================
+END OF SUMMARY — copy everything above for discussion
+======================================================================

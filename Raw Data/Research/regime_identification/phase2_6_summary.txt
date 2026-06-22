@@ -1,0 +1,85 @@
+======================================================================
+FCPO PHASE 2.6 — DISTRIBUTION CHECK AND SHAPE-CONDITIONED CONFIDENCE GRID
+======================================================================
+
+--- PART J: FULL DISTRIBUTION CHECK ON KEY TRADE-IDEA CELLS ---
+stock   spot_cat  pair   n  mean  median  std   snr   q25  q75    min   max  pct_opposite_sign
+  Low Large down M1-M2 105  -7.9    -8.0 53.8 0.147 -38.0 17.0 -133.0 169.0               41.0
+  Low Large down M4-M5 105  -4.7    -2.0 19.9 0.237 -13.0  6.0  -77.0  44.0               43.8
+ High Large down M1-M2  79   7.1     1.0 42.1 0.168 -13.5 21.5  -89.0 162.0               49.4
+  Mid Small down M1-M2 142  -7.1    -6.0 37.0 0.191 -22.0  8.8 -109.0 127.0               37.3
+ High   Large up M4-M5  95   2.1     0.0 11.6 0.181  -5.0  8.5  -24.0  35.0               51.6
+
+--- PART K: CONFIDENCE GRID CONDITIONED ON CURVE SHAPE ---
+shape  pair   mean   std  snr_unfiltered  snr_z_filtered   n regime_consistent confidence
+  0.0 M1-M2  -6.92 54.89           0.126           0.357 785              True       HIGH
+  0.0 M2-M3  -0.85 34.81           0.025           0.272 785              True       HIGH
+  0.0 M3-M4  -0.76 23.99           0.032           0.152 785              True       HIGH
+  0.0 M4-M5  -0.71 18.42           0.039           0.153 785              True       HIGH
+  0.0 M5-M6  -1.08 16.22           0.066             NaN 785              True       HIGH
+  0.1 M1-M2  18.30 54.24           0.337           0.610 262             False     MEDIUM
+  0.1 M2-M3   1.58 21.43           0.074           0.052 262              True       HIGH
+  0.1 M3-M4  -2.46 18.40           0.134           0.253 262              True       HIGH
+  0.1 M4-M5  -2.61 15.14           0.172           0.200 262              True       HIGH
+  0.1 M5-M6  -1.84 15.75           0.117             NaN 262             False        LOW
+  0.2 M1-M2 -10.51 33.22           0.316           0.355  79              True       HIGH
+  0.2 M2-M3  -3.13 15.66           0.200             NaN  79             False        LOW
+  0.2 M3-M4   1.85 11.57           0.160             NaN  79              True       HIGH
+  0.2 M4-M5   1.63 10.99           0.149             NaN  79              True       HIGH
+  0.2 M5-M6   2.06 15.06           0.137             NaN  79              True       HIGH
+    1 M1-M2  -1.89 29.73           0.063           0.195 643              True       HIGH
+    1 M2-M3   0.21 12.55           0.017           0.113 643              None     MEDIUM
+    1 M3-M4   1.26 10.80           0.116           0.208 643              None     MEDIUM
+    1 M4-M5   1.59 10.19           0.156           0.222 642              True       HIGH
+    1 M5-M6   1.49  9.31           0.160             NaN 642              None     MEDIUM
+    2 M1-M2   7.29 33.60           0.217           0.384 316              None       HIGH
+    2 M2-M3   0.18 12.99           0.014           0.056 316              None     MEDIUM
+    2 M3-M4   0.06 11.69           0.005           0.247 316              None     MEDIUM
+    2 M4-M5  -0.57 10.67           0.054           0.287 316              None     MEDIUM
+    2 M5-M6  -0.21  9.10           0.023             NaN 316              None     MEDIUM
+
+Confidence label counts:
+confidence
+HIGH      15
+MEDIUM     8
+LOW        2
+Name: count, dtype: int64
+
+HIGH confidence cells by shape:
+shape
+0.0    5
+0.1    3
+0.2    4
+1      2
+2      1
+dtype: int64
+
+Trend-following shapes detail (0.1, 0.2, 2):
+
+Shape 0.1:
+ pair  mean   n  snr_unfiltered  snr_z_filtered confidence
+M1-M2 18.30 262           0.337           0.610     MEDIUM
+M2-M3  1.58 262           0.074           0.052       HIGH
+M3-M4 -2.46 262           0.134           0.253       HIGH
+M4-M5 -2.61 262           0.172           0.200       HIGH
+M5-M6 -1.84 262           0.117             NaN        LOW
+
+Shape 0.2:
+ pair   mean  n  snr_unfiltered  snr_z_filtered confidence
+M1-M2 -10.51 79           0.316           0.355       HIGH
+M2-M3  -3.13 79           0.200             NaN        LOW
+M3-M4   1.85 79           0.160             NaN       HIGH
+M4-M5   1.63 79           0.149             NaN       HIGH
+M5-M6   2.06 79           0.137             NaN       HIGH
+
+Shape 2:
+ pair  mean   n  snr_unfiltered  snr_z_filtered confidence
+M1-M2  7.29 316           0.217           0.384       HIGH
+M2-M3  0.18 316           0.014           0.056     MEDIUM
+M3-M4  0.06 316           0.005           0.247     MEDIUM
+M4-M5 -0.57 316           0.054           0.287     MEDIUM
+M5-M6 -0.21 316           0.023             NaN     MEDIUM
+
+======================================================================
+END — copy all text above for discussion
+======================================================================

@@ -1,0 +1,16 @@
+spot_cat,stock_level,mean,count
+Large down,High,7.06,79
+Large down,Low,-7.91,105
+Large down,Mid,-1.56,97
+Small down,High,0.73,147
+Small down,Low,0.45,86
+Small down,Mid,-7.06,142
+Flat,High,3.96,185
+Flat,Low,5.8,111
+Flat,Mid,3.1,195
+Small up,High,0.14,137
+Small up,Low,-5.86,107
+Small up,Mid,4.03,152
+Large up,High,-3.28,95
+Large up,Low,2.05,117
+Large up,Mid,-6.9,112
