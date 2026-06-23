@@ -21,7 +21,12 @@ from dashboard.fcpo_s_calculator import (
     build_per_pair_regression, load_oni_history, load_enso_forecast,
 )
 from dashboard.fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
+from dashboard.shape_classifier import (
+    update_shape_log, force_full_reclassify, SHAPE_NAMES, LOG_PATH, MONTHS as SHAPE_MONTHS,
+    load_centroids, load_stock_terciles,
+)
 import datetime
+from datetime import date
 import csv
 from pathlib import Path
 
@@ -852,10 +857,11 @@ if _F_c and _G_c:
 else:
     st.session_state.setdefault('c_current', 0.0)
 
-tab1, tab2, tab3, tab4, tab_enso, tab7, tab8, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab_enso, tab7, tab8, tab6, tab_shape_tracker, tab_confidence_matrix = st.tabs([
     "Year-over-Year", "Term Structure", "Event Log",
     "Supply & Demand", "ENSO Analysis",
     "S Calculator", "Spread & Butterfly", "Pair Screener",
+    "Shape Tracker", "Confidence Matrix",
 ])
 
 with tab1:
@@ -4048,3 +4054,273 @@ with tab_enso:
 - **Directional bias only.** Confirm with Z-score and MPOB before entering any trade.
 - **Update monthly.** Stale forecast data is worse than no data.
         """)
+
+# ─── Helper: build daily curve DataFrame with M1-M6 columns ───
+@st.cache_data
+def _build_shape_curve_df():
+    """Build a date-indexed DataFrame with M1-M6 from the term structure."""
+    contracts = load_contracts()
+    raw = build_daily_table(contracts)
+    tenor_map = {"Current": "M1"}
+    for i in range(1, 6):
+        tenor_map[f"+{i}M"] = f"M{i+1}"
+    df_curve = raw.rename(columns=tenor_map)[["Date"] + SHAPE_MONTHS].copy()
+    df_curve["Date"] = pd.to_datetime(df_curve["Date"], format="%d %b %Y")
+    df_curve = df_curve.set_index("Date").sort_index()
+    df_curve = df_curve.dropna(subset=SHAPE_MONTHS)
+    return df_curve
+
+
+@st.cache_data
+def _build_stock_pct_series():
+    """Build a date-indexed Series of rolling stock percentile (756-day window)."""
+    mpob_df = load_mpob_data()
+    stock = mpob_df.set_index("date")["mpob_stocks"].sort_index()
+    stock = stock.resample("ME").last().resample("D").ffill()
+    window = 756
+    stock_pct = stock.rolling(window, min_periods=window // 2).rank() / window
+    return stock_pct
+
+
+# ─── Tab: Shape Tracker ───
+with tab_shape_tracker:
+    st.subheader("Shape Tracker")
+
+    daily_curve_df = _build_shape_curve_df()
+    stock_pct_series = _build_stock_pct_series()
+
+    shape_log = update_shape_log(daily_curve_df, stock_pct_series)
+
+    if shape_log is None or len(shape_log) == 0:
+        st.warning("No classified days yet. Check that price and stock data are loading correctly.")
+    else:
+        shape_log["date"] = pd.to_datetime(shape_log["date"])
+        shape_log = shape_log.sort_values("date")
+        latest = shape_log.iloc[-1]
+
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Today's shape", f"Shape {latest['shape']}")
+        col1.caption(SHAPE_NAMES.get(str(latest["shape"]), ""))
+        col2.metric("Stock tercile", latest["stock_tercile"] or "n/a")
+        col3.metric("Spot momentum", latest["spot_mom_cat"] or "n/a")
+
+        st.divider()
+        st.markdown("**Last 20 trading days**")
+        last_20 = shape_log.tail(20).copy()
+        same_as_today = (last_20["shape"].astype(str) == str(latest["shape"])).sum()
+        st.write(f"{same_as_today} of the last 20 days were in Shape {latest['shape']}")
+
+        shape_color_map = {
+            "0.0": "#1D9E75", "0.1": "#EF9F27", "0.2": "#D85A30",
+            "1": "#7F77DD", "2": "#888780",
+        }
+        fig_shape = go.Figure()
+        fig_shape.add_trace(go.Scatter(
+            x=last_20["date"], y=last_20["shape"].astype(str),
+            mode="markers+lines",
+            marker=dict(
+                size=10,
+                color=[shape_color_map.get(str(s), "#888") for s in last_20["shape"]],
+            ),
+            line=dict(color=DARK_GRID),
+        ))
+        fig_shape.update_layout(
+            paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
+            font_color=DARK_TEXT, yaxis_title="Shape",
+            margin=dict(l=60, r=30, t=30, b=30),
+        )
+        st.plotly_chart(fig_shape, use_container_width=True)
+
+        st.divider()
+        st.markdown("**One-week outlook**")
+        # Load playbook/threshold reference files if they exist
+        _playbook_path = "Raw Data/Research/regime_identification/trend_playbook_conditioned.csv"
+        _z_thresh_path = "Raw Data/Research/regime_identification/best_z_thresholds.csv"
+        _trend_shapes = {"0.1", "0.2", "2"}
+        _reversion_shapes = {"0.0", "1"}
+        _current_shape = str(latest["shape"])
+
+        if _current_shape in _trend_shapes and os.path.exists(_playbook_path):
+            _playbook_df = pd.read_csv(_playbook_path, dtype={"shape": str})
+            _match = _playbook_df[
+                (_playbook_df["shape"] == _current_shape)
+            ]
+            if not _match.empty:
+                st.dataframe(_match, use_container_width=True)
+            else:
+                st.info(f"No playbook entry found for shape {_current_shape}")
+        elif _current_shape in _reversion_shapes and os.path.exists(_z_thresh_path):
+            _z_df = pd.read_csv(_z_thresh_path, dtype={"shape": str})
+            _match = _z_df[_z_df["shape"] == _current_shape]
+            if not _match.empty:
+                st.dataframe(_match, use_container_width=True)
+            else:
+                st.info(f"No Z-threshold entry found for shape {_current_shape}")
+        else:
+            st.info("Playbook/threshold reference files not found. Run research notebook Phase 2.5+.")
+
+        st.divider()
+        with st.expander("Advanced: force full re-classification"):
+            st.warning(
+                "This discards the existing log and rebuilds it from scratch. "
+                "Only use this if the centroid or tercile reference files were updated."
+            )
+            confirm = st.checkbox("I understand this will discard the current log")
+            if confirm and st.button("Force re-classify now"):
+                shape_log = force_full_reclassify(daily_curve_df, stock_pct_series)
+                st.success("Re-classification complete.")
+                st.rerun()
+
+
+# ─── Tab: Confidence Matrix ───
+@st.cache_data(ttl=86400)
+def build_confidence_matrix(_shape_log_json, _daily_curve_json, as_of_date_str):
+    """Build the confidence matrix from shape log + daily curve data.
+    Accepts JSON strings for cacheability."""
+    shape_log_df = pd.read_json(_shape_log_json, orient="records")
+    daily_curve_df = pd.read_json(_daily_curve_json, orient="records")
+
+    if shape_log_df.empty or daily_curve_df.empty:
+        return pd.DataFrame()
+
+    shape_log_df["date"] = pd.to_datetime(shape_log_df["date"])
+    daily_curve_df["date"] = pd.to_datetime(daily_curve_df["date"])
+
+    # Compute spreads and 3-day forward changes
+    for m_i in range(1, 6):
+        col_a, col_b = f"M{m_i}", f"M{m_i+1}"
+        sp_col = f"sp_M{m_i}M{m_i+1}"
+        daily_curve_df[sp_col] = daily_curve_df[col_a] - daily_curve_df[col_b]
+        daily_curve_df[f"{sp_col}_fwd3"] = daily_curve_df[sp_col].shift(-3) - daily_curve_df[sp_col]
+
+    merged = shape_log_df.merge(daily_curve_df, on="date", how="inner", suffixes=("", "_curve"))
+
+    pairs = ["M1-M2", "M2-M3", "M3-M4", "M4-M5", "M5-M6"]
+    shapes = ["0.0", "0.1", "0.2", "1", "2"]
+    stock_tiers = ["Low", "Mid", "High"]
+    spot_cats = ["Down", "Flat", "Up"]
+
+    as_of = pd.Timestamp(as_of_date_str)
+    year_starts = {
+        "1yr":  pd.Timestamp(date(as_of.year, 1, 1)),
+        "3yr":  pd.Timestamp(date(as_of.year - 2, 1, 1)),
+        "5yr":  pd.Timestamp(date(as_of.year - 4, 1, 1)),
+        "10yr": pd.Timestamp(date(as_of.year - 9, 1, 1)),
+    }
+
+    rows = []
+    for shape in shapes:
+        for pair in pairs:
+            m_i = int(pair[1])
+            fwd_col = f"sp_M{m_i}M{m_i+1}_fwd3"
+            if fwd_col not in merged.columns:
+                continue
+            for tier in stock_tiers:
+                for spot_cat in spot_cats:
+                    for window_label, year_start in year_starts.items():
+                        sub = merged[
+                            (merged["date"] >= year_start) &
+                            (merged["shape"].astype(str) == shape) &
+                            (merged["stock_tercile"] == tier) &
+                            (merged["spot_mom_cat"] == spot_cat)
+                        ]
+                        vals = sub[fwd_col].dropna()
+                        n = len(vals)
+                        if n >= 3:
+                            mean_val = vals.mean()
+                            std_val = vals.std()
+                            snr = abs(mean_val) / std_val if std_val > 0 else None
+                        else:
+                            mean_val = std_val = snr = None
+                        rows.append({
+                            "shape": shape, "pair": pair, "stock_tercile": tier,
+                            "spot_cat": spot_cat, "window": window_label,
+                            "mean": mean_val, "std": std_val, "snr": snr, "n": n,
+                        })
+    return pd.DataFrame(rows)
+
+
+def flag_drift(matrix_df, threshold=0.30):
+    if matrix_df.empty:
+        return matrix_df
+    matrix_df = matrix_df.copy()
+    matrix_df["drift_warning"] = False
+    pivot = matrix_df.pivot_table(
+        index=["shape", "pair", "stock_tercile", "spot_cat"],
+        columns="window", values="snr",
+    )
+    for idx, row in pivot.iterrows():
+        snr_1yr = row.get("1yr")
+        for long_window in ["5yr", "10yr"]:
+            snr_long = row.get(long_window)
+            if pd.notna(snr_1yr) and pd.notna(snr_long) and snr_long != 0:
+                pct_diff = abs(snr_1yr - snr_long) / snr_long
+                if pct_diff > threshold:
+                    mask = (
+                        (matrix_df["shape"] == idx[0]) & (matrix_df["pair"] == idx[1]) &
+                        (matrix_df["stock_tercile"] == idx[2]) & (matrix_df["spot_cat"] == idx[3])
+                    )
+                    matrix_df.loc[mask, "drift_warning"] = True
+    return matrix_df
+
+
+with tab_confidence_matrix:
+    st.subheader("Confidence Matrix")
+    st.caption(
+        "Mean / std / SNR by shape, pair, stock tercile, and spot momentum, "
+        "across four calendar-year-anchored windows. Cached once per day."
+    )
+
+    sel_shape = st.selectbox(
+        "Shape", ["0.0", "0.1", "0.2", "1", "2"],
+        format_func=lambda s: f"{s} — {SHAPE_NAMES.get(s, '')}",
+        key="cm_shape",
+    )
+    sel_pair = st.selectbox(
+        "Spread pair", ["M1-M2", "M2-M3", "M3-M4", "M4-M5", "M5-M6"],
+        key="cm_pair",
+    )
+
+    # Reuse shape_log from Shape Tracker tab (already computed above)
+    _cm_curve_df = _build_shape_curve_df()
+    if "shape_log" not in dir() or shape_log is None or (hasattr(shape_log, "__len__") and len(shape_log) == 0):
+        _cm_shape_log = update_shape_log(_cm_curve_df, _build_stock_pct_series())
+    else:
+        _cm_shape_log = shape_log
+
+    if _cm_shape_log is not None and len(_cm_shape_log) > 0:
+        # Serialize for cache-friendly function
+        _cm_curve_with_date = _cm_curve_df.reset_index().rename(columns={"Date": "date"})
+        if "date" not in _cm_curve_with_date.columns and _cm_curve_with_date.index.name == "Date":
+            _cm_curve_with_date = _cm_curve_with_date.reset_index().rename(columns={"Date": "date"})
+
+        matrix_df = build_confidence_matrix(
+            _cm_shape_log.to_json(orient="records", date_format="iso"),
+            _cm_curve_with_date.to_json(orient="records", date_format="iso"),
+            str(date.today()),
+        )
+        if not matrix_df.empty:
+            matrix_df = flag_drift(matrix_df)
+
+            filtered = matrix_df[
+                (matrix_df["shape"] == sel_shape) & (matrix_df["pair"] == sel_pair)
+            ]
+            display_table = filtered.pivot_table(
+                index=["stock_tercile", "spot_cat"], columns="window",
+                values=["mean", "std", "snr", "n"], aggfunc="first",
+            )
+
+            drift_rows = filtered[filtered["drift_warning"]][
+                ["stock_tercile", "spot_cat"]
+            ].drop_duplicates()
+            if len(drift_rows) > 0:
+                st.warning(
+                    f"Drift flagged in {len(drift_rows)} stock/spot combination(s) — "
+                    f"1-year SNR diverges from longer-run SNR by more than 30%."
+                )
+
+            st.dataframe(display_table, use_container_width=True)
+        else:
+            st.info("Not enough data to build the confidence matrix.")
+    else:
+        st.warning("Shape log is empty. Ensure the Shape Tracker tab has data first.")
