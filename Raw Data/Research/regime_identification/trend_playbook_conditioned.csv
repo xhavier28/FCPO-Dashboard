@@ -11,13 +11,13 @@ shape,stock_tercile,spot_mom_cat,n,dominant_resolution,dominant_pct,confidence,f
 0.2,Low,Down,12,0.0,50.0,LOW,"{'0.0': np.float64(50.0), '1': np.float64(25.0), '0.1': np.float64(8.3), '0.2': np.float64(8.3), '2': np.float64(8.3)}"
 0.2,Low,Flat,2,0.0,100.0,INSUFFICIENT DATA,{'0.0': np.float64(100.0)}
 0.2,Low,Up,14,0.0,100.0,LOW,{'0.0': np.float64(100.0)}
-0.2,Mid,Down,13,1,38.5,LOW,"{'1': np.float64(38.5), '0.0': np.float64(23.1), '0.1': np.float64(15.4), '2': np.float64(15.4), '0.2': np.float64(7.7)}"
+0.2,Mid,Down,13,1.0,38.5,LOW,"{'1': np.float64(38.5), '0.0': np.float64(23.1), '0.1': np.float64(15.4), '2': np.float64(15.4), '0.2': np.float64(7.7)}"
 0.2,Mid,Flat,11,0.0,45.5,LOW,"{'0.0': np.float64(45.5), '1': np.float64(27.3), '0.2': np.float64(18.2), '2': np.float64(9.1)}"
-0.2,Mid,Up,8,1,50.0,LOW,"{'1': np.float64(50.0), '0.0': np.float64(25.0), '2': np.float64(12.5), '0.1': np.float64(12.5)}"
+0.2,Mid,Up,8,1.0,50.0,LOW,"{'1': np.float64(50.0), '0.0': np.float64(25.0), '2': np.float64(12.5), '0.1': np.float64(12.5)}"
 2,Low,Down,1,0.1,100.0,INSUFFICIENT DATA,{'0.1': np.float64(100.0)}
-2,Mid,Down,23,1,43.5,LOW,"{'1': np.float64(43.5), '2': np.float64(26.1), '0.0': np.float64(17.4), '0.1': np.float64(8.7), '0.2': np.float64(4.3)}"
-2,Mid,Flat,16,1,37.5,LOW,"{'1': np.float64(37.5), '0.1': np.float64(31.2), '0.0': np.float64(18.8), '2': np.float64(12.5)}"
+2,Mid,Down,23,1.0,43.5,LOW,"{'1': np.float64(43.5), '2': np.float64(26.1), '0.0': np.float64(17.4), '0.1': np.float64(8.7), '0.2': np.float64(4.3)}"
+2,Mid,Flat,16,1.0,37.5,LOW,"{'1': np.float64(37.5), '0.1': np.float64(31.2), '0.0': np.float64(18.8), '2': np.float64(12.5)}"
 2,Mid,Up,28,0.1,39.3,LOW,"{'0.1': np.float64(39.3), '1': np.float64(35.7), '2': np.float64(17.9), '0.0': np.float64(7.1)}"
-2,High,Down,74,2,50.0,MEDIUM,"{'2': np.float64(50.0), '0.1': np.float64(25.7), '1': np.float64(24.3)}"
-2,High,Flat,51,2,54.9,MEDIUM,"{'2': np.float64(54.9), '1': np.float64(27.5), '0.1': np.float64(17.6)}"
-2,High,Up,100,2,49.0,MEDIUM,"{'2': np.float64(49.0), '1': np.float64(33.0), '0.1': np.float64(12.0), '0.0': np.float64(6.0)}"
+2,High,Down,74,2.0,50.0,MEDIUM,"{'2': np.float64(50.0), '0.1': np.float64(25.7), '1': np.float64(24.3)}"
+2,High,Flat,51,2.0,54.9,MEDIUM,"{'2': np.float64(54.9), '1': np.float64(27.5), '0.1': np.float64(17.6)}"
+2,High,Up,100,2.0,49.0,MEDIUM,"{'2': np.float64(49.0), '1': np.float64(33.0), '0.1': np.float64(12.0), '0.0': np.float64(6.0)}"

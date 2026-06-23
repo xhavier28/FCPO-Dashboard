@@ -100,7 +100,10 @@ def update_shape_log(daily_curve_df, stock_pct_series, log_path=LOG_PATH):
     daily_curve_df = daily_curve_df.sort_index()
 
     if os.path.exists(log_path):
-        existing_log = pd.read_csv(log_path, parse_dates=['date']).set_index('date')
+        existing_log = pd.read_csv(
+            log_path, parse_dates=['date'],
+            dtype={'shape': str, 'stock_tercile': str, 'spot_mom_cat': str}
+        ).set_index('date')
         last_logged_date = existing_log.index.max()
         new_dates = daily_curve_df.index[daily_curve_df.index > last_logged_date]
     else:
@@ -119,6 +122,7 @@ def update_shape_log(daily_curve_df, stock_pct_series, log_path=LOG_PATH):
         shape = classify_shape(row_prices.values, centroids_df)
         if shape is None:
             continue
+        shape = str(shape)  # guarantee string even if centroids index drifts
 
         stock_pct_today = stock_pct_series.get(d, np.nan) if isinstance(stock_pct_series, dict) else (
             stock_pct_series.loc[d] if d in stock_pct_series.index else np.nan
@@ -145,6 +149,7 @@ def update_shape_log(daily_curve_df, stock_pct_series, log_path=LOG_PATH):
     else:
         full_log = new_log_df
 
+    full_log['shape'] = full_log['shape'].astype(str)  # final guarantee before writing
     full_log = full_log.drop_duplicates(subset='date').sort_values('date')
     full_log.to_csv(log_path, index=False)
     return full_log
