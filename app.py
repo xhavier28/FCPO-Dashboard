@@ -4173,71 +4173,103 @@ with tab_shape_tracker:
 
 
 # ─── Tab: Confidence Matrix ───
-@st.cache_data(ttl=86400)
-def build_confidence_matrix(_shape_log_json, _daily_curve_json, as_of_date_str):
-    """Build the confidence matrix from shape log + daily curve data.
-    Accepts JSON strings for cacheability."""
-    shape_log_df = pd.read_json(_shape_log_json, orient="records")
-    daily_curve_df = pd.read_json(_daily_curve_json, orient="records")
+def build_confidence_matrix(shape_log_df, daily_curve_df, as_of_date):
+    """Build the confidence matrix from shape log + daily curve data."""
+    shape_log_df = shape_log_df.copy()
+    daily_curve_df = daily_curve_df.copy()
+
+    # FIX 1: force both date columns to real datetime
+    shape_log_df["date"] = pd.to_datetime(shape_log_df["date"], errors="coerce")
+    daily_curve_df["date"] = pd.to_datetime(daily_curve_df["date"], errors="coerce")
+    shape_log_df = shape_log_df.dropna(subset=["date"])
+    daily_curve_df = daily_curve_df.dropna(subset=["date"])
 
     if shape_log_df.empty or daily_curve_df.empty:
         return pd.DataFrame()
 
-    shape_log_df["date"] = pd.to_datetime(shape_log_df["date"])
-    daily_curve_df["date"] = pd.to_datetime(daily_curve_df["date"])
-
-    # Compute spreads and 3-day forward changes
+    # Compute spreads and 3-day forward changes on the curve data
+    daily_curve_df = daily_curve_df.sort_values("date").reset_index(drop=True)
     for m_i in range(1, 6):
         col_a, col_b = f"M{m_i}", f"M{m_i+1}"
         sp_col = f"sp_M{m_i}M{m_i+1}"
         daily_curve_df[sp_col] = daily_curve_df[col_a] - daily_curve_df[col_b]
         daily_curve_df[f"{sp_col}_fwd3"] = daily_curve_df[sp_col].shift(-3) - daily_curve_df[sp_col]
 
-    merged = shape_log_df.merge(daily_curve_df, on="date", how="inner", suffixes=("", "_curve"))
+    # Only keep date + spread columns for the merge (avoid M1-M6 column collisions)
+    spread_cols = [c for c in daily_curve_df.columns if c.startswith("sp_")]
+    spread_data = daily_curve_df[["date"] + spread_cols]
+
+    merged = shape_log_df.merge(spread_data, on="date", how="inner")
+
+    # FIX 2: fail loudly if merge produces nothing
+    if len(merged) == 0:
+        return pd.DataFrame(
+            columns=["shape", "pair", "stock_tercile", "spot_cat",
+                     "window", "mean", "std", "snr", "n", "_diag_merge_empty"]
+        )
 
     pairs = ["M1-M2", "M2-M3", "M3-M4", "M4-M5", "M5-M6"]
     shapes = ["0.0", "0.1", "0.2", "1", "2"]
     stock_tiers = ["Low", "Mid", "High"]
     spot_cats = ["Down", "Flat", "Up"]
 
-    as_of = pd.Timestamp(as_of_date_str)
     year_starts = {
-        "1yr":  pd.Timestamp(date(as_of.year, 1, 1)),
-        "3yr":  pd.Timestamp(date(as_of.year - 2, 1, 1)),
-        "5yr":  pd.Timestamp(date(as_of.year - 4, 1, 1)),
-        "10yr": pd.Timestamp(date(as_of.year - 9, 1, 1)),
+        "1yr":  pd.Timestamp(date(as_of_date.year, 1, 1)),
+        "3yr":  pd.Timestamp(date(as_of_date.year - 2, 1, 1)),
+        "5yr":  pd.Timestamp(date(as_of_date.year - 4, 1, 1)),
+        "10yr": pd.Timestamp(date(as_of_date.year - 9, 1, 1)),
     }
+
+    # FIX 3: verify expected spread columns exist
+    pair_to_col = {}
+    for pair in pairs:
+        m_i = int(pair[1])
+        fwd_col = f"sp_M{m_i}M{m_i+1}_fwd3"
+        if fwd_col in merged.columns:
+            pair_to_col[pair] = fwd_col
 
     rows = []
     for shape in shapes:
         for pair in pairs:
-            m_i = int(pair[1])
-            fwd_col = f"sp_M{m_i}M{m_i+1}_fwd3"
-            if fwd_col not in merged.columns:
-                continue
+            fwd_col = pair_to_col.get(pair)
             for tier in stock_tiers:
                 for spot_cat in spot_cats:
                     for window_label, year_start in year_starts.items():
-                        sub = merged[
-                            (merged["date"] >= year_start) &
-                            (merged["shape"].astype(str) == shape) &
-                            (merged["stock_tercile"] == tier) &
-                            (merged["spot_mom_cat"] == spot_cat)
-                        ]
-                        vals = sub[fwd_col].dropna()
-                        n = len(vals)
-                        if n >= 3:
-                            mean_val = vals.mean()
-                            std_val = vals.std()
-                            snr = abs(mean_val) / std_val if std_val > 0 else None
-                        else:
+                        if fwd_col is None:
+                            n = 0
                             mean_val = std_val = snr = None
+                        else:
+                            sub = merged[
+                                (merged["date"] >= year_start) &
+                                (merged["shape"].astype(str) == shape) &
+                                (merged["stock_tercile"] == tier) &
+                                (merged["spot_mom_cat"] == spot_cat)
+                            ]
+                            vals = sub[fwd_col].dropna()
+                            n = len(vals)
+                            if n >= 3:
+                                mean_val = vals.mean()
+                                std_val = vals.std()
+                                snr = abs(mean_val) / std_val if std_val > 0 else None
+                            else:
+                                mean_val = std_val = snr = None
                         rows.append({
                             "shape": shape, "pair": pair, "stock_tercile": tier,
                             "spot_cat": spot_cat, "window": window_label,
                             "mean": mean_val, "std": std_val, "snr": snr, "n": n,
                         })
-    return pd.DataFrame(rows)
+
+    result_df = pd.DataFrame(rows)
+    # Store diagnostic info for the debug expander
+    result_df.attrs["_diag_merged_rows"] = len(merged)
+    result_df.attrs["_diag_shape_log_rows"] = len(shape_log_df)
+    result_df.attrs["_diag_spread_data_rows"] = len(spread_data)
+    result_df.attrs["_diag_pair_cols_found"] = list(pair_to_col.keys())
+    result_df.attrs["_diag_pair_cols_missing"] = [p for p in pairs if p not in pair_to_col]
+    result_df.attrs["_diag_merged_shapes"] = sorted(merged["shape"].astype(str).unique().tolist())
+    result_df.attrs["_diag_merged_stock_terciles"] = sorted(merged["stock_tercile"].dropna().unique().tolist())
+    result_df.attrs["_diag_merged_spot_cats"] = sorted(merged["spot_mom_cat"].dropna().unique().tolist())
+    return result_df
 
 
 def flag_drift(matrix_df, threshold=0.30):
@@ -4268,7 +4300,7 @@ with tab_confidence_matrix:
     st.subheader("Confidence Matrix")
     st.caption(
         "Mean / std / SNR by shape, pair, stock tercile, and spot momentum, "
-        "across four calendar-year-anchored windows. Cached once per day."
+        "across four calendar-year-anchored windows."
     )
 
     sel_shape = st.selectbox(
@@ -4281,7 +4313,7 @@ with tab_confidence_matrix:
         key="cm_pair",
     )
 
-    # Reuse shape_log from Shape Tracker tab (already computed above)
+    # Load data — reuse shape_log from Shape Tracker if available
     _cm_curve_df = _build_shape_curve_df()
     if "shape_log" not in dir() or shape_log is None or (hasattr(shape_log, "__len__") and len(shape_log) == 0):
         _cm_shape_log = update_shape_log(_cm_curve_df, _build_stock_pct_series())
@@ -4289,17 +4321,50 @@ with tab_confidence_matrix:
         _cm_shape_log = shape_log
 
     if _cm_shape_log is not None and len(_cm_shape_log) > 0:
-        # Serialize for cache-friendly function
-        _cm_curve_with_date = _cm_curve_df.reset_index().rename(columns={"Date": "date"})
-        if "date" not in _cm_curve_with_date.columns and _cm_curve_with_date.index.name == "Date":
-            _cm_curve_with_date = _cm_curve_with_date.reset_index().rename(columns={"Date": "date"})
+        # Prepare curve data with a date column (not index)
+        _cm_curve_with_date = _cm_curve_df.reset_index()
+        # The index name after reset could be "Date" or the default
+        if "Date" in _cm_curve_with_date.columns:
+            _cm_curve_with_date = _cm_curve_with_date.rename(columns={"Date": "date"})
 
         matrix_df = build_confidence_matrix(
-            _cm_shape_log.to_json(orient="records", date_format="iso"),
-            _cm_curve_with_date.to_json(orient="records", date_format="iso"),
-            str(date.today()),
+            _cm_shape_log,
+            _cm_curve_with_date,
+            date.today(),
         )
-        if not matrix_df.empty:
+
+        # Diagnostic expander
+        with st.expander("Debug: Confidence Matrix diagnostics"):
+            _diag_merged = matrix_df.attrs.get("_diag_merged_rows", "?")
+            _diag_sl = matrix_df.attrs.get("_diag_shape_log_rows", "?")
+            _diag_sp = matrix_df.attrs.get("_diag_spread_data_rows", "?")
+            _diag_found = matrix_df.attrs.get("_diag_pair_cols_found", [])
+            _diag_missing = matrix_df.attrs.get("_diag_pair_cols_missing", [])
+            _diag_shapes = matrix_df.attrs.get("_diag_merged_shapes", [])
+            _diag_tiers = matrix_df.attrs.get("_diag_merged_stock_terciles", [])
+            _diag_cats = matrix_df.attrs.get("_diag_merged_spot_cats", [])
+
+            st.text(f"1. shape_log rows: {_diag_sl}")
+            st.text(f"2. spread_data rows: {_diag_sp}")
+            st.text(f"3. Merged rows: {_diag_merged}")
+            st.text(f"4. Spread fwd3 cols found: {_diag_found}")
+            st.text(f"   Spread fwd3 cols missing: {_diag_missing}")
+            st.text(f"5. Merged shape values: {_diag_shapes}")
+            st.text(f"6. Merged stock_tercile values: {_diag_tiers}")
+            st.text(f"7. Merged spot_mom_cat values: {_diag_cats}")
+            total_n = matrix_df["n"].sum() if "n" in matrix_df.columns else 0
+            st.text(f"8. Total n across all cells: {total_n}")
+
+            if "_diag_merge_empty" in matrix_df.columns:
+                st.error("Merge produced 0 rows — date dtype or value mismatch between shape_log and curve data.")
+            elif total_n == 0:
+                st.error(
+                    "Merge succeeded but every cell has n=0. Check that shape/stock_tercile/spot_mom_cat "
+                    "labels match expected values: shapes=['0.0','0.1','0.2','1','2'], "
+                    "tiers=['Low','Mid','High'], cats=['Down','Flat','Up']."
+                )
+
+        if not matrix_df.empty and "n" in matrix_df.columns:
             matrix_df = flag_drift(matrix_df)
 
             filtered = matrix_df[
