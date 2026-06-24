@@ -217,6 +217,7 @@ def build_delta_table(df):
     df["date"] = pd.to_datetime(df["Date"], format="%d %b %Y")
     df = df.sort_values("date").reset_index(drop=True)
 
+    # ── Existing 8 spreads (M3/M4 … M10/M11) ───────────────────────
     for name, near, far in SPREAD_PAIRS:
         df[name] = df[near] - df[far]
 
@@ -236,8 +237,76 @@ def build_delta_table(df):
             roll_dod = pd.Series(np.nan, index=df.index)
         df[delta] = np.where(df["_is_roll"], roll_dod, normal_dod)
 
+    # ── New: Spot DoD (no roll adjustment needed — Current already
+    #    absorbs the roll via front_month logic in build_daily_table) ─
+    df["DeltaSpot"] = df["Current"] - df["Current"].shift(1)
+
+    # ── New: S1M2M and S2M3M spreads + roll-adjusted deltas ────────
+    # S1M2M = Current - +1M;  on roll day baseline shifts to +1M → +2M
+    # S2M3M = +1M - +2M;      on roll day baseline shifts to +2M → +3M
+    FRONT_SPREAD_PAIRS = [
+        ("Spread1M2M", "Current", "+1M", "+2M"),  # (name, near, far, far_shifted)
+        ("Spread2M3M", "+1M",     "+2M", "+3M"),
+    ]
+    for name, near, far, far_shifted in FRONT_SPREAD_PAIRS:
+        df[name] = df[near] - df[far]
+        delta_name = f"DeltaS{name[6:]}"
+        normal_dod = df[name] - df[name].shift(1)
+        # On roll: compare today's spread with yesterday's next-tenor spread
+        # e.g. S1M2M today vs (yesterday's +1M - yesterday's +2M) = yesterday's Spread2M3M
+        roll_baseline = df[far].shift(1) - df[far_shifted].shift(1)
+        roll_dod = (df[near] - df[far]) - roll_baseline
+        df[delta_name] = np.where(df["_is_roll"], roll_dod, normal_dod)
+
     df.drop(columns=["_day", "_prev_day", "_is_roll", "date"], inplace=True)
     return df
+
+
+# All 11 delta column names (3 new + 8 existing), for pipeline use
+ALL_DELTA_COLS = (
+    ["DeltaSpot", "DeltaS1M2M", "DeltaS2M3M"]
+    + [f"DeltaS{p[0][6:]}" for p in SPREAD_PAIRS]
+)
+
+# Short display names matching ALL_DELTA_COLS order
+ALL_DELTA_SHORT = (
+    ["Spot", "S1M2M", "S2M3M"]
+    + [f"S{p[0][6:]}" for p in SPREAD_PAIRS]
+)
+
+
+def build_weekly_seasonal_stats(df_delta, year_start=2017, year_end=2026):
+    """Build weekly-seasonal mean/std/n for all 11 delta series.
+
+    Buckets by ISO week-of-year over the trusted data window.
+    Returns DataFrame with columns: series, iso_week, mean, std, n,
+    low_sample_warning.
+    """
+    df = df_delta.copy()
+    df["_dt"] = pd.to_datetime(df["Date"], format="%d %b %Y")
+    df = df[(df["_dt"].dt.year >= year_start) & (df["_dt"].dt.year <= year_end)]
+    df["_iso_week"] = df["_dt"].dt.isocalendar().week.astype(int)
+
+    rows = []
+    for col, short in zip(ALL_DELTA_COLS, ALL_DELTA_SHORT):
+        if col not in df.columns:
+            continue
+        grp = df.groupby("_iso_week")[col]
+        for week, vals in grp:
+            clean = vals.dropna()
+            n = len(clean)
+            mean_val = clean.mean() if n > 0 else None
+            std_val = clean.std() if n >= 2 else None
+            rows.append({
+                "series": short,
+                "iso_week": int(week),
+                "mean": round(mean_val, 2) if mean_val is not None else None,
+                "std": round(std_val, 2) if std_val is not None else None,
+                "n": n,
+                "low_sample_warning": n < 15,
+            })
+
+    return pd.DataFrame(rows)
 
 
 def build_combined_chart(df, year, df_term, compare_year=None):
