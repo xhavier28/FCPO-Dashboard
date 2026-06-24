@@ -42,15 +42,16 @@ def classify_shape(m1_to_m6, centroids_df):
     """
     m1_to_m6: array-like of 6 prices, M1 through M6, for a single day.
     centroids_df: output of load_centroids().
-    Returns the shape label string of the nearest centroid.
+    Returns (shape_label, confidence_pct) — confidence is how much closer the
+    winner is vs the runner-up, normalized to 0-100%.
     """
     vals = np.array(m1_to_m6, dtype=float)
     if len(vals) != 6 or np.any(np.isnan(vals)):
-        return None
+        return None, None
     mean = vals.mean()
     std = vals.std()
     if std == 0:
-        return None
+        return None, None
     normalized = (vals - mean) / std
 
     distances = {}
@@ -58,7 +59,16 @@ def classify_shape(m1_to_m6, centroids_df):
         centroid_vec = row.values.astype(float)
         distances[shape_label] = np.linalg.norm(normalized - centroid_vec)
 
-    return min(distances, key=distances.get)
+    sorted_dist = sorted(distances.items(), key=lambda x: x[1])
+    best_shape, best_dist = sorted_dist[0]
+    second_dist = sorted_dist[1][1]
+
+    if second_dist == 0:
+        confidence_pct = 100.0
+    else:
+        confidence_pct = round((1 - best_dist / second_dist) * 100, 1)
+
+    return best_shape, confidence_pct
 
 
 def classify_stock_tercile(stock_pct, shape, terciles_df):
@@ -119,7 +129,7 @@ def update_shape_log(daily_curve_df, stock_pct_series, log_path=LOG_PATH):
         if row_prices.isna().any():
             continue
 
-        shape = classify_shape(row_prices.values, centroids_df)
+        shape, classification_confidence = classify_shape(row_prices.values, centroids_df)
         if shape is None:
             continue
         shape = str(shape)  # guarantee string even if centroids index drifts
@@ -137,6 +147,7 @@ def update_shape_log(daily_curve_df, stock_pct_series, log_path=LOG_PATH):
             spot_mom_cat = None
 
         new_row = {'date': d, 'shape': shape,
+                   'classification_confidence': classification_confidence,
                    'stock_pct': stock_pct_today, 'stock_tercile': stock_tercile,
                    'spot_mom_cat': spot_mom_cat, 'month': d.month}
         for m in MONTHS:

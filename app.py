@@ -4100,15 +4100,26 @@ with tab_shape_tracker:
 
         col1, col2, col3 = st.columns(3)
         col1.metric("Today's shape", f"Shape {latest['shape']}")
-        col1.caption(SHAPE_NAMES.get(str(latest["shape"]), ""))
+        _conf_val = latest.get("classification_confidence")
+        _conf_str = f" — confidence: {_conf_val:.0f}%" if pd.notna(_conf_val) else ""
+        col1.caption(f"{SHAPE_NAMES.get(str(latest['shape']), '')}{_conf_str}")
+        if pd.notna(_conf_val) and _conf_val < 20:
+            st.warning(f"Low classification confidence ({_conf_val:.0f}%) — today's curve sits near the boundary between two shapes.")
         col2.metric("Stock tercile", latest["stock_tercile"] or "n/a")
         col3.metric("Spot momentum", latest["spot_mom_cat"] or "n/a")
 
+        # Store current shape for Confidence Matrix tab
+        st.session_state["current_shape"] = str(latest["shape"])
+
         st.divider()
-        st.markdown("**Last 20 trading days**")
-        last_20 = shape_log.tail(20).copy()
-        same_as_today = (last_20["shape"].astype(str) == str(latest["shape"])).sum()
-        st.write(f"{same_as_today} of the last 20 days were in Shape {latest['shape']}")
+        lookback_days = st.selectbox(
+            "Lookback window", [30, 60, 90, 120],
+            format_func=lambda d: f"Last {d} trading days",
+            key="shape_lookback",
+        )
+        last_n = shape_log.tail(lookback_days).copy()
+        same_as_today = (last_n["shape"].astype(str) == str(latest["shape"])).sum()
+        st.write(f"{same_as_today} of the last {lookback_days} days were in Shape {latest['shape']}")
 
         shape_color_map = {
             "0.0": "#1D9E75", "0.1": "#EF9F27", "0.2": "#D85A30",
@@ -4116,48 +4127,70 @@ with tab_shape_tracker:
         }
         fig_shape = go.Figure()
         fig_shape.add_trace(go.Scatter(
-            x=last_20["date"], y=last_20["shape"].astype(str),
+            x=last_n["date"], y=last_n["shape"].astype(str),
             mode="markers+lines",
             marker=dict(
                 size=10,
-                color=[shape_color_map.get(str(s), "#888") for s in last_20["shape"]],
+                color=[shape_color_map.get(str(s), "#888") for s in last_n["shape"]],
             ),
             line=dict(color=DARK_GRID),
         ))
+        _chart_h = 300 if lookback_days == 30 else 400
         fig_shape.update_layout(
             paper_bgcolor=DARK_BG, plot_bgcolor=DARK_PLOT,
             font_color=DARK_TEXT, yaxis_title="Shape",
+            height=_chart_h,
             margin=dict(l=60, r=30, t=30, b=30),
         )
         st.plotly_chart(fig_shape, use_container_width=True)
 
         st.divider()
-        st.markdown("**One-week outlook**")
-        # Load playbook/threshold reference files if they exist
+        st.markdown("**One-week outlook — likely next shape**")
         _playbook_path = "Raw Data/Research/regime_identification/trend_playbook_conditioned.csv"
-        _z_thresh_path = "Raw Data/Research/regime_identification/best_z_thresholds.csv"
-        _trend_shapes = {"0.1", "0.2", "2"}
-        _reversion_shapes = {"0.0", "1"}
         _current_shape = str(latest["shape"])
+        _current_tercile = latest.get("stock_tercile")
+        _current_spot = latest.get("spot_mom_cat")
+        _SURVIVAL_BY_SHAPE = {
+            "0.0": 37.2, "0.1": 0.4, "0.2": 0.0, "1": 54.8, "2": 0.0,
+        }
+        _survival_pct = _SURVIVAL_BY_SHAPE.get(_current_shape)
 
-        if _current_shape in _trend_shapes and os.path.exists(_playbook_path):
+        if os.path.exists(_playbook_path) and _current_tercile and _current_spot:
             _playbook_df = pd.read_csv(_playbook_path, dtype={"shape": str})
-            _match = _playbook_df[
-                (_playbook_df["shape"] == _current_shape)
+            _outlook_row = _playbook_df[
+                (_playbook_df["shape"] == _current_shape) &
+                (_playbook_df["stock_tercile"] == _current_tercile) &
+                (_playbook_df["spot_mom_cat"] == _current_spot)
             ]
-            if not _match.empty:
-                st.dataframe(_match, use_container_width=True)
+            if not _outlook_row.empty:
+                _outlook = _outlook_row.iloc[0]
+                _next_shape = str(_outlook["dominant_resolution"])
+                _next_pct = _outlook["dominant_pct"]
+                _conf_label = _outlook["confidence"]
+
+                _oc1, _oc2, _oc3 = st.columns(3)
+                _oc1.metric("Most likely next shape", f"Shape {_next_shape}", f"{_next_pct:.1f}%")
+                _oc2.metric("20d survivability", f"{_survival_pct:.1f}%" if _survival_pct is not None else "n/a")
+                _oc3.metric("Forecast confidence", _conf_label)
+
+                _month_name = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][int(latest["month"])-1]
+                st.caption(
+                    f"Shape {_current_shape} has historically held its ground "
+                    f"{_survival_pct:.1f}% of the time over 20 days. When it does resolve, "
+                    f"conditioned on the current month ({_month_name}), stock level ({_current_tercile}), "
+                    f"and spot momentum ({_current_spot}), it has moved to Shape {_next_shape} "
+                    f"{_next_pct:.1f}% of the time — labeled {_conf_label} confidence."
+                )
             else:
-                st.info(f"No playbook entry found for shape {_current_shape}")
-        elif _current_shape in _reversion_shapes and os.path.exists(_z_thresh_path):
-            _z_df = pd.read_csv(_z_thresh_path, dtype={"shape": str})
-            _match = _z_df[_z_df["shape"] == _current_shape]
-            if not _match.empty:
-                st.dataframe(_match, use_container_width=True)
-            else:
-                st.info(f"No Z-threshold entry found for shape {_current_shape}")
+                st.warning(
+                    f"No playbook entry for Shape {_current_shape} + "
+                    f"{_current_tercile} stock + {_current_spot} momentum. "
+                    f"This combination may not have occurred often enough historically."
+                )
+        elif not os.path.exists(_playbook_path):
+            st.info("Playbook file not found. Run research notebook Phase 2.5+.")
         else:
-            st.info("Playbook/threshold reference files not found. Run research notebook Phase 2.5+.")
+            st.info("Stock tercile or spot momentum not available for outlook.")
 
         st.divider()
         with st.expander("Advanced: force full re-classification"):
@@ -4214,7 +4247,6 @@ def build_confidence_matrix(shape_log_df, daily_curve_df, as_of_date):
     spot_cats = ["Down", "Flat", "Up"]
 
     year_starts = {
-        "1yr":  pd.Timestamp(date(as_of_date.year, 1, 1)),
         "3yr":  pd.Timestamp(date(as_of_date.year - 2, 1, 1)),
         "5yr":  pd.Timestamp(date(as_of_date.year - 4, 1, 1)),
         "10yr": pd.Timestamp(date(as_of_date.year - 9, 1, 1)),
@@ -4228,36 +4260,42 @@ def build_confidence_matrix(shape_log_df, daily_curve_df, as_of_date):
         if fwd_col in merged.columns:
             pair_to_col[pair] = fwd_col
 
+    # Add month column from date for monthly filtering
+    merged["month"] = merged["date"].dt.month
+
     rows = []
     for shape in shapes:
         for pair in pairs:
             fwd_col = pair_to_col.get(pair)
             for tier in stock_tiers:
                 for spot_cat in spot_cats:
-                    for window_label, year_start in year_starts.items():
-                        if fwd_col is None:
-                            n = 0
-                            mean_val = std_val = snr = None
-                        else:
-                            sub = merged[
-                                (merged["date"] >= year_start) &
-                                (merged["shape"].astype(str) == shape) &
-                                (merged["stock_tercile"] == tier) &
-                                (merged["spot_mom_cat"] == spot_cat)
-                            ]
-                            vals = sub[fwd_col].dropna()
-                            n = len(vals)
-                            if n >= 3:
-                                mean_val = vals.mean()
-                                std_val = vals.std()
-                                snr = abs(mean_val) / std_val if std_val > 0 else None
-                            else:
+                    for month_num in range(1, 13):
+                        for window_label, year_start in year_starts.items():
+                            if fwd_col is None:
+                                n = 0
                                 mean_val = std_val = snr = None
-                        rows.append({
-                            "shape": shape, "pair": pair, "stock_tercile": tier,
-                            "spot_cat": spot_cat, "window": window_label,
-                            "mean": mean_val, "std": std_val, "snr": snr, "n": n,
-                        })
+                            else:
+                                sub = merged[
+                                    (merged["date"] >= year_start) &
+                                    (merged["shape"].astype(str) == shape) &
+                                    (merged["stock_tercile"] == tier) &
+                                    (merged["spot_mom_cat"] == spot_cat) &
+                                    (merged["month"] == month_num)
+                                ]
+                                vals = sub[fwd_col].dropna()
+                                n = len(vals)
+                                if n >= 3:
+                                    mean_val = vals.mean()
+                                    std_val = vals.std()
+                                    snr = abs(mean_val) / std_val if std_val > 0 else None
+                                else:
+                                    mean_val = std_val = snr = None
+                            rows.append({
+                                "shape": shape, "pair": pair, "stock_tercile": tier,
+                                "spot_cat": spot_cat, "month": month_num,
+                                "window": window_label,
+                                "mean": mean_val, "std": std_val, "snr": snr, "n": n,
+                            })
 
     result_df = pd.DataFrame(rows)
     # Store diagnostic info for the debug expander
@@ -4282,35 +4320,58 @@ def flag_drift(matrix_df, threshold=0.30):
         columns="window", values="snr",
     )
     for idx, row in pivot.iterrows():
-        snr_1yr = row.get("1yr")
-        for long_window in ["5yr", "10yr"]:
-            snr_long = row.get(long_window)
-            if pd.notna(snr_1yr) and pd.notna(snr_long) and snr_long != 0:
-                pct_diff = abs(snr_1yr - snr_long) / snr_long
-                if pct_diff > threshold:
-                    mask = (
-                        (matrix_df["shape"] == idx[0]) & (matrix_df["pair"] == idx[1]) &
-                        (matrix_df["stock_tercile"] == idx[2]) & (matrix_df["spot_cat"] == idx[3])
-                    )
-                    matrix_df.loc[mask, "drift_warning"] = True
+        snr_3yr = row.get("3yr")
+        snr_10yr = row.get("10yr")
+        if pd.notna(snr_3yr) and pd.notna(snr_10yr) and snr_10yr != 0:
+            pct_diff = abs(snr_3yr - snr_10yr) / snr_10yr
+            if pct_diff > threshold:
+                mask = (
+                    (matrix_df["shape"] == idx[0]) & (matrix_df["pair"] == idx[1]) &
+                    (matrix_df["stock_tercile"] == idx[2]) & (matrix_df["spot_cat"] == idx[3])
+                )
+                matrix_df.loc[mask, "drift_warning"] = True
     return matrix_df
+
+
+_CM_MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+
+def _highlight_top5_gradient(snr_df):
+    """5-step green gradient: rank 1 brightest, rank 5 lightest, per column."""
+    styles = pd.DataFrame("", index=snr_df.index, columns=snr_df.columns)
+    gradient = ["#1DE9A0", "#3FD9A0", "#5FC9A0", "#7FB9A0", "#9FA9A0"]
+    for col in snr_df.columns:
+        col_vals = snr_df[col].dropna()
+        if len(col_vals) == 0:
+            continue
+        top5 = col_vals.sort_values(ascending=False).head(5)
+        for rank, (idx, _) in enumerate(top5.items()):
+            styles.loc[idx, col] = f"background-color: {gradient[rank]}; color: #0A2E22; font-weight: bold"
+    return styles
 
 
 with tab_confidence_matrix:
     st.subheader("Confidence Matrix")
     st.caption(
-        "Mean / std / SNR by shape, pair, stock tercile, and spot momentum, "
-        "across four calendar-year-anchored windows."
+        "Combined mean / SNR / std / n by shape, pair, stock tercile, and spot momentum, "
+        "across three calendar-year-anchored windows, filtered by month."
     )
 
-    sel_shape = st.selectbox(
-        "Shape", ["0.0", "0.1", "0.2", "1", "2"],
-        format_func=lambda s: f"{s} — {SHAPE_NAMES.get(s, '')}",
-        key="cm_shape",
-    )
-    sel_pair = st.selectbox(
-        "Spread pair", ["M1-M2", "M2-M3", "M3-M4", "M4-M5", "M5-M6"],
-        key="cm_pair",
+    # Lock to live shape from Shape Tracker
+    _live_shape = st.session_state.get("current_shape")
+    if _live_shape:
+        st.info(f"Locked to live shape: **{_live_shape}** — {SHAPE_NAMES.get(_live_shape, '')}")
+        sel_shape = _live_shape
+    else:
+        st.warning("No current shape available. Visit the Shape Tracker tab first to classify today's shape.")
+        sel_shape = "0.0"
+
+    # Month selector
+    sel_month = st.selectbox(
+        "Month", list(range(1, 13)),
+        index=date.today().month - 1,
+        format_func=lambda m: _CM_MONTH_NAMES[m - 1],
+        key="cm_month",
     )
 
     # Load data — reuse shape_log from Shape Tracker if available
@@ -4321,9 +4382,7 @@ with tab_confidence_matrix:
         _cm_shape_log = shape_log
 
     if _cm_shape_log is not None and len(_cm_shape_log) > 0:
-        # Prepare curve data with a date column (not index)
         _cm_curve_with_date = _cm_curve_df.reset_index()
-        # The index name after reset could be "Date" or the default
         if "Date" in _cm_curve_with_date.columns:
             _cm_curve_with_date = _cm_curve_with_date.rename(columns={"Date": "date"})
 
@@ -4333,7 +4392,6 @@ with tab_confidence_matrix:
             date.today(),
         )
 
-        # Diagnostic expander
         with st.expander("Debug: Confidence Matrix diagnostics"):
             _diag_merged = matrix_df.attrs.get("_diag_merged_rows", "?")
             _diag_sl = matrix_df.attrs.get("_diag_shape_log_rows", "?")
@@ -4360,31 +4418,86 @@ with tab_confidence_matrix:
             elif total_n == 0:
                 st.error(
                     "Merge succeeded but every cell has n=0. Check that shape/stock_tercile/spot_mom_cat "
-                    "labels match expected values: shapes=['0.0','0.1','0.2','1','2'], "
-                    "tiers=['Low','Mid','High'], cats=['Down','Flat','Up']."
+                    "labels match expected values."
                 )
 
         if not matrix_df.empty and "n" in matrix_df.columns:
             matrix_df = flag_drift(matrix_df)
 
-            filtered = matrix_df[
-                (matrix_df["shape"] == sel_shape) & (matrix_df["pair"] == sel_pair)
-            ]
-            display_table = filtered.pivot_table(
-                index=["stock_tercile", "spot_cat"], columns="window",
-                values=["mean", "std", "snr", "n"], aggfunc="first",
-            )
+            _pair_tabs = st.tabs(["M1-M2", "M2-M3", "M3-M4", "M4-M5", "M5-M6"])
+            _all_pairs = ["M1-M2", "M2-M3", "M3-M4", "M4-M5", "M5-M6"]
+            for _pt, _pair_name in zip(_pair_tabs, _all_pairs):
+                with _pt:
+                    filtered = matrix_df[
+                        (matrix_df["shape"] == sel_shape) &
+                        (matrix_df["pair"] == _pair_name) &
+                        (matrix_df["month"] == sel_month)
+                    ]
 
-            drift_rows = filtered[filtered["drift_warning"]][
-                ["stock_tercile", "spot_cat"]
-            ].drop_duplicates()
-            if len(drift_rows) > 0:
-                st.warning(
-                    f"Drift flagged in {len(drift_rows)} stock/spot combination(s) — "
-                    f"1-year SNR diverges from longer-run SNR by more than 30%."
-                )
+                    drift_rows = filtered[filtered["drift_warning"]][
+                        ["stock_tercile", "spot_cat"]
+                    ].drop_duplicates()
+                    if len(drift_rows) > 0:
+                        st.warning(
+                            f"Drift flagged in {len(drift_rows)} stock/spot combination(s) — "
+                            f"3-year SNR diverges from 10-year SNR by more than 30%."
+                        )
 
-            st.dataframe(display_table, use_container_width=True)
+                    _win_cols = ["3yr", "5yr", "10yr"]
+
+                    # Pivot all metrics
+                    _snr_p = filtered.pivot_table(
+                        index=["stock_tercile", "spot_cat"], columns="window",
+                        values="snr", aggfunc="first",
+                    )
+                    _mean_p = filtered.pivot_table(
+                        index=["stock_tercile", "spot_cat"], columns="window",
+                        values="mean", aggfunc="first",
+                    )
+                    _std_p = filtered.pivot_table(
+                        index=["stock_tercile", "spot_cat"], columns="window",
+                        values="std", aggfunc="first",
+                    )
+                    _n_p = filtered.pivot_table(
+                        index=["stock_tercile", "spot_cat"], columns="window",
+                        values="n", aggfunc="first",
+                    )
+
+                    # Reorder columns
+                    for _df in [_snr_p, _mean_p, _std_p, _n_p]:
+                        _existing = [w for w in _win_cols if w in _df.columns]
+                        if _existing:
+                            _df.drop(columns=[c for c in _df.columns if c not in _existing], inplace=True)
+
+                    if not _snr_p.empty:
+                        # Build combined display: "mean X | SNR X | std X | n=X"
+                        _combined = pd.DataFrame(index=_snr_p.index, columns=[w for w in _win_cols if w in _snr_p.columns])
+                        for _idx in _snr_p.index:
+                            for _col in _combined.columns:
+                                _m = _mean_p.loc[_idx, _col] if _col in _mean_p.columns else None
+                                _s = _snr_p.loc[_idx, _col] if _col in _snr_p.columns else None
+                                _sd = _std_p.loc[_idx, _col] if _col in _std_p.columns else None
+                                _nn = _n_p.loc[_idx, _col] if _col in _n_p.columns else None
+                                if pd.isna(_m):
+                                    _combined.loc[_idx, _col] = "—"
+                                else:
+                                    _n_int = int(_nn) if pd.notna(_nn) else 0
+                                    _combined.loc[_idx, _col] = (
+                                        f"mean {_m:.1f} | SNR {_s:.3f} | std {_sd:.1f} | n={_n_int}"
+                                    )
+
+                        # Apply 5-step gradient based on SNR values
+                        _styled = _combined.style.apply(
+                            lambda _: _highlight_top5_gradient(_snr_p), axis=None
+                        )
+                        st.dataframe(_styled, use_container_width=True)
+
+                        # Thin-n warning
+                        _thin = (_n_p < 5).sum().sum()
+                        if _thin > 0:
+                            st.caption(f"{_thin} cell(s) have n < 5 — interpret with caution.")
+                    else:
+                        st.info("No data for this combination.")
         else:
             st.info("Not enough data to build the confidence matrix.")
     else:
