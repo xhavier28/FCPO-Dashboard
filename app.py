@@ -4304,27 +4304,51 @@ def build_confidence_matrix(shape_log_df, daily_curve_df, as_of_date):
             fwd_col = pair_to_col.get(pair)
             for tier in stock_tiers:
                 for spot_cat in spot_cats:
-                    for month_num in range(1, 13):
-                        for window_label, year_start in year_starts.items():
-                            if fwd_col is None:
-                                n = 0
-                                mean_val = std_val = snr = None
+                    for window_label, year_start in year_starts.items():
+                        if fwd_col is None:
+                            # No data for this pair — emit ALL + 12 month rows with n=0
+                            for month_key in ["ALL"] + list(range(1, 13)):
+                                rows.append({
+                                    "shape": shape, "pair": pair, "stock_tercile": tier,
+                                    "spot_cat": spot_cat, "month": month_key,
+                                    "window": window_label,
+                                    "mean": None, "std": None, "snr": None, "n": 0,
+                                })
+                            continue
+
+                        base_mask = (
+                            (merged["date"] >= year_start) &
+                            (merged["shape"].astype(str) == shape) &
+                            (merged["stock_tercile"] == tier) &
+                            (merged["spot_mom_cat"] == spot_cat)
+                        )
+
+                        # --- "ALL months" row ---
+                        vals_all = merged[base_mask][fwd_col].dropna()
+                        n_all = len(vals_all)
+                        if n_all >= 3:
+                            mean_all = vals_all.mean()
+                            std_all = vals_all.std()
+                            snr_all = abs(mean_all) / std_all if std_all > 0 else None
+                        else:
+                            mean_all = std_all = snr_all = None
+                        rows.append({
+                            "shape": shape, "pair": pair, "stock_tercile": tier,
+                            "spot_cat": spot_cat, "month": "ALL", "window": window_label,
+                            "mean": mean_all, "std": std_all, "snr": snr_all, "n": n_all,
+                        })
+
+                        # --- per-month rows ---
+                        for month_num in range(1, 13):
+                            sub = merged[base_mask & (merged["month"] == month_num)]
+                            vals = sub[fwd_col].dropna()
+                            n = len(vals)
+                            if n >= 3:
+                                mean_val = vals.mean()
+                                std_val = vals.std()
+                                snr = abs(mean_val) / std_val if std_val > 0 else None
                             else:
-                                sub = merged[
-                                    (merged["date"] >= year_start) &
-                                    (merged["shape"].astype(str) == shape) &
-                                    (merged["stock_tercile"] == tier) &
-                                    (merged["spot_mom_cat"] == spot_cat) &
-                                    (merged["month"] == month_num)
-                                ]
-                                vals = sub[fwd_col].dropna()
-                                n = len(vals)
-                                if n >= 3:
-                                    mean_val = vals.mean()
-                                    std_val = vals.std()
-                                    snr = abs(mean_val) / std_val if std_val > 0 else None
-                                else:
-                                    mean_val = std_val = snr = None
+                                mean_val = std_val = snr = None
                             rows.append({
                                 "shape": shape, "pair": pair, "stock_tercile": tier,
                                 "spot_cat": spot_cat, "month": month_num,
@@ -4351,7 +4375,7 @@ def flag_drift(matrix_df, threshold=0.30):
     matrix_df = matrix_df.copy()
     matrix_df["drift_warning"] = False
     pivot = matrix_df.pivot_table(
-        index=["shape", "pair", "stock_tercile", "spot_cat"],
+        index=["shape", "pair", "stock_tercile", "spot_cat", "month"],
         columns="window", values="snr",
     )
     for idx, row in pivot.iterrows():
@@ -4362,7 +4386,8 @@ def flag_drift(matrix_df, threshold=0.30):
             if pct_diff > threshold:
                 mask = (
                     (matrix_df["shape"] == idx[0]) & (matrix_df["pair"] == idx[1]) &
-                    (matrix_df["stock_tercile"] == idx[2]) & (matrix_df["spot_cat"] == idx[3])
+                    (matrix_df["stock_tercile"] == idx[2]) & (matrix_df["spot_cat"] == idx[3]) &
+                    (matrix_df["month"] == idx[4])
                 )
                 matrix_df.loc[mask, "drift_warning"] = True
     return matrix_df
@@ -4416,7 +4441,7 @@ with tab_confidence_matrix:
     st.subheader("Confidence Matrix")
     st.caption(
         "Combined mean / SNR / std / n by shape, pair, stock tercile, and spot momentum, "
-        "across three calendar-year-anchored windows, filtered by month."
+        "across three calendar-year-anchored windows. Default: all months pooled."
     )
 
     # Shape dropdown defaulted to current live shape
@@ -4429,13 +4454,19 @@ with tab_confidence_matrix:
         key="cm_shape",
     )
 
-    # Month selector
-    sel_month = st.selectbox(
-        "Month", list(range(1, 13)),
-        index=date.today().month - 1,
-        format_func=lambda m: _CM_MONTH_NAMES[m - 1],
-        key="cm_month",
-    )
+    # Month filter: checkbox toggle between all-months-pooled and specific month
+    _use_specific_month = st.checkbox("Filter to a specific month", value=False, key="cm_month_toggle")
+    if _use_specific_month:
+        sel_month = st.selectbox(
+            "Month", list(range(1, 13)),
+            index=date.today().month - 1,
+            format_func=lambda m: _CM_MONTH_NAMES[m - 1],
+            key="cm_month",
+        )
+        st.caption(f"Showing {_CM_MONTH_NAMES[sel_month - 1]} only")
+    else:
+        sel_month = "ALL"
+        st.caption("Showing the average across all months (default)")
 
     # Load data — reuse shape_log from Shape Tracker if available
     _cm_curve_df = _build_shape_curve_df()
