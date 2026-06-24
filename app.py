@@ -4082,12 +4082,19 @@ def _build_stock_pct_series():
     return stock_pct
 
 
+def _forward_fill_stock_pct(stock_pct_series, daily_curve_df):
+    """Forward-fill the monthly stock percentile to cover every trading day."""
+    full_idx = daily_curve_df.index.union(stock_pct_series.index).sort_values()
+    aligned = stock_pct_series.reindex(full_idx).ffill()
+    return aligned.reindex(daily_curve_df.index)
+
+
 # ─── Tab: Shape Tracker ───
 with tab_shape_tracker:
     st.subheader("Shape Tracker")
 
     daily_curve_df = _build_shape_curve_df()
-    stock_pct_series = _build_stock_pct_series()
+    stock_pct_series = _forward_fill_stock_pct(_build_stock_pct_series(), daily_curve_df)
 
     shape_log = update_shape_log(daily_curve_df, stock_pct_series)
 
@@ -4191,6 +4198,34 @@ with tab_shape_tracker:
             st.info("Playbook file not found. Run research notebook Phase 2.5+.")
         else:
             st.info("Stock tercile or spot momentum not available for outlook.")
+
+        st.divider()
+        st.markdown("**Where does this shape go next? (unconditioned, full history)**")
+        _trans_dir = "Raw Data/Research/regime_identification"
+        _trans_files = {
+            "5 days": f"{_trans_dir}/transition_matrix_5d.csv",
+            "10 days": f"{_trans_dir}/transition_matrix_10d.csv",
+            "20 days": f"{_trans_dir}/transition_matrix_20d.csv",
+        }
+        _trans_available = all(os.path.exists(p) for p in _trans_files.values())
+        if _trans_available:
+            _tc1, _tc2, _tc3 = st.columns(3)
+            for _tcol, (_horizon, _tpath) in zip([_tc1, _tc2, _tc3], _trans_files.items()):
+                with _tcol:
+                    st.caption(_horizon)
+                    _tmat = pd.read_csv(_tpath, dtype={"final_shape": str}).set_index("final_shape")
+                    # Normalize index (1.0 → 1, 2.0 → 2)
+                    _tmat.index = _tmat.index.map(lambda x: x.rstrip("0").rstrip(".") if "." in x and x.replace(".", "").replace("0", "").isdigit() else x)
+                    _cur = str(latest["shape"])
+                    if _cur in _tmat.index:
+                        _trow = _tmat.loc[_cur].sort_values(ascending=False)
+                        for _dest, _pct in _trow.items():
+                            if float(_pct) > 0:
+                                st.write(f"Shape {_dest}: **{float(_pct):.1f}%**")
+                    else:
+                        st.write("No data for this shape.")
+        else:
+            st.info("Transition matrix files not found. Run research notebook.")
 
         st.divider()
         with st.expander("Advanced: force full re-classification"):
@@ -4336,12 +4371,39 @@ def flag_drift(matrix_df, threshold=0.30):
 _CM_MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 
-def _highlight_top5_gradient(snr_df):
-    """5-step green gradient: rank 1 brightest, rank 5 lightest, per column."""
-    styles = pd.DataFrame("", index=snr_df.index, columns=snr_df.columns)
+def _build_grouped_table(filtered_df):
+    """Build MultiIndex-column table: (Mean|SNR|STD|N) × (3yr|5yr|10yr)."""
+    metrics = ["mean", "snr", "std", "n"]
+    metric_labels = {"mean": "Mean", "snr": "SNR", "std": "STD", "n": "N"}
+    windows = ["3yr", "5yr", "10yr"]
+
+    pivot = filtered_df.pivot_table(
+        index=["stock_tercile", "spot_cat"],
+        columns="window",
+        values=metrics,
+        aggfunc="first",
+    )
+    # Reorder to (metric, window) with desired ordering
+    new_cols = [(metric_labels[m], w) for m in metrics for w in windows
+                if (m, w) in pivot.columns]
+    pivot = pivot.reindex(columns=pd.MultiIndex.from_tuples(
+        [(m, w) for m in metrics for w in windows]
+    ))
+    pivot.columns = pd.MultiIndex.from_tuples(
+        [(metric_labels[m], w) for m, w in pivot.columns]
+    )
+    return pivot
+
+
+def _highlight_snr_gradient_grouped(grouped_table):
+    """Apply 5-step green gradient only within the SNR block of the grouped table."""
+    styles = pd.DataFrame("", index=grouped_table.index, columns=grouped_table.columns)
     gradient = ["#1DE9A0", "#3FD9A0", "#5FC9A0", "#7FB9A0", "#9FA9A0"]
-    for col in snr_df.columns:
-        col_vals = snr_df[col].dropna()
+    for window in ["3yr", "5yr", "10yr"]:
+        col = ("SNR", window)
+        if col not in grouped_table.columns:
+            continue
+        col_vals = grouped_table[col].dropna()
         if len(col_vals) == 0:
             continue
         top5 = col_vals.sort_values(ascending=False).head(5)
@@ -4357,14 +4419,15 @@ with tab_confidence_matrix:
         "across three calendar-year-anchored windows, filtered by month."
     )
 
-    # Lock to live shape from Shape Tracker
+    # Shape dropdown defaulted to current live shape
     _live_shape = st.session_state.get("current_shape")
-    if _live_shape:
-        st.info(f"Locked to live shape: **{_live_shape}** — {SHAPE_NAMES.get(_live_shape, '')}")
-        sel_shape = _live_shape
-    else:
-        st.warning("No current shape available. Visit the Shape Tracker tab first to classify today's shape.")
-        sel_shape = "0.0"
+    _shape_options = ["0.0", "0.1", "0.2", "1", "2"]
+    _default_idx = _shape_options.index(_live_shape) if _live_shape in _shape_options else 0
+    sel_shape = st.selectbox(
+        "Shape", _shape_options, index=_default_idx,
+        format_func=lambda s: f"{s} — {SHAPE_NAMES.get(s, '')}" + (" (current)" if s == _live_shape else ""),
+        key="cm_shape",
+    )
 
     # Month selector
     sel_month = st.selectbox(
@@ -4377,7 +4440,7 @@ with tab_confidence_matrix:
     # Load data — reuse shape_log from Shape Tracker if available
     _cm_curve_df = _build_shape_curve_df()
     if "shape_log" not in dir() or shape_log is None or (hasattr(shape_log, "__len__") and len(shape_log) == 0):
-        _cm_shape_log = update_shape_log(_cm_curve_df, _build_stock_pct_series())
+        _cm_shape_log = update_shape_log(_cm_curve_df, _forward_fill_stock_pct(_build_stock_pct_series(), _cm_curve_df))
     else:
         _cm_shape_log = shape_log
 
@@ -4443,59 +4506,33 @@ with tab_confidence_matrix:
                             f"3-year SNR diverges from 10-year SNR by more than 30%."
                         )
 
-                    _win_cols = ["3yr", "5yr", "10yr"]
-
-                    # Pivot all metrics
-                    _snr_p = filtered.pivot_table(
-                        index=["stock_tercile", "spot_cat"], columns="window",
-                        values="snr", aggfunc="first",
-                    )
-                    _mean_p = filtered.pivot_table(
-                        index=["stock_tercile", "spot_cat"], columns="window",
-                        values="mean", aggfunc="first",
-                    )
-                    _std_p = filtered.pivot_table(
-                        index=["stock_tercile", "spot_cat"], columns="window",
-                        values="std", aggfunc="first",
-                    )
-                    _n_p = filtered.pivot_table(
-                        index=["stock_tercile", "spot_cat"], columns="window",
-                        values="n", aggfunc="first",
-                    )
-
-                    # Reorder columns
-                    for _df in [_snr_p, _mean_p, _std_p, _n_p]:
-                        _existing = [w for w in _win_cols if w in _df.columns]
-                        if _existing:
-                            _df.drop(columns=[c for c in _df.columns if c not in _existing], inplace=True)
-
-                    if not _snr_p.empty:
-                        # Build combined display: "mean X | SNR X | std X | n=X"
-                        _combined = pd.DataFrame(index=_snr_p.index, columns=[w for w in _win_cols if w in _snr_p.columns])
-                        for _idx in _snr_p.index:
-                            for _col in _combined.columns:
-                                _m = _mean_p.loc[_idx, _col] if _col in _mean_p.columns else None
-                                _s = _snr_p.loc[_idx, _col] if _col in _snr_p.columns else None
-                                _sd = _std_p.loc[_idx, _col] if _col in _std_p.columns else None
-                                _nn = _n_p.loc[_idx, _col] if _col in _n_p.columns else None
-                                if pd.isna(_m):
-                                    _combined.loc[_idx, _col] = "—"
-                                else:
-                                    _n_int = int(_nn) if pd.notna(_nn) else 0
-                                    _combined.loc[_idx, _col] = (
-                                        f"mean {_m:.1f} | SNR {_s:.3f} | std {_sd:.1f} | n={_n_int}"
-                                    )
-
-                        # Apply 5-step gradient based on SNR values
-                        _styled = _combined.style.apply(
-                            lambda _: _highlight_top5_gradient(_snr_p), axis=None
+                    grouped = _build_grouped_table(filtered)
+                    if not grouped.empty:
+                        _styled = grouped.style.apply(
+                            lambda _: _highlight_snr_gradient_grouped(grouped), axis=None
+                        ).format(
+                            "{:.2f}",
+                            subset=pd.IndexSlice[:, [("Mean", w) for w in ["3yr", "5yr", "10yr"]
+                                                     if ("Mean", w) in grouped.columns]
+                                    + [("SNR", w) for w in ["3yr", "5yr", "10yr"]
+                                       if ("SNR", w) in grouped.columns]
+                                    + [("STD", w) for w in ["3yr", "5yr", "10yr"]
+                                       if ("STD", w) in grouped.columns]],
+                            na_rep="—",
+                        ).format(
+                            "{:.0f}",
+                            subset=pd.IndexSlice[:, [("N", w) for w in ["3yr", "5yr", "10yr"]
+                                                     if ("N", w) in grouped.columns]],
+                            na_rep="—",
                         )
                         st.dataframe(_styled, use_container_width=True)
 
                         # Thin-n warning
-                        _thin = (_n_p < 5).sum().sum()
-                        if _thin > 0:
-                            st.caption(f"{_thin} cell(s) have n < 5 — interpret with caution.")
+                        _n_cols = [("N", w) for w in ["3yr", "5yr", "10yr"] if ("N", w) in grouped.columns]
+                        if _n_cols:
+                            _thin = (grouped[_n_cols] < 5).sum().sum()
+                            if _thin > 0:
+                                st.caption(f"{_thin} cell(s) have n < 5 — interpret with caution.")
                     else:
                         st.info("No data for this combination.")
         else:
