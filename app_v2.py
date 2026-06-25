@@ -569,7 +569,11 @@ def compute_all_disagreements(df_delta):
     """Compute window disagreement for all 11 series on the latest trading day.
 
     Builds 3 windows per series:
-      - rolling_60d: last 60 trading days
+      - rolling_20d: last 20 trading days of DoD values (matches Spread &
+        Butterfly's 20-day Z-score lookback used for conviction scoring).
+        Note: S&B computes z20 on raw spread *levels*; here we apply the
+        same 20-day window to DoD *changes*, which is the correct basis
+        for cross-window comparison with monthly/seasonal DoD stats.
       - monthly_historical: same calendar month, all years 2017-2026
       - seasonal_weekly: same ISO week, all years 2017-2026
 
@@ -589,6 +593,9 @@ def compute_all_disagreements(df_delta):
     # Pre-compute weekly seasonal stats (cached)
     ws_stats = _cached_weekly_seasonal_stats(id(df_delta))
 
+    # Pre-compute ISO week column once (not per-series)
+    df["_iso_wk"] = df["_dt"].dt.isocalendar().week.astype(int)
+
     results = []
     for col, short in zip(ALL_DELTA_COLS, ALL_DELTA_SHORT):
         if col not in df.columns:
@@ -596,8 +603,10 @@ def compute_all_disagreements(df_delta):
 
         today_value = df[col].iloc[-1]
 
-        # Window 1: rolling 60d (last 60 trading days, excluding today)
-        rolling_vals = df[col].iloc[max(0, len(df) - 61):-1].dropna()
+        # Window 1: rolling_20d — last 20 trading days, excluding today.
+        # Matches Spread & Butterfly's 20-day lookback (fcpo_spread_engine
+        # _add_rolling_stats w=20).
+        rolling_vals = df[col].iloc[max(0, len(df) - 21):-1].dropna()
 
         # Window 2: monthly_historical — same calendar month across 2017-2026
         month_mask = (df["_dt"].dt.month == latest_month) & (df["_dt"].dt.year >= 2017)
@@ -606,13 +615,12 @@ def compute_all_disagreements(df_delta):
         monthly_vals = df.loc[month_mask, col].dropna()
 
         # Window 3: seasonal_weekly — same ISO week across 2017-2026
-        df["_iso_wk"] = df["_dt"].dt.isocalendar().week.astype(int)
         week_mask = (df["_iso_wk"] == latest_iso_week) & (df["_dt"].dt.year >= 2017)
         week_mask &= df["_dt"] < latest_dt
         seasonal_vals = df.loc[week_mask, col].dropna()
 
         windows = {
-            "rolling_60d": rolling_vals,
+            "rolling_20d": rolling_vals,
             "monthly_historical": monthly_vals,
             "seasonal_weekly": seasonal_vals,
         }
@@ -636,10 +644,10 @@ def compute_all_disagreements(df_delta):
             "date": latest_dt.strftime("%Y-%m-%d"),
             "series": short,
             "today_value": round(today_value, 2) if not pd.isna(today_value) else None,
-            "pct_rank_rolling": pw.get("rolling_60d", {}).get("pct_rank"),
+            "pct_rank_rolling": pw.get("rolling_20d", {}).get("pct_rank"),
             "pct_rank_monthly": pw.get("monthly_historical", {}).get("pct_rank"),
             "pct_rank_seasonal": pw.get("seasonal_weekly", {}).get("pct_rank"),
-            "z_rolling": pw.get("rolling_60d", {}).get("z_score"),
+            "z_rolling": pw.get("rolling_20d", {}).get("z_score"),
             "z_monthly": pw.get("monthly_historical", {}).get("z_score"),
             "z_seasonal": pw.get("seasonal_weekly", {}).get("z_score"),
             "seasonal_low_sample": seasonal_info.get("low_sample_warning", True),
@@ -1425,7 +1433,8 @@ with tab3:
     st.subheader("Window Disagreement Check")
     st.caption(
         "Compares today's DoD delta for each series across 3 reference windows: "
-        "rolling 60-day, monthly historical (same month, 2017-2026), and weekly seasonal "
+        "rolling 20-day (matching Spread & Butterfly's Z-score lookback), "
+        "monthly historical (same month, 2017-2026), and weekly seasonal "
         "(same ISO week, 2017-2026). Flags series where windows disagree on how "
         "unusual today's value is. Descriptive only — not a trade signal."
     )
