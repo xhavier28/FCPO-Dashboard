@@ -25,6 +25,7 @@ from dashboard_v2.shape_classifier import (
     update_shape_log, force_full_reclassify, SHAPE_NAMES, LOG_PATH, MONTHS as SHAPE_MONTHS,
     load_centroids, load_stock_terciles,
 )
+from dashboard_v2.window_disagreement import compute_window_disagreement
 import datetime
 from datetime import date
 import csv
@@ -545,6 +546,136 @@ def load_delta_data():
     contracts = load_contracts()
     df_raw = build_daily_table(contracts)
     return build_delta_table(df_raw)
+
+
+DISAGREEMENT_LOG_PATH = Path("dashboard_v2/disagreement_log.csv")
+DISAGREEMENT_LOG_COLS = [
+    "date", "series", "today_value",
+    "pct_rank_rolling", "pct_rank_monthly", "pct_rank_seasonal",
+    "z_rolling", "z_monthly", "z_seasonal",
+    "seasonal_low_sample", "overall_disagreement", "flagged_windows",
+    "max_pct_gap", "max_z_gap",
+]
+
+
+@st.cache_data
+def _cached_weekly_seasonal_stats(_df_delta_hash):
+    """Cached wrapper for build_weekly_seasonal_stats."""
+    df_delta = load_delta_data()
+    return build_weekly_seasonal_stats(df_delta)
+
+
+def compute_all_disagreements(df_delta):
+    """Compute window disagreement for all 11 series on the latest trading day.
+
+    Builds 3 windows per series:
+      - rolling_60d: last 60 trading days
+      - monthly_historical: same calendar month, all years 2017-2026
+      - seasonal_weekly: same ISO week, all years 2017-2026
+
+    Returns list of dicts (one per series) with all log columns + result details.
+    """
+    df = df_delta.copy()
+    df["_dt"] = pd.to_datetime(df["Date"], format="%d %b %Y")
+    df = df.sort_values("_dt").reset_index(drop=True)
+
+    if df.empty:
+        return []
+
+    latest_dt = df["_dt"].iloc[-1]
+    latest_month = latest_dt.month
+    latest_iso_week = latest_dt.isocalendar()[1]
+
+    # Pre-compute weekly seasonal stats (cached)
+    ws_stats = _cached_weekly_seasonal_stats(id(df_delta))
+
+    results = []
+    for col, short in zip(ALL_DELTA_COLS, ALL_DELTA_SHORT):
+        if col not in df.columns:
+            continue
+
+        today_value = df[col].iloc[-1]
+
+        # Window 1: rolling 60d (last 60 trading days, excluding today)
+        rolling_vals = df[col].iloc[max(0, len(df) - 61):-1].dropna()
+
+        # Window 2: monthly_historical — same calendar month across 2017-2026
+        month_mask = (df["_dt"].dt.month == latest_month) & (df["_dt"].dt.year >= 2017)
+        # Exclude today so it's purely historical
+        month_mask &= df["_dt"] < latest_dt
+        monthly_vals = df.loc[month_mask, col].dropna()
+
+        # Window 3: seasonal_weekly — same ISO week across 2017-2026
+        df["_iso_wk"] = df["_dt"].dt.isocalendar().week.astype(int)
+        week_mask = (df["_iso_wk"] == latest_iso_week) & (df["_dt"].dt.year >= 2017)
+        week_mask &= df["_dt"] < latest_dt
+        seasonal_vals = df.loc[week_mask, col].dropna()
+
+        windows = {
+            "rolling_60d": rolling_vals,
+            "monthly_historical": monthly_vals,
+            "seasonal_weekly": seasonal_vals,
+        }
+
+        if pd.isna(today_value):
+            result = compute_window_disagreement(float("nan"), windows)
+        else:
+            result = compute_window_disagreement(today_value, windows)
+
+        pw = result["per_window"]
+        # Compute max gaps from pairwise comparisons
+        max_pct_gap = 0.0
+        max_z_gap = 0.0
+        for comp in result["pairwise_comparisons"]:
+            max_pct_gap = max(max_pct_gap, comp["percentile_gap"])
+            max_z_gap = max(max_z_gap, comp["z_gap"])
+
+        seasonal_info = pw.get("seasonal_weekly", {})
+
+        results.append({
+            "date": latest_dt.strftime("%Y-%m-%d"),
+            "series": short,
+            "today_value": round(today_value, 2) if not pd.isna(today_value) else None,
+            "pct_rank_rolling": pw.get("rolling_60d", {}).get("pct_rank"),
+            "pct_rank_monthly": pw.get("monthly_historical", {}).get("pct_rank"),
+            "pct_rank_seasonal": pw.get("seasonal_weekly", {}).get("pct_rank"),
+            "z_rolling": pw.get("rolling_60d", {}).get("z_score"),
+            "z_monthly": pw.get("monthly_historical", {}).get("z_score"),
+            "z_seasonal": pw.get("seasonal_weekly", {}).get("z_score"),
+            "seasonal_low_sample": seasonal_info.get("low_sample_warning", True),
+            "overall_disagreement": result["overall_disagreement"],
+            "flagged_windows": ",".join(result["flagged_windows"]) if result["flagged_windows"] else "",
+            "max_pct_gap": round(max_pct_gap, 1),
+            "max_z_gap": round(max_z_gap, 2),
+            # Keep full result for UI rendering
+            "_result": result,
+        })
+
+    return results
+
+
+def append_disagreement_log(rows):
+    """Append disagreement results to CSV, skipping if today already logged."""
+    if not rows:
+        return
+
+    log_path = DISAGREEMENT_LOG_PATH
+    today_str = rows[0]["date"]
+
+    # Check if today already logged (avoid duplicates on Streamlit rerun)
+    if log_path.exists():
+        try:
+            existing = pd.read_csv(log_path, usecols=["date", "series"], dtype=str)
+            if not existing.empty and (existing["date"] == today_str).any():
+                return  # Already logged today
+        except Exception:
+            pass  # Corrupted file — will just append
+
+    write_rows = [{k: v for k, v in r.items() if k != "_result"} for r in rows]
+    df_new = pd.DataFrame(write_rows, columns=DISAGREEMENT_LOG_COLS)
+
+    write_header = not log_path.exists()
+    df_new.to_csv(log_path, mode="a", header=write_header, index=False)
 
 
 @st.cache_data(ttl=3600)
@@ -1289,6 +1420,68 @@ with tab3:
         _total_days = len(_df[_df["_year"] == _outlier_year])
         st.caption(f"{len(_df_z)} outlier days out of {_total_days} trading days.")
         st.dataframe(_z_styler, use_container_width=True)
+
+    # ── Disagreement Check ────────────────────────────────────────────────────
+    st.subheader("Window Disagreement Check")
+    st.caption(
+        "Compares today's DoD delta for each series across 3 reference windows: "
+        "rolling 60-day, monthly historical (same month, 2017-2026), and weekly seasonal "
+        "(same ISO week, 2017-2026). Flags series where windows disagree on how "
+        "unusual today's value is. Descriptive only — not a trade signal."
+    )
+
+    _disagree_rows = compute_all_disagreements(df_delta)
+
+    if _disagree_rows:
+        # Append to persistent log (idempotent per day)
+        append_disagreement_log(_disagree_rows)
+
+        _flagged = [r for r in _disagree_rows if r["overall_disagreement"]]
+        _clean   = [r for r in _disagree_rows if not r["overall_disagreement"]]
+
+        def _format_disagree_table(rows, show_flags=False):
+            """Build a display DataFrame from disagreement result rows."""
+            display_rows = []
+            for r in rows:
+                row = {
+                    "Series": r["series"],
+                    "Value": r["today_value"] if r["today_value"] is not None else "–",
+                    "Pct Rolling": f"{r['pct_rank_rolling']:.0f}" if r["pct_rank_rolling"] is not None else "–",
+                    "Pct Monthly": f"{r['pct_rank_monthly']:.0f}" if r["pct_rank_monthly"] is not None else "–",
+                    "Pct Seasonal": (f"{r['pct_rank_seasonal']:.0f}" if r["pct_rank_seasonal"] is not None else "–") + (" *" if r.get("seasonal_low_sample") else ""),
+                    "Z Rolling": f"{r['z_rolling']:+.2f}" if r["z_rolling"] is not None else "–",
+                    "Z Monthly": f"{r['z_monthly']:+.2f}" if r["z_monthly"] is not None else "–",
+                    "Z Seasonal": (f"{r['z_seasonal']:+.2f}" if r["z_seasonal"] is not None else "–") + (" *" if r.get("seasonal_low_sample") else ""),
+                }
+                if show_flags:
+                    result = r.get("_result", {})
+                    flagged_wins = r.get("flagged_windows", "")
+                    # Build direction description from pairwise comparisons
+                    directions = []
+                    for comp in result.get("pairwise_comparisons", []):
+                        if comp["disagree_on_percentile"] or comp["disagree_on_zscore"]:
+                            directions.append(comp["direction"])
+                    row["Flagged"] = flagged_wins.replace(",", ", ") if flagged_wins else ""
+                    row["Note"] = "; ".join(directions) if directions else ""
+                display_rows.append(row)
+            return pd.DataFrame(display_rows)
+
+        _latest_date_str = _disagree_rows[0]["date"] if _disagree_rows else ""
+        st.caption(f"Latest trading day: {_latest_date_str}")
+
+        if _flagged:
+            st.markdown(f"**Flagged** ({len(_flagged)} series)")
+            _flagged_df = _format_disagree_table(_flagged, show_flags=True)
+            st.dataframe(_flagged_df.set_index("Series"), use_container_width=True)
+        else:
+            st.info("No disagreement flags today across all 11 tracked series.")
+
+        if _clean:
+            with st.expander(f"Clean ({len(_clean)} series)", expanded=not _flagged):
+                _clean_df = _format_disagree_table(_clean, show_flags=False)
+                st.dataframe(_clean_df.set_index("Series"), use_container_width=True)
+    else:
+        st.warning("No delta data available for disagreement analysis.")
 
     st.subheader("Raw Daily Term Delta")
     st.caption("Date, 12 tenor prices, 8 consecutive spreads, 8 roll-adjusted DoD deltas.")
