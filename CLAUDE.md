@@ -40,16 +40,26 @@ Requirements: `streamlit>=1.32.0`, `pandas>=2.1.0`, `plotly>=5.20.0`
 ## Project Structure
 
 ```
-app.py                    # Main Streamlit dashboard
-dashboard/                # Helper modules imported by app.py
-  FCPO_analysis.py        # Spread tables, combined dataset, plotting
-  fcpo_spread_engine.py   # Curve, spread history, conviction scoring
-  fcpo_s_calculator.py    # MPOB, regression, forward S curve
-  fcpo_tt_reader.py       # TT daily term reader
+app.py                    # Main Streamlit dashboard (v1)
+app_v2.py                 # Streamlit dashboard (v2)
+dashboard/                # Helper modules
+  v1/                     # Modules imported by app.py
+    FCPO_analysis.py      # Spread tables, combined dataset, plotting
+    fcpo_spread_engine.py # Curve, spread history, conviction scoring
+    fcpo_s_calculator.py  # MPOB, regression, forward S curve
+    fcpo_tt_reader.py     # TT daily term reader
+    shape_classifier.py   # Shape classification
+  v2/                     # Modules imported by app_v2.py
+    FCPO_analysis.py
+    fcpo_spread_engine.py
+    fcpo_s_calculator.py
+    fcpo_tt_reader.py
+    shape_classifier.py
+    window_disagreement.py
 research/                 # Jupyter notebooks + chart outputs
   outputs/                # Saved PNGs and CSVs from research
 tools/                    # Standalone utility scripts
-mr_screener/              # Mean-reversion pair screener package
+mr_screener/              # Mean-reversion pair screener (shared by both apps)
 MRBackTest/               # Backtest engine (separate project)
 ssf_engine/               # SSF engine (separate project)
 Raw Data/                 # All CSV/Excel data files
@@ -57,7 +67,7 @@ Raw Data/                 # All CSV/Excel data files
 
 ## Architecture
 
-Single-file app (`app.py`) with six Streamlit tabs built on Plotly + Pandas. Helper modules live in `dashboard/`.
+Two app versions (`app.py` v1, `app_v2.py` v2) with six Streamlit tabs built on Plotly + Pandas. Helper modules live in `dashboard/v1/` and `dashboard/v2/`. Both share `mr_screener/` for pair screening.
 
 ### Data Sources
 

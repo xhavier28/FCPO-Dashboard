@@ -74,7 +74,7 @@ def build_regression_dataset(mpob_df, contracts_dict, r_annual=0.03, capacity=3_
     Returns DataFrame [date, utilisation, s_implied, F_M1, F_M2, mpob_stocks].
     Filters: 0.30 < utilisation < 0.98 AND 5 < s_implied_myr < 40.
     """
-    from dashboard_v2.fcpo_spread_engine import implied_s_backsolve
+    from dashboard.v1.fcpo_spread_engine import implied_s_backsolve
 
     rows = []
     for _, row in mpob_df.iterrows():
@@ -434,19 +434,17 @@ def build_forward_s_curve(current_month, seasonal_table, current_mpob_stocks,
         valid_means = [x for x in (near_s_mean, far_s_mean) if x is not None]
         pair_seasonal_mean = round(sum(valid_means) / len(valid_means), 1) if valid_means else None
 
-        if offset in (1, 2):
-            # M1/M2 and M2/M3: use MPOB current (same logic as M3-M5)
-            seas = seasonal_table.get(target_month, {})
-            s_seas = seas.get('s_mean', 12.0)
-            seas_util_mean = seas.get('util_mean', 0.65)
-            year_ratio = current_util / seas_util_mean if seas_util_mean > 0 else 1.0
-            dampen = max(0, 1 - offset * 0.08)
-            s_val = s_seas * (1 + (year_ratio - 1) * dampen)
-            s_val = max(5.0, s_val)
-            source = 'seasonal'
-            confidence = 'MEDIUM'
-            trade_role = ('Intel only — do not trade' if offset == 1
-                          else 'Direction — approach with care')
+        if offset == 1:
+            s_val = s_producer_current
+            source = 'producer'
+            confidence = 'HIGH'
+            trade_role = 'Intel only — do not trade'
+
+        elif offset == 2:
+            s_val = s_producer_forward
+            source = 'producer'
+            confidence = 'MED-HIGH'
+            trade_role = 'Direction — approach with care'
 
         elif offset in (3, 4):
             seas = seasonal_table.get(target_month, {})

@@ -5,27 +5,27 @@ import numpy as np
 import plotly.graph_objects as go
 import plotly.colors
 from plotly.subplots import make_subplots
-from dashboard_v2.FCPO_analysis import build_spread_table, load_combined_dataset
-from mr_screener_v2.data.loader import load_pair
-from mr_screener_v2.screener.pipeline import run_pair, autotune_delta
-from dashboard_v2.fcpo_spread_engine import (
+from dashboard.v2.FCPO_analysis import build_spread_table, load_combined_dataset
+from mr_screener.data.loader import load_pair
+from mr_screener.screener.pipeline import run_pair, autotune_delta
+from dashboard.v2.fcpo_spread_engine import (
     get_active_curve, build_spread_history, build_butterfly_history,
     fair_spread_value, implied_s_backsolve, implied_c,
     conviction_score, scenario_interpretation, entry_conditions_checklist,
     load_spread_history_from_delta_files,
 )
-from dashboard_v2.fcpo_s_calculator import (
+from dashboard.v2.fcpo_s_calculator import (
     load_mpob_history, estimate_capacity, build_regression_dataset,
     fit_s_regression, fit_seasonal_regression, build_seasonal_s_table,
     get_s_mpob, producer_s_composite, build_forward_s_curve,
     build_per_pair_regression, load_oni_history, load_enso_forecast,
 )
-from dashboard_v2.fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
-from dashboard_v2.shape_classifier import (
+from dashboard.v2.fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
+from dashboard.v2.shape_classifier import (
     update_shape_log, force_full_reclassify, SHAPE_NAMES, LOG_PATH, MONTHS as SHAPE_MONTHS,
     load_centroids, load_stock_terciles,
 )
-from dashboard_v2.window_disagreement import compute_window_disagreement
+from dashboard.v2.window_disagreement import compute_window_disagreement
 import datetime
 from datetime import date
 import csv
@@ -2122,7 +2122,7 @@ with tab7:
             }
 
             try:
-                from dashboard_v2.window_disagreement import compute_window_disagreement
+                from dashboard.v2.window_disagreement import compute_window_disagreement
                 _gap_wd = compute_window_disagreement(_gap1_value, _gap_windows)
                 _pw = _gap_wd["per_window"]
 
