@@ -548,7 +548,7 @@ def load_delta_data():
     return build_delta_table(df_raw)
 
 
-DISAGREEMENT_LOG_PATH = Path("dashboard_v2/disagreement_log.csv")
+DISAGREEMENT_LOG_PATH = Path("dashboard/v2/disagreement_log.csv")
 DISAGREEMENT_LOG_COLS = [
     "date", "series", "today_value",
     "pct_rank_rolling", "pct_rank_monthly", "pct_rank_seasonal",
