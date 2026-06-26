@@ -17,7 +17,7 @@ from dashboard_v2.fcpo_spread_engine import (
 from dashboard_v2.fcpo_s_calculator import (
     load_mpob_history, estimate_capacity, build_regression_dataset,
     fit_s_regression, fit_seasonal_regression, build_seasonal_s_table,
-    get_s_mpob, producer_s_composite, build_forward_s_curve, three_source_gaps,
+    get_s_mpob, producer_s_composite, build_forward_s_curve,
     build_per_pair_regression, load_oni_history, load_enso_forecast,
 )
 from dashboard_v2.fcpo_tt_reader import read_all, get_outrights, is_available, get_last_update_time, compute_gaps
@@ -2016,10 +2016,11 @@ with tab6:
 
 # ── Tab 7: S Calculator ───────────────────────────────────────────────────────
 with tab7:
-    st.header("Storage Cost (S) — Three Source Comparison")
+    st.header("Storage Cost (S) — Implied vs MPOB")
     st.caption(
-        "Three-source storage cost model: MPOB regression, seasonal baseline, and producer intelligence. "
-        "S drives fair-value calendar spreads. Higher S = higher fair-value spread (backwardation expected)."
+        "Two-source storage cost comparison: Implied S (back-solved from M1/M2 prices) vs MPOB S (regression on utilisation). "
+        "S drives fair-value calendar spreads. Higher S = higher fair-value spread (backwardation expected). "
+        "Producer intelligence is collected separately below but not used in headline gap assessment."
     )
 
     _r7 = st.session_state.get('r_annual', 0.03)
@@ -2092,15 +2093,74 @@ with tab7:
         st.markdown("---")
 
         _ref_s = _s_implied_avg if _s_implied_avg is not None else _s_mpob_t7
-        _gc1, _gc2, _gc3 = st.columns(3)
-        _gc1.metric("Gap 1 — Implied vs MPOB",  f"{_ref_s - _s_mpob_t7:+.1f} MYR/t")
-        _gc2.metric("Gap 2 — MPOB vs Producer", f"{_s_mpob_t7 - _s_producer_t7:+.1f} MYR/t")
-        _alpha_gap_t7 = _ref_s - _s_producer_t7
-        _gc3.metric(
-            "Gap 3 — YOUR ALPHA (Implied vs Producer)",
-            f"{_alpha_gap_t7:+.1f} MYR/t",
-            delta="BUY SPREAD" if _alpha_gap_t7 < -8 else "SELL SPREAD" if _alpha_gap_t7 > 8 else "NEUTRAL",
-        )
+        _gap1_value = round(_ref_s - _s_mpob_t7, 2)
+        st.metric("Gap — Implied S vs MPOB S", f"{_gap1_value:+.1f} MYR/t")
+
+        # ── Window disagreement on Gap 1 level ────────────────────────────
+        # Build historical Gap 1 values from regression dataset
+        # Gap 1 = s_implied - s_mpob(util) for each historical month
+        _gap1_insight_msg = None
+        if not _s_reg_df.empty and _s_reg.get('util_to_s_function'):
+            _gap_hist_df = _s_reg_df.copy()
+            _gap_hist_df['s_mpob_hist'] = _gap_hist_df['utilisation'].apply(
+                _s_reg['util_to_s_function']
+            )
+            _gap_hist_df['gap1'] = _gap_hist_df['s_implied'] - _gap_hist_df['s_mpob_hist']
+            _gap_hist_df['month'] = pd.to_datetime(_gap_hist_df['date']).dt.month
+
+            # Window 1: seasonal — same calendar month across all years
+            _gap_seasonal = _gap_hist_df[
+                _gap_hist_df['month'] == _current_month_t7
+            ]['gap1']
+
+            # Window 2: rolling — last 60-90 days (use last 75 entries as proxy)
+            _gap_rolling = _gap_hist_df.sort_values('date').tail(75)['gap1']
+
+            _gap_windows = {
+                "seasonal_same_month": _gap_seasonal,
+                "rolling_60_90d": _gap_rolling,
+            }
+
+            try:
+                from dashboard_v2.window_disagreement import compute_window_disagreement
+                _gap_wd = compute_window_disagreement(_gap1_value, _gap_windows)
+                _pw = _gap_wd["per_window"]
+
+                if _gap_wd["overall_disagreement"]:
+                    _comp = _gap_wd["pairwise_comparisons"][0]
+                    _gap1_insight_msg = (
+                        f"Gap is {_gap1_value:+.1f} MYR/t — seasonal and recent windows "
+                        f"disagree on how unusual this is ({_comp['direction']}) — worth noting."
+                    )
+                else:
+                    _gap1_insight_msg = (
+                        f"Implied S vs MPOB S gap is {_gap1_value:+.1f} MYR/t, "
+                        f"consistent with seasonal and recent norms."
+                    )
+
+                # Show per-window context
+                _seas_pw = _pw.get("seasonal_same_month", {})
+                _roll_pw = _pw.get("rolling_60_90d", {})
+                _detail_parts = []
+                if _seas_pw.get("pct_rank") is not None:
+                    _detail_parts.append(
+                        f"Seasonal: {_seas_pw['pct_rank']:.0f}th pct (Z={_seas_pw['z_score']:+.1f}, n={_seas_pw['n']})"
+                    )
+                if _roll_pw.get("pct_rank") is not None:
+                    _detail_parts.append(
+                        f"Rolling: {_roll_pw['pct_rank']:.0f}th pct (Z={_roll_pw['z_score']:+.1f}, n={_roll_pw['n']})"
+                    )
+
+                if _gap_wd["overall_disagreement"]:
+                    st.warning(_gap1_insight_msg)
+                else:
+                    st.info(_gap1_insight_msg)
+
+                if _detail_parts:
+                    st.caption(" · ".join(_detail_parts))
+
+            except Exception as _wd_err:
+                st.caption(f"Window disagreement check unavailable: {_wd_err}")
 
         st.markdown("---")
 
@@ -2717,9 +2777,16 @@ with tab7:
                     _source = f"regression (R²={_reg_pp['r2']})"
                     _conf = "HIGH" if _reg_pp['r2'] >= 0.4 else "MEDIUM"
                 else:
-                    _model_s = _s_producer_current_input
-                    _source = "producer"
-                    _conf = "HIGH"
+                    # Fallback: MPOB current (same logic as M3-M5)
+                    if _util_fn_t7:
+                        _model_s = round(_util_fn_t7(_current_util_t7), 1)
+                        _source = "MPOB current"
+                        _conf = "MEDIUM"
+                    else:
+                        _seas_entry = _s_seas_tbl.get(_current_month_t7, {})
+                        _model_s = round(_seas_entry.get('s_mean', 15.0), 1)
+                        _source = "seasonal"
+                        _conf = "MEDIUM"
             elif _near == 2:
                 _reg_pp = _per_pair_reg.get('M2/M3')
                 if _reg_pp and _reg_pp.get('util_to_spread') and _reg_pp['r2'] >= 0.20:
@@ -2727,9 +2794,16 @@ with tab7:
                     _source = f"regression (R²={_reg_pp['r2']})"
                     _conf = "HIGH" if _reg_pp['r2'] >= 0.4 else "MEDIUM"
                 else:
-                    _model_s = _s_producer_forward_input
-                    _source = "producer forward"
-                    _conf = "MED-HIGH"
+                    # Fallback: MPOB current (same logic as M3-M5)
+                    if _util_fn_t7:
+                        _model_s = round(_util_fn_t7(_current_util_t7), 1)
+                        _source = "MPOB current"
+                        _conf = "MEDIUM"
+                    else:
+                        _seas_entry = _s_seas_tbl.get(_current_month_t7, {})
+                        _model_s = round(_seas_entry.get('s_mean', 15.0), 1)
+                        _source = "seasonal"
+                        _conf = "MEDIUM"
             elif _near <= 5:
                 if _util_fn_t7:
                     _model_s = round(_util_fn_t7(_current_util_t7), 1)
@@ -3013,32 +3087,19 @@ with tab8:
                   delta=f"Edge: {edge_m1m2:+.1f}" if edge_m1m2 is not None else None,
                   delta_color="inverse" if edge_m1m2 and edge_m1m2 < 0 else "normal")
     col_f3.metric("S MPOB", f"{st.session_state.get('s_mpob', 0):.1f} MYR/t")
-    col_f4.metric("S Producer",
-                  f"{st.session_state.get('s_producer_current', st.session_state.get('s_mpob', 0)):.1f} MYR/t")
+    col_f4.metric("Regime", st.session_state.get('regime', '—'))
 
-    # Three-source gap analysis expander
-    with st.expander("Three-Source Gap Analysis", expanded=True):
+    # Implied vs MPOB gap summary
+    with st.expander("Implied vs MPOB Gap", expanded=True):
         s_impl  = s_implied_live or s_implied_avg or 0
         s_mpob  = st.session_state.get('s_mpob', 0)
-        s_prod  = st.session_state.get('s_producer_current', s_mpob)
         gap1 = round(s_impl - s_mpob, 1)
-        gap2 = round(s_mpob - s_prod, 1)
-        gap3 = round(s_impl - s_prod, 1)
 
-        cg1, cg2, cg3 = st.columns(3)
-        cg1.metric("Gap1: Implied - MPOB", f"{gap1:+.1f}",
-                   help="Positive = market pricing more tightness than inventory justifies")
-        cg2.metric("Gap2: MPOB - Producer", f"{gap2:+.1f}",
-                   help="Negative = producer tighter than MPOB → leading indicator")
-        cg3.metric("Gap3: Implied - Producer", f"{gap3:+.1f}",
-                   help="Primary alpha signal. >+8 = SELL SPREAD. <-8 = BUY SPREAD.")
-
-        if gap3 > 8:
-            st.error("SELL SPREAD — Market overstating tightness vs physical reality. Sell spread.")
-        elif gap3 < -8:
-            st.success("BUY SPREAD — Market underpricing tightness your contact sees. Buy spread.")
-        else:
-            st.info(f"NEUTRAL — Gap3 = {gap3:+.1f} MYR/t. No strong mispricing signal.")
+        st.metric("Gap: Implied S - MPOB S", f"{gap1:+.1f} MYR/t",
+                  help="Positive = market pricing more tightness than inventory justifies")
+        st.caption(
+            "Descriptive only — see S Calculator tab for full window disagreement analysis."
+        )
 
     st.markdown("---")
 
@@ -4318,7 +4379,7 @@ with tab_enso:
 
     with st.expander("⚠️ Important caveats before trading on ENSO signals"):
         st.markdown("""
-- **Back months only (M6+).** Front months M1-M3 use producer intelligence and MPOB data.
+- **Back months only (M6+).** Front months M1-M5 use MPOB regression and seasonal data.
 - **Lag varies 6-15 months.** Cannot predict the exact production impact month.
 - **Demand can overwhelm supply.** 2022: El Niño supply pressure overwhelmed by Ukraine war demand shock.
 - **Strength matters more than probability.** Confirmed Strong El Niño (ONI >1.5°C) is more actionable than 90% probability of Weak El Niño.
