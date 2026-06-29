@@ -677,3 +677,73 @@ Method: manual residualization (regress X on control, correlate residuals with t
   RF: removing crude_oil barely moves usd_myr (rank 1.1 -> 1.0).
   Head-to-head: USD/MYR takes 55% of importance.
   Conclusion: USD/MYR is the primary signal; crude oil adds some independent information beyond it.
+
+
+================================================================================
+SECTION 9: EPISODE-EXCLUSION ROBUSTNESS CHECK
+================================================================================
+
+--- 9.1 Exclusion Windows ---
+
+  COVID window (2020-03 to 2020-06): 17 weeks excluded
+  Export-ban window (2022-01 to 2022-10): 43 weeks excluded
+  Total excluded: 60 weeks
+  Remaining panel: 435 weeks (of 495 total)
+
+  COVID window snapshot:
+    USD/MYR: 4.180 - 4.382 (range 0.202)
+    Crude oil: 4.2 - 45.6
+    Spot FCPO: 2055 - 2538
+    Shapes present: ['0.0', '0.2', '2']
+
+  Export-ban window snapshot:
+    USD/MYR: 4.181 - 4.722 (range 0.541)
+    Crude oil: 77.9 - 120.9
+    Spot FCPO: 3330 - 7693
+    Shapes present: ['0.0', '0.1', '0.2', '1', '2']
+
+
+--- 9.2 Filtered Panel (shocks excluded) — Univariate Screening ---
+
+  Cut                                                  Original           Filtered (no shocks)
+                                    Hi%   Lo%   Gap   n_hi n_lo    Hi%   Lo%   Gap   n_hi n_lo
+  -----------------------------------------------------------------------------------------------
+  usd_myr / POOLED / 12w           31.7%  61.5% -29.8  161  161   30.5%  60.3% -29.8  141  141
+  usd_myr / Shape 1 / 12w          44.2%  78.8% -34.6   52   52   48.9%  76.6% -27.7   47   47
+  crude_oil / POOLED / 12w         32.9%  57.8% -24.8  161  161   35.5%  57.4% -22.0  141  141
+  crude_oil / Shape 1 / 12w        51.9%  61.5%  -9.6   52   52   61.7%  66.0%  -4.3   47   47
+
+  RF on filtered panel (pooled 12w, 20 bootstraps):
+
+  Variable                      Original (n={n_orig})     Filtered (n={n_filt})
+                                         Imp     Rank              Imp     Rank
+  ------------------------------------------------------------------------------
+  usd_myr                     0.2099    1.0          0.2121    1.0
+  crude_oil_price             0.1267    2.5          0.1205    3.1
+  enso_oni                    0.0802    6.5          0.0899    5.2
+  palm_soy_spread             0.0834    6.2          0.0771    7.2
+  production_yoy_pct          0.0816    6.5          0.0758    7.2
+
+
+--- 9.3 Shock Windows Only (COVID + Export Ban) ---
+
+  Cut                               Hi%    Lo%     Gap  n_hi  n_lo
+  -----------------------------------------------------------------
+  usd_myr / POOLED / 12w          35.0%  55.0%  -20.0    20    20
+  usd_myr / Shape 1 / 12w         20.0%  80.0%  -60.0     5     5
+  crude_oil / POOLED / 12w        25.0%  50.0%  -25.0    20    20
+  crude_oil / Shape 1 / 12w       80.0%  40.0%  +40.0     5     5
+
+
+--- 9.4 Three-Way Comparison Table ---
+
+  Cut                             Gap (all)  Gap (no shock)  Gap (shock only)
+  ---------------------------------------------------------------------------
+  usd_myr / POOLED / 12w              -29.8           -29.8             -20.0
+  usd_myr / Shape 1 / 12w             -34.6           -27.7             -60.0
+  crude_oil / POOLED / 12w            -24.8           -22.0             -25.0
+  crude_oil / Shape 1 / 12w            -9.6            -4.3             +40.0
+
+  Note: 'Gap' = high_tercile_persist% minus low_tercile_persist% (pp).
+  Positive gap = high variable value -> more persistence.
+  Negative gap = high variable value -> less persistence (regime breaks sooner).
