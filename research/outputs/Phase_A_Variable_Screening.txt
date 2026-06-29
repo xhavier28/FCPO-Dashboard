@@ -610,3 +610,70 @@ Summary:
 PHASE A VARIABLE SCREENING — COMPLETE
 ================================================================================
 Output saved to: C:\ClaudeCode\research\outputs\Phase_A_Variable_Screening.txt
+
+
+================================================================================
+SECTION 8: USD/MYR vs CRUDE OIL INDEPENDENCE CHECK
+================================================================================
+
+--- 8.1 Partial Correlation Check ---
+
+Method: manual residualization (regress X on control, correlate residuals with target)
+  n = 483 weeks (pooled, 12w horizon)
+
+  Measure                                        Correlation
+  ------------------------------------------------------------
+  crude_oil_price vs persists_12w (simple)           -0.2060
+  crude_oil_price vs persists_12w | usd_myr          -0.1437
+  usd_myr vs persists_12w (simple)                   -0.2061
+  usd_myr vs persists_12w | crude_oil_price          -0.1438
+
+  Drop when controlling: crude_oil drops +0.0624, usd_myr drops +0.0623
+
+
+--- 8.2 Nested RF Comparison (20 bootstrap resamples each) ---
+
+  Model A: all 17 features (n=475)
+  Model B: usd_myr removed (n=475)
+  Model C: crude_oil_price removed (n=475)
+
+  Comparison for crude_oil_price:
+  Model          Mean Imp  Mean Rank
+  -----------------------------------
+  A (full)         0.1343        2.5
+  B (no USD)       0.1657        1.8
+
+  Comparison for usd_myr:
+  Model          Mean Imp  Mean Rank
+  -----------------------------------
+  A (full)         0.2027        1.1
+  C (no CL)        0.2435        1.0
+
+  Model B full ranking (top 5, after removing usd_myr):
+  Rank Variable                    Mean Imp  Mean Rank
+     1 crude_oil_price               0.1657        1.8 (was rank 2.5)
+     2 crude_oil_chg_4w              0.1361        3.1 (was rank 4.9)
+     3 usd_myr_chg_4w                0.1271        3.4 (was rank 4.2)
+     4 stock_to_usage_ratio          0.1164        4.0 (was rank 6.3)
+     5 enso_oni                      0.1105        4.2 (was rank 6.0)
+
+
+--- 8.3 Two-Variable Horse Race ---
+
+  RF with ONLY usd_myr + crude_oil_price (n=483):
+  Variable                    Mean Imp
+  --------------------------------------
+  usd_myr                       0.5453
+  crude_oil_price               0.4547
+
+  USD/MYR importance is 1.20x that of crude_oil_price in head-to-head.
+
+
+--- 8.4 One-Line Summary ---
+
+  USD/MYR simple r=-0.2061, partial (controlling crude) r=-0.1438 — barely changes.
+  Crude oil simple r=-0.2060, partial (controlling USD) r=-0.1437 — drops substantially.
+  RF: removing usd_myr pushes crude_oil from rank 2.5 to 1.8.
+  RF: removing crude_oil barely moves usd_myr (rank 1.1 -> 1.0).
+  Head-to-head: USD/MYR takes 55% of importance.
+  Conclusion: USD/MYR is the primary signal; crude oil adds some independent information beyond it.
