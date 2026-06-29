@@ -747,3 +747,47 @@ SECTION 9: EPISODE-EXCLUSION ROBUSTNESS CHECK
   Note: 'Gap' = high_tercile_persist% minus low_tercile_persist% (pp).
   Positive gap = high variable value -> more persistence.
   Negative gap = high variable value -> less persistence (regime breaks sooner).
+
+
+================================================================================
+SECTION 10: ENSO EPISODE-EXCLUSION CHECK
+================================================================================
+
+--- 10.1 Three-Way Comparison for enso_oni ---
+
+  Cut                             Gap (all)  Gap (no shock)  Gap (shock only)
+  ---------------------------------------------------------------------------
+  enso_oni / Shape 1 / 12w            +30.2           +19.8             +51.4
+  enso_oni / POOLED / 12w              -2.1           -10.6             +45.5
+
+  Detailed breakdown:
+
+  --- All weeks ---
+    enso_oni / Shape 1 / 12w: high=73.6% (39/53), low=43.4% (23/53), gap=+30.2pp
+    enso_oni / POOLED / 12w: high=44.4% (72/162), low=46.6% (75/161), gap=-2.1pp
+
+  --- Shocks excluded ---
+    enso_oni / Shape 1 / 12w: high=70.8% (34/48), low=51.0% (25/49), gap=+19.8pp
+    enso_oni / POOLED / 12w: high=44.3% (66/149), low=54.9% (79/144), gap=-10.6pp
+
+  --- Shocks only ---
+    enso_oni / Shape 1 / 12w: high=71.4% (5/7), low=20.0% (1/5), gap=+51.4pp
+    enso_oni / POOLED / 12w: high=59.1% (13/22), low=13.6% (3/22), gap=+45.5pp
+
+  ENSO ONI values during shock windows:
+    COVID (Mar-Jun 2020): ONI range -0.23 to 0.53, mean 0.16, n=17 weeks
+    Export-ban (Jan-Oct 2022): ONI range -0.97 to -0.76, mean -0.87, n=43 weeks
+
+
+--- 10.2 RF Importance: enso_oni on Filtered vs Original Panel ---
+
+  Cut                  Panel               n  enso_oni Imp  enso_oni Rank
+  ----------------------------------------------------------------------
+  Pooled 12w           Original          475        0.0830            6.0
+                       No shocks         415        0.0910            5.5
+    Filtered top 3: usd_myr (1.0), crude_oil_price (3.1), usd_myr_chg_4w (3.8)
+
+  Shape 1 12w          Original          157        0.1573            1.8
+                       No shocks         142        0.1846            1.6
+    Filtered top 3: enso_oni (1.6), usd_myr (1.9), production_yoy_pct (2.9)
+
