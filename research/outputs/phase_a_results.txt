@@ -1,0 +1,453 @@
+======================================================================
+PHASE A: REGIME PERSISTENCE VARIABLE SCREENING
+======================================================================
+
+>>> 1. LOADING DATA SOURCES
+
+1a. Shape log:
+    Columns: ['date', 'shape', 'classification_confidence', 'stock_pct', 'stock_tercile', 'spot_mom_cat', 'month', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6']
+        date shape  classification_confidence  stock_pct stock_tercile spot_mom_cat  month      M1      M2      M3      M4      M5      M6
+0 2008-01-01   0.1                       37.8        NaN           NaN          NaN      1  3086.0  3095.0  3082.0  3070.0  3055.0  3055.0
+1 2008-01-02   0.1                        1.7        NaN           NaN          NaN      1  3148.0  3145.0  3135.0  3127.0  3112.0  3112.0
+2 2008-01-03   0.1                        7.1        NaN           NaN          NaN      1  3132.0  3129.0  3120.0  3112.0  3097.0  3097.0
+    dtype of shape: object
+
+1b. MPOB Stock:
+    Columns: ['date', 'stock']
+        date    stock
+0 2016-01-01  2308582
+1 2016-02-01  2170341
+2 2016-03-01  1885630
+
+1c. MPOB Export:
+    Columns: ['date', 'export']
+        date   export
+0 2016-03-01  1334419
+1 2016-04-01  1172915
+2 2016-05-01  1282415
+
+1d. MPOB Production:
+    Columns: ['date', 'production']
+        date  production
+0 2016-03-01     1219483
+1 2016-04-01     1301291
+2 2016-05-01     1364575
+
+1e. USD/MYR:
+    Columns: ['date', 'usd_myr'], Range: 2011-01-12 to 2026-06-28
+                 date  usd_myr
+0 2011-01-12 22:00:00   3.0530
+1 2011-01-13 22:00:00   3.0575
+2 2011-01-16 22:00:00   3.0570
+
+1f. Palm-soy spread (TV combined ratio export):
+    Columns: ['date', 'palm_soy_spread'], Range: 2010-02-17 to 2026-06-29
+    Value range: 88.97 to 242.97
+    NOTE: This is a pre-computed ratio from TradingView (FCPO / ZL1!), not raw prices.
+                 date  palm_soy_spread
+0 2010-02-17 13:00:00       132.720776
+1 2010-02-18 13:00:00       133.128205
+2 2010-02-22 02:00:00       133.893130
+
+1g. Crude oil (WTI CL1!):
+    Columns: ['date', 'crude_oil_price'], Range: 2004-05-23 to 2026-06-28
+                 date  crude_oil_price
+0 2004-05-23 22:00:00            41.72
+1 2004-05-24 22:00:00            41.14
+2 2004-05-25 22:00:00            40.70
+
+1h. Macro Event Calendar:
+    Columns: ['Year', 'Month', 'Month Name', 'Indonesia Flag', 'Indonesia Notes', 'Malaysia Flag', 'Malaysia Notes', 'China Flag', 'China Notes', 'India Flag', 'India Notes', 'Global/Other Flag', 'Global/Other Notes']
+   Year  Month Month Name  Indonesia Flag Indonesia Notes Malaysia Flag Malaysia Notes  China Flag China Notes  India Flag India Notes Global/Other Flag Global/Other Notes
+0  2017    1.0    January             NaN             NaN           NaN            NaN         NaN         NaN         NaN         NaN               NaN                NaN
+1  2017    2.0   February             NaN             NaN           NaN            NaN         NaN         NaN         NaN         NaN               NaN                NaN
+2  2017    3.0      March             NaN             NaN           NaN            NaN         NaN         NaN         NaN         NaN               NaN                NaN
+
+    Cleaned macro flags:
+            event_indonesia  event_malaysia  event_china  event_india  event_global
+date                                                                               
+2017-01-01                0               0            0            0             0
+2017-02-01                0               0            0            0             0
+2017-03-01                0               0            0            0             0
+2017-04-01                0               0            0            0             0
+2017-05-01                0               0            0            0             0
+
+1i. ENSO ONI:
+    Range: 1950-01-01 to 2026-04-01
+             oni
+date            
+2026-02-01 -0.16
+2026-03-01  0.13
+2026-04-01  0.48
+
+
+>>> 2. BUILDING WEEKLY PANEL
+
+NOTE: stock_to_usage_ratio = stock / production (no import data available for full usage calc)
+
+Weekly panel shape: (495, 21)
+
+Per-column non-null counts:
+shape                    495
+spot                     495
+week_end_date            495
+shape_prev               494
+momentum_5d_sign         494
+usd_myr                  495
+palm_soy_spread          495
+crude_oil_price          495
+crude_oil_chg_4w         491
+usd_myr_chg_4w           491
+stock_to_usage_ratio     495
+export_yoy_pct           487
+production_yoy_pct       487
+enso_oni                 495
+event_indonesia          495
+event_malaysia           495
+event_china              495
+event_india              495
+event_global             495
+event_any_flag_active    495
+event_net_sum            495
+
+.head(20):
+         shape    spot week_end_date shape_prev  momentum_5d_sign   usd_myr  palm_soy_spread  crude_oil_price  crude_oil_chg_4w  usd_myr_chg_4w  stock_to_usage_ratio  export_yoy_pct  production_yoy_pct  enso_oni  event_indonesia  event_malaysia  event_china  event_india  event_global  event_any_flag_active  event_net_sum
+week_key                                                                                                                                                                                                                                                                                                                          
+2017-W01   0.0  3200.0    2017-01-05       None               NaN  4.488375       178.838424        53.267500               NaN             NaN              1.206939             NaN                 NaN     -0.19                0               0            0            0             0                      0              0
+2017-W02   0.0  3280.0    2017-01-12        0.0               1.0  4.468500       173.899301        52.010000               NaN             NaN              1.206939             NaN                 NaN     -0.19                0               0            0            0             0                      0              0
+2017-W03   0.0  3234.0    2017-01-19        0.0              -1.0  4.458375       176.677802        52.242500               NaN             NaN              1.206939             NaN                 NaN     -0.19                0               0            0            0             0                      0              0
+2017-W04   0.0  3243.0    2017-01-26        0.0               1.0  4.428375       178.326997        53.115000               NaN             NaN              1.206939             NaN                 NaN     -0.19                0               0            0            0             0                      0              0
+2017-W05   0.0  3250.0    2017-02-02        0.0              -1.0  4.427000       178.585023        53.350000          0.154879       -1.367421              1.159491             NaN                 NaN     -0.02                0               0            0            0             0                      0              0
+2017-W06   0.0  3268.0    2017-02-09        0.0               1.0  4.432667       179.589304        52.726667          1.377940       -0.801910              1.159491             NaN                 NaN     -0.02                0               0            0            0             0                      0              0
+2017-W07   0.0  3094.0    2017-02-16        0.0              -1.0  4.448250       177.893164        53.247500          1.923721       -0.227101              1.159491             NaN                 NaN     -0.02                0               0            0            0             0                      0              0
+2017-W08   0.0  2977.0    2017-02-23        0.0              -1.0  4.452375       170.582230        54.175000          1.995670        0.541960              1.159491             NaN                 NaN     -0.02                0               0            0            0             0                      0              0
+2017-W09   0.0  3000.0    2017-03-02        0.0               1.0  4.441875       166.437392        53.625000          0.515464        0.336006              1.060769       -5.144411           20.052596      0.18                0               0            0            0             0                      0              0
+2017-W10   0.0  2990.0    2017-03-09        0.0               1.0  4.450500       169.749767        51.475000         -2.373878        0.402316              1.060769       -5.144411           20.052596      0.18                0               0            0            0             0                      0              0
+2017-W11   0.0  2966.0    2017-03-16        0.0              -1.0  4.444125       172.047064        48.432500         -9.042678       -0.092733              1.060769       -5.144411           20.052596      0.18                0               0            0            0             0                      0              0
+2017-W12   0.0  2895.0    2017-03-23        0.0              -1.0  4.425000       169.676392        48.222500        -10.987540       -0.614840              1.060769       -5.144411           20.052596      0.18                0               0            0            0             0                      0              0
+2017-W13   0.0  2833.0    2017-03-30        0.0              -1.0  4.414875       168.181133        48.990000         -8.643357       -0.607851              1.060769       -5.144411           20.052596      0.18                0               0            0            0             0                      0              0
+2017-W14   0.0  2885.0    2017-04-06        0.0               1.0  4.430125       169.279865        51.030000         -0.864497       -0.457814              0.387515        9.411850           18.962861      0.31                0               0            0            0             0                      0              0
+2017-W15   0.0  2750.0    2017-04-13        0.0              -1.0  4.424750       166.668342        53.192500          9.828111       -0.435969              0.387515        9.411850           18.962861      0.31                0               0            0            0             0                      0              0
+2017-W16   0.0  2669.0    2017-04-20        0.0              -1.0  4.401625       158.657076        51.765000          7.346156       -0.528249              0.387515        9.411850           18.962861      0.31                0               0            0            0             0                      0              0
+2017-W17   0.0  2694.0    2017-04-27        0.0               1.0  4.370250       156.652342        49.345000          0.724638       -1.010787              0.387515        9.411850           18.962861      0.31                0               0            0            0             0                      0              0
+2017-W18   0.0  2775.0    2017-05-04        0.0               1.0  4.327000       156.345564        47.460000         -6.995885       -2.327812              0.941287       17.439051           21.246102      0.40                0               0            0            0             0                      0              0
+2017-W19   0.0  2860.0    2017-05-11        0.0               1.0  4.342000       160.334705        47.196667        -11.271952       -1.870162              0.941287       17.439051           21.246102      0.40                0               0            0            0             0                      0              0
+2017-W20   0.0  2885.0    2017-05-18        0.0              -1.0  4.323000       160.234814        49.060000         -5.225538       -1.786272              0.941287       17.439051           21.246102      0.40                0               0            0            0             0                      0              0
+
+.describe():
+              spot                  week_end_date  momentum_5d_sign     usd_myr  palm_soy_spread  crude_oil_price  crude_oil_chg_4w  usd_myr_chg_4w  stock_to_usage_ratio  export_yoy_pct  production_yoy_pct    enso_oni  event_indonesia  event_malaysia  event_china  event_india  event_global  event_any_flag_active  event_net_sum
+count   495.000000                            495        494.000000  495.000000       495.000000       495.000000        491.000000      491.000000            495.000000      487.000000          487.000000  495.000000       495.000000      495.000000   495.000000   495.000000    495.000000             495.000000     495.000000
+mean   3589.074747  2021-09-30 20:21:49.090909184          0.076923    4.275428       156.880380        66.665200          2.191616       -0.060248              1.269501        1.168785            1.944728   -0.004707         0.050505       -0.052525    -0.022222    -0.016162     -0.034343               0.282828      -0.074747
+min    1775.000000            2017-01-05 00:00:00         -1.000000    3.866250       107.877881         4.232000        -81.753902       -6.536644              0.387515      -27.794289          -32.572069   -1.200000        -1.000000       -1.000000    -1.000000    -1.000000     -1.000000               0.000000      -4.000000
+25%    2576.500000            2019-05-20 12:00:00         -1.000000    4.131063       144.626661        55.778750         -4.973119       -0.949889              1.091071      -12.929649           -4.833238   -0.570000         0.000000        0.000000     0.000000     0.000000      0.000000               0.000000       0.000000
+50%    3783.000000            2021-10-01 00:00:00          1.000000    4.217875       155.365972        66.588000          0.738834       -0.025082              1.231604        1.402854            1.565477   -0.070000         0.000000        0.000000     0.000000     0.000000      0.000000               0.000000       0.000000
+75%    4235.000000            2024-02-12 12:00:00          1.000000    4.430563       170.541454        76.691750          6.550160        0.841303              1.440622       12.598614            9.505271    0.480000         0.000000        0.000000     0.000000     0.000000      0.000000               1.000000       0.000000
+max    7693.000000            2026-06-26 00:00:00          1.000000    4.783800       241.157043       120.925000        676.323251        5.278758              2.105702       57.595016           27.242900    2.060000         1.000000        1.000000     1.000000     1.000000      0.000000               1.000000       1.000000
+std    1125.800151                            NaN          0.996013    0.220990        21.629104        17.149084         33.031151        1.683615              0.257911       16.982021           11.460618    0.738400         0.341873        0.293776     0.249516     0.190199      0.182294               0.450829       0.667696
+
+
+>>> 3. TARGET VARIABLES
+
+--- 3a. Fixed-horizon persistence ---
+
+BASE PERSISTENCE RATES (naive baseline):
+Shape      N=4w persist%   N=4w count   N=12w persist%   N=12w count
+----------------------------------------------------------------------
+0.0                72.2%         187            59.9%          187
+0.1                25.9%          54             5.6%           54
+0.2                19.2%          26             3.8%           26
+1                  77.3%         163            61.8%          157
+2                  39.3%          61            27.1%           59
+POOLED   N=4w: 61.9% persist (491 obs)
+POOLED   N=12w: 47.4% persist (483 obs)
+
+--- 3b. Survival-style (time-to-event) ---
+
+Total episodes: 127
+
+Episode counts and censoring rates per shape:
+Shape      Episodes   Censored    Censor%   Mean dur   Median dur
+-----------------------------------------------------------------
+0.0              32          0       0.0%       5.8w         4.0w
+0.1              28          0       0.0%       1.9w         1.0w
+0.2              14          0       0.0%       1.9w         1.0w
+1                26          1       3.8%       6.3w         2.0w
+2                27          0       0.0%       2.3w         2.0w
+
+
+>>> 4. UNIVARIATE SCREENING
+
+FIXED-HORIZON PERSISTENCE: UNIVARIATE SCREENING (sorted by |diff|)
+==============================================================================================================
+Variable                  Horizon   Shape   High%    Low%  Diff(pp)  n_high   n_low    Split
+--------------------------------------------------------------------------------------------------------------
+stock_to_usage_ratio           4w     0.0   25.0%   75.0%    -50.0       8     128  tercile
+enso_oni                      12w       2    0.0%   47.6%    -47.6      14      21  tercile
+event_china                   12w  POOLED   90.0%   46.5%    +43.5      10     473   median
+enso_oni                      12w       1   67.5%   24.3%    +43.1      83      37  tercile
+palm_soy_spread                4w       1   40.0%   82.5%    -42.5      10      80  tercile
+event_malaysia                12w     0.0  100.0%   58.6%    +41.4       6     181   median
+usd_myr                       12w       1   38.5%   78.5%    -40.0      39      65  tercile
+production_yoy_pct             4w     0.2   40.0%    0.0%    +40.0       5       8  tercile
+event_china                    4w  POOLED  100.0%   61.1%    +38.9      10     481   median
+event_india                    4w  POOLED  100.0%   61.5%    +38.5       5     486   median
+event_any_flag_active         12w       2    0.0%   34.8%    -34.8      13      46   median
+palm_soy_spread                4w     0.2   33.3%    0.0%    +33.3       6      10  tercile
+enso_oni                       4w     0.2   33.3%    0.0%    +33.3       9       4  tercile
+crude_oil_chg_4w               4w     0.2    0.0%   33.3%    -33.3       5      12  tercile
+usd_myr                       12w     0.0   45.1%   77.4%    -32.3      71      53  tercile
+palm_soy_spread               12w       2   40.0%    8.0%    +32.0      10      25  tercile
+crude_oil_price               12w       2    8.7%   40.0%    -31.3      23      10  tercile
+enso_oni                      12w     0.0   37.8%   68.8%    -30.9      37      80  tercile
+enso_oni                       4w       2   12.5%   42.9%    -30.4      16      21  tercile
+usd_myr_chg_4w                 4w       2   18.2%   48.5%    -30.3      11      33  tercile
+event_china                   12w       1   90.0%   59.9%    +30.1      10     147   median
+usd_myr                       12w  POOLED   31.7%   61.5%    -29.8     161     161  tercile
+usd_myr_chg_4w                 4w       1   85.9%   56.5%    +29.4      64      46  tercile
+event_indonesia                4w       2   66.7%   37.9%    +28.7       3      58   median
+event_indonesia               12w       2    0.0%   28.6%    -28.6       3      56   median
+event_indonesia               12w       1   87.5%   60.4%    +27.1       8     149   median
+enso_oni                       4w     0.1   36.8%   10.0%    +26.8      19      20  tercile
+production_yoy_pct             4w     0.1   12.5%   39.1%    -26.6      16      23  tercile
+enso_oni                       4w       1   84.7%   59.5%    +25.2      85      37  tercile
+production_yoy_pct             4w       2   40.6%   15.4%    +25.2      32      13  tercile
+crude_oil_price               12w  POOLED   32.9%   57.8%    -24.8     161     161  tercile
+crude_oil_chg_4w              12w     0.0   73.8%   49.2%    +24.7      65      61  tercile
+enso_oni                       4w     0.0   51.4%   75.9%    -24.6      37      83  tercile
+crude_oil_price               12w     0.0   47.6%   71.8%    -24.2      63      71  tercile
+event_china                    4w       1  100.0%   75.8%    +24.2      10     153   median
+event_indonesia                4w       1  100.0%   76.1%    +23.9       8     155   median
+export_yoy_pct                 4w       2   54.2%   30.8%    +23.4      24      13  tercile
+event_india                    4w       1  100.0%   76.7%    +23.3       4     159   median
+production_yoy_pct            12w       2   37.5%   14.3%    +23.2      32      14  tercile
+event_malaysia                 4w     0.0   50.0%   72.9%    -22.9       6     181   median
+crude_oil_chg_4w               4w       2   45.0%   23.5%    +21.5      20      17  tercile
+production_yoy_pct             4w       1   65.0%   86.0%    -21.0      60      43  tercile
+palm_soy_spread                4w     0.1   31.4%   11.1%    +20.3      35       9  tercile
+event_indonesia                4w     0.1   41.7%   21.4%    +20.2      12      42   median
+event_malaysia                12w  POOLED   66.7%   47.0%    +19.6       9     474   median
+stock_to_usage_ratio           4w     0.1   34.8%   15.4%    +19.4      23      13  tercile
+production_yoy_pct            12w       1   49.1%   68.4%    -19.3      55      38  tercile
+event_any_flag_active          4w       2   53.8%   35.4%    +18.4      13      48   median
+event_malaysia                 4w  POOLED   44.4%   62.2%    -17.8       9     482   median
+event_any_flag_active          4w     0.2   26.7%    9.1%    +17.6      15      11   median
+crude_oil_price                4w     0.2   12.5%   30.0%    -17.5       8      10  tercile
+event_any_flag_active          4w     0.0   60.0%   76.6%    -16.6      50     137   median
+export_yoy_pct                12w       2   31.8%   15.4%    +16.4      22      13  tercile
+usd_myr                       12w       2   11.8%   28.0%    -16.2      17      25  tercile
+production_yoy_pct            12w     0.0   48.1%   63.6%    -15.6      52      77  tercile
+crude_oil_price               12w       1   44.2%   59.7%    -15.5      43      62  tercile
+usd_myr_chg_4w                 4w     0.0   58.6%   74.1%    -15.5      58      58  tercile
+usd_myr_chg_4w                 4w     0.1   22.7%   38.1%    -15.4      22      21  tercile
+palm_soy_spread                4w       2   27.3%   42.3%    -15.0      11      26  tercile
+usd_myr_chg_4w                12w     0.2   14.3%    0.0%    +14.3       7       4  tercile
+
+
+SURVIVAL DURATION: UNIVARIATE SCREENING
+==========================================================================================
+Variable                   High KM med   Low KM med   Diff(w)  n_high   n_low
+---------------------------------------------------------------------------
+event_indonesia                    4.0          2.0      +2.0       6     121
+event_any_flag_active              1.0          2.0      -1.0      40      87
+event_malaysia                     1.0          2.0      -1.0       3     124
+usd_myr_chg_4w                     2.0          1.0      +1.0      42      42
+stock_to_usage_ratio               2.0          2.0      +0.0      42      42
+palm_soy_spread                    2.0          2.0      +0.0      42      42
+enso_oni                           2.0          2.0      +0.0      44      43
+production_yoy_pct                 2.0          2.0      +0.0      42      42
+export_yoy_pct                     2.0          2.0      +0.0      42      43
+usd_myr                            2.0          2.0      +0.0      42      42
+crude_oil_chg_4w                   2.0          2.0      +0.0      42      42
+crude_oil_price                    2.0          2.0      +0.0      42      42
+event_net_sum                      2.0          2.0      +0.0      98     119
+
+
+>>> 5. CORRELATION MATRIX (continuous Tier 1 + Tier 2 variables)
+
+Correlation matrix (487 complete rows):
+
+                      stock_to_usage_ratio  export_yoy_pct  production_yoy_pct  enso_oni  palm_soy_spread  crude_oil_price  crude_oil_chg_4w  usd_myr  usd_myr_chg_4w
+stock_to_usage_ratio                  1.00            0.05                0.02      0.28            -0.25             0.06             -0.01    -0.32           -0.04
+export_yoy_pct                        0.05            1.00                0.43     -0.04             0.05             0.02              0.02    -0.07           -0.20
+production_yoy_pct                    0.02            0.43                1.00     -0.09             0.01            -0.11              0.02     0.13           -0.30
+enso_oni                              0.28           -0.04               -0.09      1.00            -0.11            -0.02             -0.05     0.38            0.11
+palm_soy_spread                      -0.25            0.05                0.01     -0.11             1.00            -0.25             -0.00     0.05           -0.08
+crude_oil_price                       0.06            0.02               -0.11     -0.02            -0.25             1.00             -0.01     0.29            0.16
+crude_oil_chg_4w                     -0.01            0.02                0.02     -0.05            -0.00            -0.01              1.00    -0.04           -0.05
+usd_myr                              -0.32           -0.07                0.13      0.38             0.05             0.29             -0.04     1.00            0.17
+usd_myr_chg_4w                       -0.04           -0.20               -0.30      0.11            -0.08             0.16             -0.05     0.17            1.00
+
+
+SPECIFIC CHECK: production/export/stock correlations:
+                      production_yoy_pct  export_yoy_pct  stock_to_usage_ratio
+production_yoy_pct                 1.000            0.43                 0.019
+export_yoy_pct                     0.430            1.00                 0.050
+stock_to_usage_ratio               0.019            0.05                 1.000
+
+
+>>> 6. RANDOM FOREST FEATURE IMPORTANCE (bootstrapped)
+
+
+--- Horizon: 4w ---
+
+  Shape 0.0 (179 obs, base rate 70.9%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 usd_myr                       0.1262     0.0216        2.4        1.4     STABLE
+     2 enso_oni                      0.1141     0.0316        4.0        2.6   moderate
+     3 stock_to_usage_ratio          0.1094     0.0301        4.1        2.4   moderate
+     4 crude_oil_price               0.0978     0.0214        4.1        1.8     STABLE
+     5 usd_myr_chg_4w                0.0968     0.0285        4.7        2.6   moderate
+     6 crude_oil_chg_4w              0.0811     0.0196        6.3        2.3   moderate
+     7 export_yoy_pct                0.0765     0.0257        6.4        2.8   moderate
+     8 palm_soy_spread               0.0700     0.0175        7.3        1.6     STABLE
+     9 production_yoy_pct            0.0671     0.0173        7.7        2.4   moderate
+    10 event_india                   0.0530     0.0295        9.2        3.1   moderate
+
+  Shape 0.1 (54 obs, base rate 25.9%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 usd_myr_chg_4w                0.1533     0.0489        2.3        1.3     STABLE
+     2 palm_soy_spread               0.1269     0.0342        3.2        2.2   moderate
+     3 usd_myr                       0.1105     0.0217        4.0        1.7     STABLE
+     4 enso_oni                      0.1021     0.0379        5.4        2.7   moderate
+     5 crude_oil_chg_4w              0.1012     0.0195        4.7        2.0   moderate
+     6 crude_oil_price               0.0926     0.0261        5.8        2.0   moderate
+     7 stock_to_usage_ratio          0.0890     0.0293        6.0        2.2   moderate
+     8 production_yoy_pct            0.0884     0.0306        6.0        2.5   moderate
+     9 export_yoy_pct                0.0652     0.0190        8.1        1.8     STABLE
+    10 event_indonesia               0.0211     0.0220       10.8        1.9     STABLE
+  Shape 0.2: SKIPPED (only 26 obs)
+
+  Shape 1 (163 obs, base rate 77.3%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 usd_myr_chg_4w                0.1724     0.0326        1.6        0.8     STABLE
+     2 palm_soy_spread               0.1442     0.0343        2.4        1.4     STABLE
+     3 usd_myr                       0.1308     0.0251        3.1        1.2     STABLE
+     4 enso_oni                      0.1186     0.0271        3.8        1.5     STABLE
+     5 production_yoy_pct            0.0920     0.0164        5.4        1.5     STABLE
+     6 crude_oil_chg_4w              0.0797     0.0124        6.5        1.0     STABLE
+     7 crude_oil_price               0.0755     0.0169        6.5        1.6     STABLE
+     8 stock_to_usage_ratio          0.0678     0.0209        7.2        1.7     STABLE
+     9 export_yoy_pct                0.0478     0.0101        8.7        0.6     STABLE
+    10 event_net_sum                 0.0239     0.0121       10.2        0.6     STABLE
+
+  Shape 2 (61 obs, base rate 39.3%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 usd_myr                       0.1317     0.0342        3.0        2.3   moderate
+     2 production_yoy_pct            0.1108     0.0414        4.8        2.5   moderate
+     3 export_yoy_pct                0.1047     0.0405        5.1        3.0   moderate
+     4 usd_myr_chg_4w                0.1011     0.0246        4.8        2.4   moderate
+     5 palm_soy_spread               0.0999     0.0168        4.1        1.5     STABLE
+     6 enso_oni                      0.0974     0.0221        4.8        2.2   moderate
+     7 crude_oil_chg_4w              0.0938     0.0284        5.8        2.9   moderate
+     8 stock_to_usage_ratio          0.0855     0.0272        6.2        2.7   moderate
+     9 crude_oil_price               0.0805     0.0160        6.8        1.5     STABLE
+    10 event_malaysia                0.0198     0.0162       11.8        2.0     STABLE
+
+  Shape POOLED (483 obs, base rate 61.3%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 usd_myr                       0.1571     0.0196        1.2        0.4     STABLE
+     2 crude_oil_price               0.1099     0.0152        4.2        1.4     STABLE
+     3 palm_soy_spread               0.1057     0.0154        4.5        1.8     STABLE
+     4 usd_myr_chg_4w                0.1054     0.0187        4.6        1.9     STABLE
+     5 stock_to_usage_ratio          0.1014     0.0227        5.0        2.3   moderate
+     6 crude_oil_chg_4w              0.1000     0.0245        4.8        2.6   moderate
+     7 enso_oni                      0.0919     0.0198        6.2        1.9     STABLE
+     8 production_yoy_pct            0.0851     0.0183        6.2        1.6     STABLE
+     9 export_yoy_pct                0.0646     0.0136        8.6        1.4     STABLE
+    10 event_net_sum                 0.0207     0.0123       10.8        0.8     STABLE
+
+--- Horizon: 12w ---
+
+  Shape 0.0 (179 obs, base rate 58.1%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 crude_oil_price               0.1583     0.0306        1.6        0.9     STABLE
+     2 usd_myr                       0.1407     0.0242        2.1        0.9     STABLE
+     3 palm_soy_spread               0.1057     0.0207        4.2        1.9     STABLE
+     4 stock_to_usage_ratio          0.0977     0.0345        5.3        2.2   moderate
+     5 enso_oni                      0.0966     0.0211        5.0        2.0   moderate
+     6 crude_oil_chg_4w              0.0904     0.0224        5.6        2.3   moderate
+     7 usd_myr_chg_4w                0.0834     0.0167        6.2        1.5     STABLE
+     8 production_yoy_pct            0.0825     0.0174        6.5        1.6     STABLE
+     9 export_yoy_pct                0.0650     0.0103        8.2        1.0     STABLE
+    10 event_net_sum                 0.0175     0.0062       11.1        1.0     STABLE
+
+  Shape 0.1 (54 obs, base rate 5.6%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 palm_soy_spread               0.1509     0.0827        3.8        4.0   UNSTABLE
+     2 crude_oil_chg_4w              0.1437     0.0726        3.5        3.0   moderate
+     3 export_yoy_pct                0.0889     0.0478        5.9        4.1   UNSTABLE
+     4 crude_oil_price               0.0883     0.0407        5.6        2.7   moderate
+     5 usd_myr                       0.0839     0.0558        5.8        2.7   moderate
+     6 production_yoy_pct            0.0695     0.0336        6.6        3.5   moderate
+     7 usd_myr_chg_4w                0.0682     0.0346        6.5        2.1   moderate
+     8 enso_oni                      0.0585     0.0282        7.8        2.9   moderate
+     9 event_global                  0.0493     0.0770        9.2        4.7   UNSTABLE
+    10 stock_to_usage_ratio          0.0461     0.0311        8.9        3.8   UNSTABLE
+  Shape 0.2: SKIPPED (only 26 obs)
+
+  Shape 1 (157 obs, base rate 61.8%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 enso_oni                      0.1693     0.0358        1.7        1.0     STABLE
+     2 usd_myr                       0.1546     0.0210        2.0        0.9     STABLE
+     3 production_yoy_pct            0.1254     0.0298        3.8        2.0     STABLE
+     4 crude_oil_price               0.1033     0.0184        4.8        1.6     STABLE
+     5 stock_to_usage_ratio          0.0910     0.0265        5.5        1.9     STABLE
+     6 usd_myr_chg_4w                0.0836     0.0204        5.8        1.5     STABLE
+     7 palm_soy_spread               0.0822     0.0190        6.2        1.8     STABLE
+     8 crude_oil_chg_4w              0.0775     0.0202        6.7        1.8     STABLE
+     9 export_yoy_pct                0.0549     0.0140        8.4        0.9     STABLE
+    10 event_any_flag_active         0.0129     0.0071       11.4        1.5     STABLE
+
+  Shape 2 (59 obs, base rate 27.1%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 production_yoy_pct            0.1726     0.0425        2.2        1.4     STABLE
+     2 crude_oil_price               0.1602     0.0407        2.4        1.2     STABLE
+     3 enso_oni                      0.1259     0.0446        3.8        2.5   moderate
+     4 palm_soy_spread               0.1197     0.0258        3.5        0.9     STABLE
+     5 stock_to_usage_ratio          0.0938     0.0428        5.1        2.1   moderate
+     6 usd_myr                       0.0787     0.0093        5.6        1.1     STABLE
+     7 crude_oil_chg_4w              0.0668     0.0183        7.1        1.6     STABLE
+     8 usd_myr_chg_4w                0.0634     0.0119        7.5        1.2     STABLE
+     9 export_yoy_pct                0.0594     0.0256        7.8        1.8     STABLE
+    10 event_any_flag_active         0.0253     0.0135       10.1        0.6     STABLE
+
+  Shape POOLED (475 obs, base rate 46.5%):
+  Rank Variable                    Mean Imp    Std Imp  Mean Rank   Std Rank  Stability
+     1 usd_myr                       0.2018     0.0317        1.1        0.2     STABLE
+     2 crude_oil_price               0.1281     0.0249        2.6        1.1     STABLE
+     3 crude_oil_chg_4w              0.1034     0.0240        4.7        1.7     STABLE
+     4 usd_myr_chg_4w                0.0987     0.0185        4.7        2.2   moderate
+     5 enso_oni                      0.0867     0.0151        6.0        2.1   moderate
+     6 stock_to_usage_ratio          0.0861     0.0196        5.6        1.9     STABLE
+     7 palm_soy_spread               0.0819     0.0125        6.2        1.9     STABLE
+     8 production_yoy_pct            0.0816     0.0150        6.5        1.9     STABLE
+     9 export_yoy_pct                0.0708     0.0109        7.8        1.3     STABLE
+    10 event_net_sum                 0.0153     0.0072       11.2        1.3     STABLE
+
+
+>>> 7. DATA ISSUES SUMMARY
+
+1. stock_to_usage_ratio: Uses stock/production as fallback (no import data available).
+   Full usage = production + imports - exports; without imports, this is an approximation.
+2. MPOB data range: Stock 2016-01-01 to 2026-05-01
+   Production 2016-03-01 to 2026-05-01
+   Export 2016-03-01 to 2026-05-01
+3. Palm-soy spread: TV ratio export, 2010-02-17 to 2026-06-29
+   Pre-2017 data available but only 2017+ used in panel.
+4. USD/MYR: 2011-01-12 to 2026-06-28
+5. Crude oil: 2004-05-23 to 2026-06-28
+6. Macro calendar: 2017-01-01 to 2026-06-01
+7. ENSO ONI: 1950-01-01 to 2026-04-01
+8. Shape log trusted window: 2017-01-02 to 2026-06-26
+9. Weekly panel final shape: (495, 25)
+
+10. Missing data in weekly panel:
+    export_yoy_pct: 8 missing (1.6%)
+    production_yoy_pct: 8 missing (1.6%)
+    crude_oil_chg_4w: 4 missing (0.8%)
+    usd_myr_chg_4w: 4 missing (0.8%)
+    momentum_5d_sign: 1 missing (0.2%)
+
+======================================================================
+PHASE A COMPLETE
+======================================================================
