@@ -1,0 +1,413 @@
+================================================================================
+PHASE B: PERSISTENCE MODEL BUILD — COMPLETE REPORT
+================================================================================
+Generated: 2026-06-30 09:17
+Training window: 2017-W01 through 2024-W52
+Test window: 2025-W01 through 2026-W26
+Model type: Per-shape logistic regression + Random Forest comparison
+Survival model: Cox proportional hazards (lifelines)
+Phase A inputs: Validated driver map (fixed, not re-derived)
+
+
+================================================================================
+SECTION 0: DATA LOADING & WEEKLY PANEL RECONSTRUCTION
+================================================================================
+
+Shape log: 4070 rows, 2008-01-01 to 2026-06-26
+
+Weekly panel: 495 weeks x 14 columns
+Date range: 2017-01-05 to 2026-06-26
+
+
+================================================================================
+SECTION 1: TRAIN/TEST SPLIT
+================================================================================
+
+Train set: 417 weeks
+  Date range: 2017-01-05 to 2024-12-27
+Test set:  78 weeks
+  Date range: 2025-01-03 to 2026-06-26
+
+Date overlap check: 0 overlapping dates (PASS — no overlap)
+Test set saved to: phase_b_test_set_LOCKED.csv
+
+Per-shape train/test counts:
+Shape    Name                     Train 4w  Train 12w    Test 4w   Test 12w
+----------------------------------------------------------------------
+0.0      Contango                      172        172         15         15
+0.1      Mild Contango                  49         49          5          5
+0.2      Steep Backwardation            22         22          4          4
+1        Backwardation                 138        138         25         19
+2        Flat                           36         36         25         23
+
+
+================================================================================
+SECTION 2: SURVIVAL EPISODE CONSTRUCTION
+================================================================================
+
+Total episodes: 127 (train: 100, test: 27)
+  Shape 0.0 (Contango): 28 train episodes, 4 test episodes
+  Shape 1 (Backwardation): 18 train episodes, 8 test episodes
+  Shape 2 (Flat): 19 train episodes, 8 test episodes
+
+
+================================================================================
+SECTION 3: FIXED-HORIZON PERSISTENCE MODELS — TRAINING SET RESULTS
+================================================================================
+
+For each modelable shape, fitting Logistic Regression (primary) and
+Random Forest (comparison) on the 2017-2024 training set.
+Features per shape are fixed from Phase A's validated driver map.
+
+======================================================================
+SHAPE 0.0 — Contango
+Features: ['usd_myr', 'enso_oni']
+======================================================================
+
+  --- Horizon: 4w ---
+  Training samples: 172 (persists: 126, breaks: 46)
+  Base rate (majority class): 73.3%
+
+  LOGISTIC REGRESSION (training set):
+    Accuracy: 74.4%  (vs base rate 73.3%)
+    Feature                         Coeff  Direction   Expected  Match
+    -----------------------------------------------------------------
+    usd_myr                       +0.2250   positive   negative     NO
+    enso_oni                      -0.6065   negative   positive     NO
+    Intercept:  +1.0569
+    Class 1 (persists): precision=74.7%, recall=98.4%
+    Class 0 (breaks):   precision=66.7%, recall=8.7%
+
+  RANDOM FOREST (training set):
+    In-sample accuracy: 87.8%
+    Bootstrap OOB accuracy: 76.8% +/- 3.0%
+    Feature importances:
+      usd_myr                      0.5372 +/- 0.0342
+      enso_oni                     0.4628 +/- 0.0342
+
+  --- Horizon: 12w ---
+  Training samples: 172 (persists: 107, breaks: 65)
+  Base rate (majority class): 62.2%
+
+  LOGISTIC REGRESSION (training set):
+    Accuracy: 63.4%  (vs base rate 62.2%)
+    Feature                         Coeff  Direction   Expected  Match
+    -----------------------------------------------------------------
+    usd_myr                       -0.2124   negative   negative    YES
+    enso_oni                      -0.2502   negative   positive     NO
+    Intercept:  +0.5159
+    Class 1 (persists): precision=64.3%, recall=92.5%
+    Class 0 (breaks):   precision=55.6%, recall=15.4%
+
+  RANDOM FOREST (training set):
+    In-sample accuracy: 87.2%
+    Bootstrap OOB accuracy: 67.8% +/- 5.9%
+    Feature importances:
+      usd_myr                      0.5211 +/- 0.0316
+      enso_oni                     0.4789 +/- 0.0316
+
+======================================================================
+SHAPE 1 — Backwardation
+Features: ['usd_myr', 'enso_oni', 'stock_to_usage_ratio']
+======================================================================
+
+  --- Horizon: 4w ---
+  Training samples: 138 (persists: 111, breaks: 27)
+  Base rate (majority class): 80.4%
+
+  LOGISTIC REGRESSION (training set):
+    Accuracy: 81.2%  (vs base rate 80.4%)
+    Feature                         Coeff  Direction   Expected  Match
+    -----------------------------------------------------------------
+    usd_myr                       -0.6903   negative   negative    YES
+    enso_oni                      +0.3663   positive   positive    YES
+    stock_to_usage_ratio          -0.2948   negative   negative    YES
+    Intercept:  +1.5082
+    Class 1 (persists): precision=82.0%, recall=98.2%
+    Class 0 (breaks):   precision=60.0%, recall=11.1%
+
+  RANDOM FOREST (training set):
+    In-sample accuracy: 90.6%
+    Bootstrap OOB accuracy: 82.5% +/- 4.9%
+    Feature importances:
+      usd_myr                      0.3997 +/- 0.0342
+      enso_oni                     0.3344 +/- 0.0275
+      stock_to_usage_ratio         0.2658 +/- 0.0357
+
+  --- Horizon: 12w ---
+  Training samples: 138 (persists: 88, breaks: 50)
+  Base rate (majority class): 63.8%
+
+  LOGISTIC REGRESSION (training set):
+    Accuracy: 73.9%  (vs base rate 63.8%)
+    Feature                         Coeff  Direction   Expected  Match
+    -----------------------------------------------------------------
+    usd_myr                       -1.0877   negative   negative    YES
+    enso_oni                      +0.5372   positive   positive    YES
+    stock_to_usage_ratio          -0.1929   negative   negative    YES
+    Intercept:  +0.6251
+    Class 1 (persists): precision=75.5%, recall=87.5%
+    Class 0 (breaks):   precision=69.4%, recall=50.0%
+
+  RANDOM FOREST (training set):
+    In-sample accuracy: 94.2%
+    Bootstrap OOB accuracy: 79.9% +/- 4.5%
+    Feature importances:
+      usd_myr                      0.3630 +/- 0.0287
+      enso_oni                     0.3479 +/- 0.0298
+      stock_to_usage_ratio         0.2892 +/- 0.0381
+
+======================================================================
+SHAPE 2 — Flat
+Features: ['enso_oni', 'crude_oil_price', 'palm_soy_spread', 'production_yoy_pct']
+======================================================================
+
+  --- Horizon: 4w ---
+  Training samples: 36 (persists: 11, breaks: 25)
+  Base rate (majority class): 30.6%
+
+  LOGISTIC REGRESSION (training set):
+    Accuracy: 75.0%  (vs base rate 30.6%)
+    Feature                         Coeff  Direction   Expected  Match
+    -----------------------------------------------------------------
+    enso_oni                      -0.3665   negative   negative    YES
+    crude_oil_price               +0.5681   positive   negative     NO
+    palm_soy_spread               -0.1352   negative   positive     NO
+    production_yoy_pct            -0.0697   negative   positive     NO
+    Intercept:  -0.9264
+    Class 1 (persists): precision=66.7%, recall=36.4%
+    Class 0 (breaks):   precision=76.7%, recall=92.0%
+
+  RANDOM FOREST (training set):
+    In-sample accuracy: 100.0%
+    Bootstrap OOB accuracy: 68.9% +/- 11.3%
+    Feature importances:
+      enso_oni                     0.2614 +/- 0.0481
+      crude_oil_price              0.2642 +/- 0.0595
+      palm_soy_spread              0.2821 +/- 0.0524
+      production_yoy_pct           0.1923 +/- 0.0874
+
+  --- Horizon: 12w ---
+  Training samples: 36 (persists: 6, breaks: 30)
+  Base rate (majority class): 16.7%
+
+  LOGISTIC REGRESSION (training set):
+    Accuracy: 88.9%  (vs base rate 16.7%)
+    Feature                         Coeff  Direction   Expected  Match
+    -----------------------------------------------------------------
+    enso_oni                      -1.1952   negative   negative    YES
+    crude_oil_price               -0.1637   negative   negative    YES
+    palm_soy_spread               -0.1100   negative   positive     NO
+    production_yoy_pct            +0.6790   positive   positive    YES
+    Intercept:  -2.3094
+    Class 1 (persists): precision=100.0%, recall=33.3%
+    Class 0 (breaks):   precision=88.2%, recall=100.0%
+
+  RANDOM FOREST (training set):
+    In-sample accuracy: 100.0%
+    Bootstrap OOB accuracy: 85.6% +/- 7.8%
+    Feature importances:
+      enso_oni                     0.3324 +/- 0.0862
+      crude_oil_price              0.2927 +/- 0.0700
+      palm_soy_spread              0.1943 +/- 0.0839
+      production_yoy_pct           0.1806 +/- 0.0751
+
+
+================================================================================
+SECTION 4: COX PROPORTIONAL HAZARDS MODELS — TRAINING SET
+================================================================================
+
+Fitting Cox PH models on training-set episodes (2017-2024).
+Target: time-to-regime-break. Covariates: shape-specific validated features.
+
+============================================================
+SHAPE 0.0 — Contango
+Features: ['usd_myr', 'enso_oni']
+Episodes: 28 (events: 28, censored: 0)
+============================================================
+
+  Cox PH Model Summary:
+  Covariate                       Coeff       HR   p-value  Direction   Expected  Match
+  ----------------------------------------------------------------------------------
+  usd_myr                       -1.6443    0.193    0.1281   decreases hazard   increases hazard     NO
+  enso_oni                      +0.8705    2.388    0.0195   increases hazard   decreases hazard     NO
+
+  Concordance index (train): 0.656
+
+============================================================
+SHAPE 1 — Backwardation
+Features: ['usd_myr', 'enso_oni', 'stock_to_usage_ratio']
+Episodes: 18 (events: 18, censored: 0)
+============================================================
+
+  Cox PH Model Summary:
+  Covariate                       Coeff       HR   p-value  Direction   Expected  Match
+  ----------------------------------------------------------------------------------
+  usd_myr                       +1.1277    3.088    0.3385   increases hazard   increases hazard    YES
+  enso_oni                      -0.3999    0.670    0.2345   decreases hazard   decreases hazard    YES
+  stock_to_usage_ratio          +0.6808    1.976    0.5634   increases hazard   increases hazard    YES
+
+  Concordance index (train): 0.625
+
+============================================================
+SHAPE 2 — Flat
+Features: ['enso_oni', 'crude_oil_price', 'palm_soy_spread', 'production_yoy_pct']
+Episodes: 19 (events: 19, censored: 0)
+============================================================
+
+  Cox PH Model Summary:
+  Covariate                       Coeff       HR   p-value  Direction   Expected  Match
+  ----------------------------------------------------------------------------------
+  enso_oni                      +0.0134    1.013    0.9585   increases hazard   increases hazard    YES
+  crude_oil_price               -0.0465    0.955    0.1595   decreases hazard   increases hazard     NO
+  palm_soy_spread               -0.0099    0.990    0.6210   decreases hazard   decreases hazard    YES
+  production_yoy_pct            -0.0066    0.993    0.7590   decreases hazard   decreases hazard    YES
+
+  Concordance index (train): 0.681
+
+
+================================================================================
+SECTION 5: NON-MODELABLE SHAPES — BASE RATE PREDICTIONS
+================================================================================
+
+Shape 0.1 — Mild Contango
+  Status: No validated driver found in Phase A. No feature-based model built.
+  Prediction method: Unconditional historical base rate from training set.
+
+  Shape 0.1 — Mild Contango (reason: No validated driver)
+    4w base rate: 26.5% (n=49)
+    12w base rate: 4.1% (n=49)
+
+  Shape 0.2 — Steep Backwardation (reason: Insufficient data (n too small))
+    4w base rate: 18.2% (n=22)
+    12w base rate: 4.5% (n=22)
+
+  These base rates ARE the standing prediction for these shapes.
+  Shape 0.2 (Steep Backwardation, n=26 total panel): flagged as a known gap
+  pending more data accumulation, not a finding.
+
+
+================================================================================
+SECTION 6: FINAL EVALUATION ON HELD-OUT TEST SET (2025-2026)
+================================================================================
+
+Loading locked test set and running every fitted model exactly once.
+No iteration on models after seeing these results.
+
+Test set loaded: 78 weeks, 2025-01-03 to 2026-06-26
+
+==========================================================================================
+Shape   Hz Model   Acc%  Prec1   Rec1  Prec0   Rec0  Base%  BaseAcc  vs Base
+==========================================================================================
+0.0      4w    LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]
+0.0      4w    RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]
+0.0     12w    LR  33.3%   0.0%   0.0%   0.0%   0.0%  33.3%    33.3%    +0.0pp [all-1]
+0.0     12w    RF  33.3%  30.8%  80.0%  50.0%  10.0%  33.3%    33.3%    +0.0pp
+1        4w    LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]
+1        4w    RF  72.0%  68.2% 100.0% 100.0%  30.0%  60.0%    60.0%   +12.0pp
+1       12w    LR  47.4%   0.0%   0.0%   0.0%   0.0%  47.4%    47.4%    +0.0pp [all-1]
+1       12w    RF  52.6%  50.0% 100.0% 100.0%  10.0%  47.4%    47.4%    +5.3pp
+2        4w    LR  36.0%  20.0%   7.7%  40.0%  66.7%  48.0%    48.0%   -12.0pp
+2        4w    RF  48.0%   0.0%   0.0%   0.0%   0.0%  48.0%    48.0%    +0.0pp [all-0]
+2       12w    LR  56.5%   0.0%   0.0%   0.0%   0.0%  56.5%    56.5%    +0.0pp [all-0]
+2       12w    RF  56.5%   0.0%   0.0%   0.0%   0.0%  56.5%    56.5%    +0.0pp [all-0]
+
+============================================================
+BASE-RATE-ONLY SHAPES ON TEST SET
+============================================================
+  Shape 0.1 (Mild Contango) 4w: train base=26.5%, test actual=20.0%, baseline acc=80.0% (n=5)
+  Shape 0.1 (Mild Contango) 12w: train base=4.1%, test actual=20.0%, baseline acc=80.0% (n=5)
+  Shape 0.2 (Steep Backwardation) 4w: train base=18.2%, test actual=25.0%, baseline acc=75.0% (n=4)
+  Shape 0.2 (Steep Backwardation) 12w: train base=4.5%, test actual=0.0%, baseline acc=100.0% (n=4)
+
+============================================================
+COX MODEL — TEST SET EVALUATION
+============================================================
+
+  Shape 0.0 (Contango):
+    Test episodes: 4 (events: 4, censored: 0)
+    Concordance index (test): 0.800
+    Training median duration (uncensored): 6.5w
+    Test median duration (uncensored): 2.0w
+
+  Shape 1 (Backwardation):
+    Test episodes: 8 (events: 7, censored: 1)
+    Concordance index (test): 0.682
+    Training median duration (uncensored): 3.0w
+    Test median duration (uncensored): 1.0w
+
+  Shape 2 (Flat):
+    Test episodes: 8 (events: 8, censored: 0)
+    Concordance index (test): 0.435
+    Training median duration (uncensored): 2.0w
+    Test median duration (uncensored): 3.0w
+
+
+================================================================================
+SECTION 7: FEATURE DIRECTION STABILITY — TRAIN vs TEST
+================================================================================
+
+Does the validated direction of each feature hold up on 2025-2026 data?
+Method: same tercile/group split as Phase A, check if persistence gap direction matches.
+
+
+  Shape 0.0 (Contango):
+    usd_myr                       4w  train gap=  -8.8pp  test gap=    -5.4pp  (n_hi=7, n_lo=8)  HOLDS 
+    usd_myr                      12w  train gap= -28.1pp  test gap=   +44.6pp  (n_hi=7, n_lo=8)  FLIPPED ***
+    enso_oni                      4w  train gap= -10.7pp  test gap=   -58.9pp  (n_hi=7, n_lo=8)  HOLDS 
+    enso_oni                     12w  train gap= -21.9pp  test gap=   -35.7pp  (n_hi=7, n_lo=8)  HOLDS 
+
+  Shape 1 (Backwardation):
+    usd_myr                       4w  train gap= -13.0pp  test gap=    -3.2pp  (n_hi=12, n_lo=13)  WEAKENED ***
+    usd_myr                      12w  train gap= -39.1pp  test gap=   +36.7pp  (n_hi=9, n_lo=10)  FLIPPED ***
+    enso_oni                      4w  train gap= +14.0pp  test gap=   +16.7pp  (n_hi=10, n_lo=15)  HOLDS 
+    enso_oni                     12w  train gap= +15.7pp  test gap=   +26.1pp  (n_hi=8, n_lo=11)  HOLDS 
+    stock_to_usage_ratio          4w  train gap=  -6.9pp  test gap=    -3.2pp  (n_hi=12, n_lo=13)  WEAKENED ***
+    stock_to_usage_ratio         12w  train gap= +10.1pp  test gap=   -38.6pp  (n_hi=8, n_lo=11)  FLIPPED ***
+
+  Shape 2 (Flat):
+    enso_oni                      4w  train gap= -25.0pp  test gap=   -36.7pp  (n_hi=10, n_lo=15)  HOLDS 
+    enso_oni                     12w  train gap= -50.0pp  test gap=   -48.5pp  (n_hi=11, n_lo=12)  HOLDS 
+    crude_oil_price               4w  train gap= +25.0pp  test gap=   -19.9pp  (n_hi=12, n_lo=13)  FLIPPED ***
+    crude_oil_price              12w  train gap= -16.7pp  test gap=   -48.5pp  (n_hi=11, n_lo=12)  HOLDS 
+    palm_soy_spread               4w  train gap= -25.0pp  test gap=   +12.2pp  (n_hi=12, n_lo=13)  FLIPPED ***
+    palm_soy_spread              12w  train gap=  +0.0pp  test gap=   +38.6pp  (n_hi=11, n_lo=12)  FLIPPED ***
+    production_yoy_pct            4w  train gap=  -8.3pp  test gap=    -3.3pp  (n_hi=10, n_lo=15)  WEAKENED ***
+    production_yoy_pct           12w  train gap= +25.0pp  test gap=   +64.6pp  (n_hi=10, n_lo=13)  HOLDS 
+
+  *** FLAGGED DIRECTION ISSUES (9) ***
+    Shape 0.0, usd_myr, 12w: train=-28.1pp -> test=+44.6pp (FLIPPED)
+    Shape 1, usd_myr, 4w: train=-13.0pp -> test=-3.2pp (WEAKENED)
+    Shape 1, usd_myr, 12w: train=-39.1pp -> test=+36.7pp (FLIPPED)
+    Shape 1, stock_to_usage_ratio, 4w: train=-6.9pp -> test=-3.2pp (WEAKENED)
+    Shape 1, stock_to_usage_ratio, 12w: train=+10.1pp -> test=-38.6pp (FLIPPED)
+    Shape 2, crude_oil_price, 4w: train=+25.0pp -> test=-19.9pp (FLIPPED)
+    Shape 2, palm_soy_spread, 4w: train=-25.0pp -> test=+12.2pp (FLIPPED)
+    Shape 2, palm_soy_spread, 12w: train=+0.0pp -> test=+38.6pp (FLIPPED)
+    Shape 2, production_yoy_pct, 4w: train=-8.3pp -> test=-3.3pp (WEAKENED)
+
+
+================================================================================
+PHASE B SUMMARY
+================================================================================
+
+Models built:
+  - 6 fixed-horizon classifiers (3 shapes x 2 horizons), each with LR + RF
+  - 3 Cox PH survival models (one per modelable shape)
+  - 2 base-rate-only shapes (0.1 Mild Contango, 0.2 Steep Backwardation)
+
+Train/test split:
+  - Train: 2017-W01 to 2024-W52 (417 weeks)
+  - Test:  2025-W01 to 2026-W26 (78 weeks), locked before model fitting
+
+Feature sets (from Phase A, not re-derived):
+  - Shape 0.0 (Contango):          usd_myr, enso_oni
+  - Shape 1   (Backwardation):     usd_myr, enso_oni, stock_to_usage_ratio
+  - Shape 2   (Flat):              enso_oni, crude_oil_price, palm_soy_spread, production_yoy_pct
+  - Shape 0.1 (Mild Contango):     base rate only (no validated driver)
+  - Shape 0.2 (Steep Backwardation): base rate only (insufficient data, n=26)
+
+================================================================================
+PHASE B: PERSISTENCE MODEL BUILD — COMPLETE
+================================================================================
+Output saved to: C:\ClaudeCode\research\outputs\Phase_B_Persistence_Model.txt
