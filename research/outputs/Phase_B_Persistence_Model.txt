@@ -673,3 +673,366 @@ CONCLUSION
 ================================================================================
 END OF SECTION 8
 ================================================================================
+
+
+================================================================================
+SECTION 9: SHAPE 0.0 AND SHAPE 2 — HORIZON SWEEP (1w to 8w)
+================================================================================
+Generated: 2026-06-30 09:42
+Three model variants: Plain LR, Class-Weighted LR (balanced), Random Forest
+Train: 2017-01-05 to 2024-12-27 (417 weeks)
+Test:  2025-01-03 to 2026-06-26 (78 weeks)
+
+
+################################################################################
+# SHAPE 0.0 — Contango
+# Features: ['usd_myr', 'enso_oni']
+################################################################################
+
+================================================================================
+9a-0.0. SAMPLE SIZE & BASE RATE AT EACH HORIZON — Shape 0.0 (Contango)
+================================================================================
+
+ Hz   Train n  Persist    Break   Base%     Flag   Test n  Persist    Break   Base%     Flag
+----------------------------------------------------------------------------------------------------
+  1w      172      145       27   84.3%                15       10        5   66.7%         
+  2w      172      135       37   78.5%                15       10        5   66.7%         
+  3w      172      134       38   77.9%                15        9        6   60.0%         
+  4w      172      126       46   73.3%                15        9        6   60.0%         
+  5w      172      123       49   71.5%                15        9        6   60.0%         
+  6w      172      118       54   68.6%                15        6        9   40.0%         
+  7w      172      113       59   65.7%                15        8        7   53.3%         
+  8w      172      119       53   69.2%                15        7        8   46.7%         
+
+No horizon flagged as trivial.
+
+================================================================================
+9b-0.0. TRAINING SET RESULTS — Shape 0.0 (Contango)
+================================================================================
+
+ Hz  Model   Acc%  Base%    Lift     usd_myr    enso_oni      Dirs
+-------------------------------------------------------------------------------
+  1w     LR  84.3%  84.3%   +0.0pp     +0.2716     -0.4771       N N
+  1w   LR-W  59.9%  84.3%  -24.4pp     +0.1964     -0.3965       N N
+  1w     RF  88.4%  84.3%   +4.1pp  imp=0.525     imp=0.475     OOB=83.8±5.0%
+  2w     LR  78.5%  78.5%   +0.0pp     +0.2001     -0.5350       N N
+  2w   LR-W  58.1%  78.5%  -20.3pp     +0.1752     -0.4900       N N
+  2w     RF  86.6%  78.5%   +8.1pp  imp=0.526     imp=0.474     OOB=76.5±5.3%
+  3w     LR  77.9%  77.9%   +0.0pp     +0.2357     -0.5391       N N
+  3w   LR-W  62.8%  77.9%  -15.1pp     +0.2427     -0.5133       N N
+  3w     RF  87.2%  77.9%   +9.3pp  imp=0.548     imp=0.452     OOB=78.9±4.7%
+  4w     LR  74.4%  73.3%   +1.2pp     +0.2250     -0.6065       N N
+  4w   LR-W  62.8%  73.3%  -10.5pp     +0.2036     -0.5526       N N
+  4w     RF  87.8%  73.3%  +14.5pp  imp=0.541     imp=0.459     OOB=73.6±4.3%
+  5w     LR  70.9%  71.5%   -0.6pp     -0.0384     -0.3259       Y N
+  5w   LR-W  58.7%  71.5%  -12.8pp     -0.0319     -0.3137       Y N
+  5w     RF  87.8%  71.5%  +16.3pp  imp=0.528     imp=0.472     OOB=74.9±3.6%
+  6w     LR  66.9%  68.6%   -1.7pp     +0.1173     -0.4490       N N
+  6w   LR-W  61.0%  68.6%   -7.6pp     +0.0931     -0.4223       N N
+  6w     RF  90.7%  68.6%  +22.1pp  imp=0.490     imp=0.510     OOB=80.1±4.4%
+  7w     LR  66.9%  65.7%   +1.2pp     -0.0491     -0.3969       Y N
+  7w   LR-W  59.9%  65.7%   -5.8pp     -0.0709     -0.3781       Y N
+  7w     RF  91.3%  65.7%  +25.6pp  imp=0.522     imp=0.478     OOB=76.6±4.9%
+  8w     LR  70.3%  69.2%   +1.2pp     -0.1667     -0.3440       Y N
+  8w   LR-W  62.2%  69.2%   -7.0pp     -0.2013     -0.3261       Y N
+  8w     RF  91.3%  69.2%  +22.1pp  imp=0.519     imp=0.481     OOB=81.2±4.2%
+
+================================================================================
+9c-0.0. TEST SET RESULTS — Shape 0.0 (Contango)
+================================================================================
+
+ Hz  Model   Acc%  Prec1   Rec1  Prec0   Rec0  Base%  BaseAcc  vs Base Note          
+---------------------------------------------------------------------------------------------------------
+  1w     LR  66.7%   0.0%   0.0%   0.0%   0.0%  66.7%    66.7%    +0.0pp [all-1]       
+  1w   LR-W  73.3%  75.0%  90.0%  66.7%  40.0%  66.7%    66.7%    +6.7pp               
+  1w     RF  66.7%   0.0%   0.0%   0.0%   0.0%  66.7%    66.7%    +0.0pp [all-1]       
+  2w     LR  66.7%   0.0%   0.0%   0.0%   0.0%  66.7%    66.7%    +0.0pp [all-1]       
+  2w   LR-W  60.0%  75.0%  60.0%  42.9%  60.0%  66.7%    66.7%    -6.7pp               
+  2w     RF  66.7%   0.0%   0.0%   0.0%   0.0%  66.7%    66.7%    +0.0pp [all-1]       
+  3w     LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+  3w   LR-W  66.7%  66.7%  88.9%  66.7%  33.3%  60.0%    60.0%    +6.7pp               
+  3w     RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+  4w     LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+  4w   LR-W  80.0%  87.5%  77.8%  71.4%  83.3%  60.0%    60.0%   +20.0pp               
+  4w     RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+  5w     LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+  5w   LR-W  60.0%  80.0%  44.4%  50.0%  83.3%  60.0%    60.0%    +0.0pp               
+  5w     RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+  6w     LR  40.0%   0.0%   0.0%   0.0%   0.0%  40.0%    40.0%    +0.0pp [all-1]       
+  6w   LR-W  86.7%  75.0% 100.0% 100.0%  77.8%  40.0%    40.0%   +46.7pp               
+  6w     RF  53.3%  46.2% 100.0% 100.0%  22.2%  40.0%    40.0%   +13.3pp               
+  7w     LR  53.3%   0.0%   0.0%   0.0%   0.0%  53.3%    53.3%    +0.0pp [all-1]       
+  7w   LR-W  66.7%  80.0%  50.0%  60.0%  85.7%  53.3%    53.3%   +13.3pp               
+  7w     RF  60.0%  57.1% 100.0% 100.0%  14.3%  53.3%    53.3%    +6.7pp               
+  8w     LR  46.7%   0.0%   0.0%   0.0%   0.0%  46.7%    46.7%    +0.0pp [all-1]       
+  8w   LR-W  60.0% 100.0%  14.3%  57.1% 100.0%  46.7%    46.7%   +13.3pp               
+  8w     RF  46.7%   0.0%   0.0%   0.0%   0.0%  46.7%    46.7%    +0.0pp [all-1]       
+
+  CLASS-WEIGHT FIX DIAGNOSIS — Shape 0.0 (Contango):
+    Plain LR degenerate: 8/8 horizons
+    Class-weighted LR degenerate: 0/8 horizons
+    → YES, class weighting fixed degeneracy at 8 horizon(s).
+    → And it beats baseline at: [1, 3, 4, 6, 7, 8]w
+
+================================================================================
+9d-0.0. FEATURE DIRECTION STABILITY — Shape 0.0 (Contango)
+================================================================================
+
+Tracking LR coefficient direction (training) vs actual test-set gap direction.
+Expected directions from Phase A shown for reference.
+
+  usd_myr (expected: negative):
+   Hz    LR coeff   LR dir  Match  LR-W coeff LR-W dir  Match    Test gap   Test dir
+  -----------------------------------------------------------------------------------------------
+    1w     +0.2716 positive     NO     +0.1964 positive     NO      +8.9pp   positive
+    2w     +0.2001 positive     NO     +0.1752 positive     NO     +35.7pp   positive
+    3w     +0.2357 positive     NO     +0.2427 positive     NO     +21.4pp   positive
+    4w     +0.2250 positive     NO     +0.2036 positive     NO      -5.4pp   negative
+    5w     -0.0384 negative    YES     -0.0319 negative    YES      -5.4pp   negative
+    6w     +0.1173 positive     NO     +0.0931 positive     NO      +5.4pp   positive
+    7w     -0.0491 negative    YES     -0.0709 negative    YES     +33.9pp   positive
+    8w     -0.1667 negative    YES     -0.2013 negative    YES     +19.6pp   positive
+
+  enso_oni (expected: positive):
+   Hz    LR coeff   LR dir  Match  LR-W coeff LR-W dir  Match    Test gap   Test dir
+  -----------------------------------------------------------------------------------------------
+    1w     -0.4771 negative     NO     -0.3965 negative     NO     -44.6pp   negative
+    2w     -0.5350 negative     NO     -0.4900 negative     NO     -17.9pp   negative
+    3w     -0.5391 negative     NO     -0.5133 negative     NO     -32.1pp   negative
+    4w     -0.6065 negative     NO     -0.5526 negative     NO     -58.9pp   negative
+    5w     -0.3259 negative     NO     -0.3137 negative     NO     -32.1pp   negative
+    6w     -0.4490 negative     NO     -0.4223 negative     NO     -75.0pp   negative
+    7w     -0.3969 negative     NO     -0.3781 negative     NO     -46.4pp   negative
+    8w     -0.3440 negative     NO     -0.3261 negative     NO     -60.7pp   negative
+
+
+================================================================================
+9e-0.0. USABLE RANGE IDENTIFICATION — Shape 0.0 (Contango)
+================================================================================
+
+  Practical floor (shortest non-trivial horizon): 1w
+
+  LR:
+    Beats baseline at: none
+    Degenerate at: [1, 2, 3, 4, 5, 6, 7, 8]
+
+  LR-W:
+    Beats baseline at: [1, 3, 4, 6, 7, 8]
+      1w: 73.3% vs 66.7% (+6.7pp, n=15)
+      3w: 66.7% vs 60.0% (+6.7pp, n=15)
+      4w: 80.0% vs 60.0% (+20.0pp, n=15)
+      6w: 86.7% vs 40.0% (+46.7pp, n=15)
+      7w: 66.7% vs 53.3% (+13.3pp, n=15)
+      8w: 60.0% vs 46.7% (+13.3pp, n=15)
+    Degenerate at: none
+
+  RF:
+    Beats baseline at: [6, 7]
+      6w: 53.3% vs 40.0% (+13.3pp, n=15)
+      7w: 60.0% vs 53.3% (+6.7pp, n=15)
+    Degenerate at: [1, 2, 3, 4, 5, 8]
+
+  ANY model beats baseline at: [1, 3, 4, 6, 7, 8]
+
+  Direction check on beating horizons:
+    1w: SOME FLIPPED (usd_myr=FLIP, enso_oni=FLIP)
+    3w: SOME FLIPPED (usd_myr=FLIP, enso_oni=FLIP)
+    4w: SOME FLIPPED (usd_myr=OK, enso_oni=FLIP)
+    6w: SOME FLIPPED (usd_myr=FLIP, enso_oni=FLIP)
+    7w: SOME FLIPPED (usd_myr=FLIP, enso_oni=FLIP)
+    8w: SOME FLIPPED (usd_myr=FLIP, enso_oni=FLIP)
+
+  ============================================================
+  CONCLUSION — Shape 0.0 (Contango):
+  Best out-of-sample result: LR-W at 6w — 86.7% accuracy
+  vs 40.0% baseline (+46.7pp lift, n=15).
+
+
+################################################################################
+# SHAPE 2 — Flat
+# Features: ['enso_oni', 'crude_oil_price', 'palm_soy_spread', 'production_yoy_pct']
+################################################################################
+
+================================================================================
+9a-2. SAMPLE SIZE & BASE RATE AT EACH HORIZON — Shape 2 (Flat)
+================================================================================
+
+ Hz   Train n  Persist    Break   Base%     Flag   Test n  Persist    Break   Base%     Flag
+----------------------------------------------------------------------------------------------------
+  1w       36       17       19   47.2%                25       17        8   68.0%         
+  2w       36       14       22   38.9%                25       16        9   64.0%         
+  3w       36       13       23   36.1%                25       13       12   52.0%         
+  4w       36       11       25   30.6%                25       13       12   52.0%         
+  5w       36       11       25   30.6%                25       11       14   44.0%         
+  6w       36        8       28   22.2%                25       10       15   40.0%         
+  7w       36        8       28   22.2%                25        9       16   36.0%         
+  8w       36        6       30   16.7%                25        7       18   28.0%         
+
+No horizon flagged as trivial.
+
+================================================================================
+9b-2. TRAINING SET RESULTS — Shape 2 (Flat)
+================================================================================
+
+ Hz  Model   Acc%  Base%    Lift    enso_oni  crude_oil_  palm_soy_s  production      Dirs
+-------------------------------------------------------------------------------------------------------
+  1w     LR  58.3%  47.2%  +11.1pp     -0.1009     +0.4815     +0.0331     +0.0228   Y N Y Y
+  1w   LR-W  61.1%  47.2%  +13.9pp     -0.1065     +0.4918     +0.0409     +0.0223   Y N Y Y
+  1w     RF 100.0%  47.2%  +52.8pp  imp=0.141     imp=0.351     imp=0.334     imp=0.174     OOB=46.4±11.7%
+  2w     LR  75.0%  38.9%  +36.1pp     +0.3726     +0.2894     -0.3059     +0.3271   N N N Y
+  2w   LR-W  55.6%  38.9%  +16.7pp     +0.3690     +0.2817     -0.3141     +0.3335   N N N Y
+  2w     RF  97.2%  38.9%  +58.3pp  imp=0.212     imp=0.324     imp=0.322     imp=0.142     OOB=44.2±10.4%
+  3w     LR  61.1%  36.1%  +25.0pp     +0.2104     +0.5440     -0.3902     +0.0556   N N N Y
+  3w   LR-W  66.7%  36.1%  +30.6pp     +0.2057     +0.5591     -0.4017     +0.0767   N N N Y
+  3w     RF 100.0%  36.1%  +63.9pp  imp=0.198     imp=0.289     imp=0.403     imp=0.110     OOB=57.3±12.8%
+  4w     LR  75.0%  30.6%  +44.4pp     -0.3665     +0.5681     -0.1352     -0.0697   Y N N N
+  4w   LR-W  66.7%  30.6%  +36.1pp     -0.3682     +0.6163     -0.0887     -0.0085   Y N N N
+  4w     RF 100.0%  30.6%  +69.4pp  imp=0.271     imp=0.281     imp=0.288     imp=0.160     OOB=68.7±12.8%
+  5w     LR  75.0%  30.6%  +44.4pp     +0.2297     +0.5081     -0.3302     +0.5481   N N N Y
+  5w   LR-W  69.4%  30.6%  +38.9pp     +0.2166     +0.5347     -0.3234     +0.5858   N N N Y
+  5w     RF 100.0%  30.6%  +69.4pp  imp=0.220     imp=0.244     imp=0.370     imp=0.166     OOB=60.5±9.1%
+  6w     LR  77.8%  22.2%  +55.6pp     -0.0126     +0.3414     -0.3707     -0.0097   Y N N N
+  6w   LR-W  66.7%  22.2%  +44.4pp     -0.0281     +0.4052     -0.3812     -0.0050   Y N N N
+  6w     RF 100.0%  22.2%  +77.8pp  imp=0.216     imp=0.342     imp=0.307     imp=0.134     OOB=66.0±12.7%
+  7w     LR  83.3%  22.2%  +61.1pp     -0.3579     +0.4620     -0.4613     +0.3889   Y N N Y
+  7w   LR-W  66.7%  22.2%  +44.4pp     -0.3143     +0.4594     -0.4496     +0.5720   Y N N Y
+  7w     RF 100.0%  22.2%  +77.8pp  imp=0.298     imp=0.324     imp=0.241     imp=0.137     OOB=76.3±8.3%
+  8w     LR  83.3%  16.7%  +66.7pp     -0.1655     +0.1834     -0.2666     +0.5867   Y N N Y
+  8w   LR-W  63.9%  16.7%  +47.2pp     -0.1263     +0.2478     -0.2507     +0.8047   Y N N Y
+  8w     RF 100.0%  16.7%  +83.3pp  imp=0.282     imp=0.268     imp=0.226     imp=0.223     OOB=77.5±11.0%
+
+================================================================================
+9c-2. TEST SET RESULTS — Shape 2 (Flat)
+================================================================================
+
+ Hz  Model   Acc%  Prec1   Rec1  Prec0   Rec0  Base%  BaseAcc  vs Base Note          
+---------------------------------------------------------------------------------------------------------
+  1w     LR  36.0%  57.1%  23.5%  27.8%  62.5%  68.0%    32.0%    +4.0pp               
+  1w   LR-W  36.0%  57.1%  23.5%  27.8%  62.5%  68.0%    32.0%    +4.0pp               
+  1w     RF  32.0%  50.0%  11.8%  28.6%  75.0%  68.0%    32.0%    +0.0pp               
+  2w     LR  40.0%  60.0%  18.8%  35.0%  77.8%  64.0%    36.0%    +4.0pp               
+  2w   LR-W  48.0%  66.7%  37.5%  37.5%  66.7%  64.0%    36.0%   +12.0pp               
+  2w     RF  40.0%  57.1%  25.0%  33.3%  66.7%  64.0%    36.0%    +4.0pp               
+  3w     LR  48.0%  50.0%  23.1%  47.4%  75.0%  52.0%    48.0%    +0.0pp               
+  3w   LR-W  48.0%  50.0%  23.1%  47.4%  75.0%  52.0%    48.0%    +0.0pp               
+  3w     RF  56.0% 100.0%  15.4%  52.2% 100.0%  52.0%    48.0%    +8.0pp               
+  4w     LR  36.0%  20.0%   7.7%  40.0%  66.7%  52.0%    48.0%   -12.0pp               
+  4w   LR-W  44.0%  42.9%  23.1%  44.4%  66.7%  52.0%    48.0%    -4.0pp               
+  4w     RF  48.0%   0.0%   0.0%   0.0%   0.0%  52.0%    48.0%    +0.0pp [all-0]       
+  5w     LR  48.0%  25.0%   9.1%  52.4%  78.6%  44.0%    56.0%    -8.0pp               
+  5w   LR-W  52.0%  44.4%  36.4%  56.2%  64.3%  44.0%    56.0%    -4.0pp               
+  5w     RF  56.0%   0.0%   0.0%   0.0%   0.0%  44.0%    56.0%    +0.0pp [all-0]       
+  6w     LR  60.0%   0.0%   0.0%   0.0%   0.0%  40.0%    60.0%    +0.0pp [all-0]       
+  6w   LR-W  44.0%  16.7%  10.0%  52.6%  66.7%  40.0%    60.0%   -16.0pp               
+  6w     RF  60.0%   0.0%   0.0%   0.0%   0.0%  40.0%    60.0%    +0.0pp [all-0]       
+  7w     LR  64.0%   0.0%   0.0%   0.0%   0.0%  36.0%    64.0%    +0.0pp [all-0]       
+  7w   LR-W  44.0%  22.2%  22.2%  56.2%  56.2%  36.0%    64.0%   -20.0pp               
+  7w     RF  64.0%   0.0%   0.0%   0.0%   0.0%  36.0%    64.0%    +0.0pp [all-0]       
+  8w     LR  72.0%   0.0%   0.0%   0.0%   0.0%  28.0%    72.0%    +0.0pp [all-0]       
+  8w   LR-W  80.0%  66.7%  57.1%  84.2%  88.9%  28.0%    72.0%    +8.0pp               
+  8w     RF  72.0%   0.0%   0.0%   0.0%   0.0%  28.0%    72.0%    +0.0pp [all-0]       
+
+  CLASS-WEIGHT FIX DIAGNOSIS — Shape 2 (Flat):
+    Plain LR degenerate: 3/8 horizons
+    Class-weighted LR degenerate: 0/8 horizons
+    → YES, class weighting fixed degeneracy at 3 horizon(s).
+    → And it beats baseline at: [1, 2, 8]w
+
+================================================================================
+9d-2. FEATURE DIRECTION STABILITY — Shape 2 (Flat)
+================================================================================
+
+Tracking LR coefficient direction (training) vs actual test-set gap direction.
+Expected directions from Phase A shown for reference.
+
+  enso_oni (expected: negative):
+   Hz    LR coeff   LR dir  Match  LR-W coeff LR-W dir  Match    Test gap   Test dir
+  -----------------------------------------------------------------------------------------------
+    1w     -0.1009 negative    YES     -0.1065 negative    YES     -13.3pp   negative
+    2w     +0.3726 positive     NO     +0.3690 positive     NO     -23.3pp   negative
+    3w     +0.2104 positive     NO     +0.2057 positive     NO     -20.0pp   negative
+    4w     -0.3665 negative    YES     -0.3682 negative    YES     -36.7pp   negative
+    5w     +0.2297 positive     NO     +0.2166 positive     NO     -23.3pp   negative
+    6w     -0.0126 negative    YES     -0.0281 negative    YES     -33.3pp   negative
+    7w     -0.3579 negative    YES     -0.3143 negative    YES     -43.3pp   negative
+    8w     -0.1655 negative    YES     -0.1263 negative    YES     -46.7pp   negative
+
+  crude_oil_price (expected: negative):
+   Hz    LR coeff   LR dir  Match  LR-W coeff LR-W dir  Match    Test gap   Test dir
+  -----------------------------------------------------------------------------------------------
+    1w     +0.4815 positive     NO     +0.4918 positive     NO      -2.6pp   negative
+    2w     +0.2894 positive     NO     +0.2817 positive     NO     -26.9pp   negative
+    3w     +0.5440 positive     NO     +0.5591 positive     NO     -19.9pp   negative
+    4w     +0.5681 positive     NO     +0.6163 positive     NO     -19.9pp   negative
+    5w     +0.5081 positive     NO     +0.5347 positive     NO      -4.5pp   negative
+    6w     +0.3414 positive     NO     +0.4052 positive     NO     -28.8pp   negative
+    7w     +0.4620 positive     NO     +0.4594 positive     NO     -21.2pp   negative
+    8w     +0.1834 positive     NO     +0.2478 positive     NO     -37.8pp   negative
+
+  palm_soy_spread (expected: positive):
+   Hz    LR coeff   LR dir  Match  LR-W coeff LR-W dir  Match    Test gap   Test dir
+  -----------------------------------------------------------------------------------------------
+    1w     +0.0331 positive    YES     +0.0409 positive    YES     +13.5pp   positive
+    2w     -0.3059 negative     NO     -0.3141 negative     NO     +21.2pp   positive
+    3w     -0.3902 negative     NO     -0.4017 negative     NO     +12.2pp   positive
+    4w     -0.1352 negative     NO     -0.0887 negative     NO     +12.2pp   positive
+    5w     -0.3302 negative     NO     -0.3234 negative     NO     +11.5pp   positive
+    6w     -0.3707 negative     NO     -0.3812 negative     NO     +19.2pp   positive
+    7w     -0.4613 negative     NO     -0.4496 negative     NO     +10.9pp   positive
+    8w     -0.2666 negative     NO     -0.2507 negative     NO     +26.3pp   positive
+
+  production_yoy_pct (expected: positive):
+   Hz    LR coeff   LR dir  Match  LR-W coeff LR-W dir  Match    Test gap   Test dir
+  -----------------------------------------------------------------------------------------------
+    1w     +0.0228 positive    YES     +0.0223 positive    YES     +36.7pp   positive
+    2w     +0.3271 positive    YES     +0.3335 positive    YES     +26.7pp   positive
+    3w     +0.0556 positive    YES     +0.0767 positive    YES     +13.3pp   positive
+    4w     -0.0697 negative     NO     -0.0085 negative     NO      -3.3pp   negative
+    5w     +0.5481 positive    YES     +0.5858 positive    YES     +10.0pp   positive
+    6w     -0.0097 negative     NO     -0.0050 negative     NO     +16.7pp   positive
+    7w     +0.3889 positive    YES     +0.5720 positive    YES      +6.7pp   positive
+    8w     +0.5867 positive    YES     +0.8047 positive    YES     +20.0pp   positive
+
+
+================================================================================
+9e-2. USABLE RANGE IDENTIFICATION — Shape 2 (Flat)
+================================================================================
+
+  Practical floor (shortest non-trivial horizon): 1w
+
+  LR:
+    Beats baseline at: [1, 2]
+      1w: 36.0% vs 32.0% (+4.0pp, n=25)
+      2w: 40.0% vs 36.0% (+4.0pp, n=25)
+    Degenerate at: [6, 7, 8]
+
+  LR-W:
+    Beats baseline at: [1, 2, 8]
+      1w: 36.0% vs 32.0% (+4.0pp, n=25)
+      2w: 48.0% vs 36.0% (+12.0pp, n=25)
+      8w: 80.0% vs 72.0% (+8.0pp, n=25)
+    Degenerate at: none
+
+  RF:
+    Beats baseline at: [2, 3]
+      2w: 40.0% vs 36.0% (+4.0pp, n=25)
+      3w: 56.0% vs 48.0% (+8.0pp, n=25)
+    Degenerate at: [4, 5, 6, 7, 8]
+
+  ANY model beats baseline at: [1, 2, 3, 8]
+
+  Direction check on beating horizons:
+    1w: ALL MATCH (enso_oni=OK, crude_oil_pr=OK, palm_soy_spr=OK, production_y=OK)
+    2w: ALL MATCH (enso_oni=OK, crude_oil_pr=OK, palm_soy_spr=OK, production_y=OK)
+    3w: ALL MATCH (enso_oni=OK, crude_oil_pr=OK, palm_soy_spr=OK, production_y=OK)
+    8w: ALL MATCH (enso_oni=OK, crude_oil_pr=OK, palm_soy_spr=OK, production_y=OK)
+
+  ============================================================
+  CONCLUSION — Shape 2 (Flat):
+  Best out-of-sample result: LR-W at 2w — 48.0% accuracy
+  vs 36.0% baseline (+12.0pp lift, n=25).
+
+
+================================================================================
+END OF SECTION 9
+================================================================================
