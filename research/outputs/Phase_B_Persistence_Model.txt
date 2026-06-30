@@ -1501,3 +1501,335 @@ CONCLUSION
 ================================================================================
 END OF SECTION 11
 ================================================================================
+
+
+================================================================================
+SECTION 12: REFIT WITH INDEPENDENTLY-CONFIRMED FEATURES
+================================================================================
+Generated: 2026-06-30 12:56
+
+NOTE: This section's conclusions SUPERSEDE Section 8's Shape 1 conclusion
+and Section 9's Shape 2 conclusion. When referencing 'the' Shape 1 or Shape 2
+model going forward, use the results from this section.
+
+Rationale: Section 11 found that some features in the original models only
+held their expected direction in the COMBINED model due to correlation with
+stronger partners, not because they carry independent signal:
+  Shape 1: stock_to_usage_ratio dropped (1/8 correct alone, r=-0.515 with usd_myr)
+  Shape 2: crude_oil_price + palm_soy_spread dropped (0/8 each, r=-0.729 together)
+
+Retained features (independently confirmed):
+  Shape 1 (Backwardation): usd_myr (8/8 alone), enso_oni (8/8 alone)
+  Shape 2 (Flat):          enso_oni (6/8 alone), production_yoy_pct (8/8 alone)
+
+
+================================================================================
+12a. SHAPE 1 (BACKWARDATION) — REFIT WITH 2 FEATURES
+================================================================================
+Features: ['usd_myr', 'enso_oni']
+Dropped:  ['stock_to_usage_ratio']
+Train: 2017-01-05 to 2024-12-27
+Test:  2025-01-03 to 2026-06-26
+
+================================================================================
+SAMPLE SIZE & BASE RATE AT EACH HORIZON
+================================================================================
+
+ Hz   Train n  Persist    Break   Base%     Flag   Test n  Persist    Break   Base%     Flag
+----------------------------------------------------------------------------------------------------
+  1w      138      120       18    87.0%               28       21        7    75.0%         
+  2w      138      115       23    83.3%               27       19        8    70.4%         
+  3w      138      112       26    81.2%               26       16       10    61.5%         
+  4w      138      111       27    80.4%               25       15       10    60.0%         
+  5w      138      110       28    79.7%               24       13       11    54.2%         
+  6w      138      105       33    76.1%               23       11       12    47.8%         
+  7w      138      102       36    73.9%               22       10       12    45.5%         
+  8w      138       98       40    71.0%               21        6       15    28.6%         
+
+================================================================================
+TRAINING SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model    Acc%  Base%      Lift      usd_myr   enso_oni   Dirs match?
+-----------------------------------------------------------------------------------------------
+  1w    LR   74.6%   87.0%   -12.3pp      -0.2613      +0.4910       ALL YES
+  1w    RF   87.0%   87.0%   +0.0pp  imp=0.498     imp=0.502  OOB=84.6+/-4.8%
+  2w    LR   74.6%   83.3%    -8.7pp      -0.5130      +0.5879       ALL YES
+  2w    RF   84.1%   83.3%   +0.7pp  imp=0.496     imp=0.504  OOB=79.7+/-5.2%
+  3w    LR   66.7%   81.2%   -14.5pp      -0.4399      +0.4301       ALL YES
+  3w    RF   81.9%   81.2%   +0.7pp  imp=0.501     imp=0.499  OOB=78.1+/-4.0%
+  4w    LR   65.2%   80.4%   -15.2pp      -0.5591      +0.3597       ALL YES
+  4w    RF   81.2%   80.4%   +0.7pp  imp=0.490     imp=0.510  OOB=77.7+/-5.4%
+  5w    LR   65.2%   79.7%   -14.5pp      -0.6476      +0.3978       ALL YES
+  5w    RF   85.5%   79.7%   +5.8pp  imp=0.554     imp=0.446  OOB=81.2+/-4.8%
+  6w    LR   66.7%   76.1%    -9.4pp      -0.7390      +0.4710       ALL YES
+  6w    RF   86.2%   76.1%  +10.1pp  imp=0.498     imp=0.502  OOB=78.0+/-3.7%
+  7w    LR   66.7%   73.9%    -7.2pp      -0.7465      +0.4298       ALL YES
+  7w    RF   81.9%   73.9%   +8.0pp  imp=0.488     imp=0.512  OOB=75.1+/-5.1%
+  8w    LR   68.8%   71.0%    -2.2pp      -0.7596      +0.5063       ALL YES
+  8w    RF   85.5%   71.0%  +14.5pp  imp=0.475     imp=0.525  OOB=76.5+/-5.1%
+
+================================================================================
+TEST SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model    Acc%  Prec1    Rec1  Prec0    Rec0  Base%  BaseAcc  vs Base       Note
+----------------------------------------------------------------------------------------------------
+  1w    LR   53.6%   90.0%   42.9%   33.3%   85.7%   75.0%     75.0%   -21.4pp           
+  1w    RF   75.0%   75.0%  100.0%    0.0%    0.0%   75.0%     75.0%    +0.0pp    [all-1]
+  2w    LR   55.6%   88.9%   42.1%   38.9%   87.5%   70.4%     70.4%   -14.8pp           
+  2w    RF   70.4%   70.4%  100.0%    0.0%    0.0%   70.4%     70.4%    +0.0pp    [all-1]
+  3w    LR   61.5%   87.5%   43.8%   50.0%   90.0%   61.5%     61.5%    +0.0pp           
+  3w    RF   61.5%   61.5%  100.0%    0.0%    0.0%   61.5%     61.5%    +0.0pp    [all-1]
+  4w    LR   48.0%   58.3%   46.7%   38.5%   50.0%   60.0%     60.0%   -12.0pp           
+  4w    RF   60.0%   60.0%  100.0%    0.0%    0.0%   60.0%     60.0%    +0.0pp    [all-1]
+  5w    LR   45.8%   50.0%   53.8%   40.0%   36.4%   54.2%     54.2%    -8.3pp           
+  5w    RF   54.2%   54.2%  100.0%    0.0%    0.0%   54.2%     54.2%    +0.0pp    [all-1]
+  6w    LR   43.5%   40.0%   36.4%   46.2%   50.0%   47.8%     52.2%    -8.7pp           
+  6w    RF   47.8%   47.8%  100.0%    0.0%    0.0%   47.8%     52.2%    -4.3pp    [all-1]
+  7w    LR   36.4%   30.0%   30.0%   41.7%   41.7%   45.5%     54.5%   -18.2pp           
+  7w    RF   45.5%   45.5%  100.0%    0.0%    0.0%   45.5%     54.5%    -9.1pp    [all-1]
+  8w    LR   61.9%   33.3%   33.3%   73.3%   73.3%   28.6%     71.4%    -9.5pp           
+  8w    RF   28.6%   28.6%  100.0%    0.0%    0.0%   28.6%     71.4%   -42.9pp    [all-1]
+
+================================================================================
+FEATURE DIRECTION ON TEST SET (median-split gap)
+================================================================================
+
+ Hz          usd_myr gap   dir   exp    ok         enso_oni gap   dir   exp    ok
+  --------------------------------------------------------------------------------
+  1w            -29.2pp   neg   neg   YES            +36.8pp   pos   pos   YES
+  2w            -21.7pp   neg   neg   YES            +42.1pp   pos   pos   YES
+  3w            -21.4pp   neg   neg   YES            +52.6pp   pos   pos   YES
+  4w             -3.2pp   neg   neg   YES            +52.6pp   pos   pos   YES
+  5w             +8.3pp   pos   neg    NO            +57.9pp   pos   pos   YES
+  6w            +22.0pp   pos   neg    NO            +63.2pp   pos   pos   YES
+  7w            +28.3pp   pos   neg    NO            +63.2pp   pos   pos   YES
+  8w            +11.1pp   pos   neg    NO            +78.9pp   pos   pos   YES
+
+  Direction stability summary:
+    usd_myr                      4/8 correct on test (expected: negative)
+    enso_oni                     8/8 correct on test (expected: positive)
+    usd_myr: first test-set direction flip at 5w
+
+
+================================================================================
+12b. SHAPE 2 (FLAT) — REFIT WITH 2 FEATURES
+================================================================================
+Features: ['enso_oni', 'production_yoy_pct']
+Dropped:  ['crude_oil_price', 'palm_soy_spread']
+Train: 2017-01-05 to 2024-12-27
+Test:  2025-01-03 to 2026-06-26
+
+================================================================================
+SAMPLE SIZE & BASE RATE AT EACH HORIZON
+================================================================================
+
+ Hz   Train n  Persist    Break   Base%     Flag   Test n  Persist    Break   Base%     Flag
+----------------------------------------------------------------------------------------------------
+  1w       36       17       19    47.2%               25       17        8    68.0%         
+  2w       36       14       22    38.9%               25       16        9    64.0%         
+  3w       36       13       23    36.1%               25       13       12    52.0%         
+  4w       36       11       25    30.6%               25       13       12    52.0%         
+  5w       36       11       25    30.6%               25       11       14    44.0%         
+  6w       36        8       28    22.2%               25       10       15    40.0%         
+  7w       36        8       28    22.2%               25        9       16    36.0%         
+  8w       36        6       30    16.7%               25        7       18    28.0%         
+
+================================================================================
+TRAINING SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model    Acc%  Base%      Lift     enso_oni   producti   Dirs match?
+-----------------------------------------------------------------------------------------------
+  1w    LR   58.3%   52.8%    +5.6pp      -0.1164      +0.0323       ALL YES
+  1w    RF   69.4%   52.8%  +16.7pp  imp=0.513     imp=0.487  OOB=42.5+/-8.6%
+  2w    LR   50.0%   61.1%   -11.1pp      +0.2230      +0.3067         MIXED
+  2w    RF   66.7%   61.1%   +5.6pp  imp=0.535     imp=0.465  OOB=41.8+/-11.6%
+  3w    LR   44.4%   63.9%   -19.4pp      +0.0186      +0.0494         MIXED
+  3w    RF   69.4%   63.9%   +5.6pp  imp=0.567     imp=0.433  OOB=57.7+/-10.1%
+  4w    LR   58.3%   69.4%   -11.1pp      -0.4510      -0.0548         MIXED
+  4w    RF   83.3%   69.4%  +13.9pp  imp=0.549     imp=0.451  OOB=73.3+/-10.3%
+  5w    LR   61.1%   69.4%    -8.3pp      +0.0318      +0.4529         MIXED
+  5w    RF   75.0%   69.4%   +5.6pp  imp=0.505     imp=0.495  OOB=63.4+/-11.9%
+  6w    LR   50.0%   77.8%   -27.8pp      -0.1890      -0.0093         MIXED
+  6w    RF   77.8%   77.8%   +0.0pp  imp=0.614     imp=0.386  OOB=71.1+/-12.9%
+  7w    LR   66.7%   77.8%   -11.1pp      -0.6227      +0.2983       ALL YES
+  7w    RF   80.6%   77.8%   +2.8pp  imp=0.630     imp=0.370  OOB=76.6+/-10.2%
+  8w    LR   61.1%   83.3%   -22.2pp      -0.2623      +0.6747       ALL YES
+  8w    RF   83.3%   83.3%   +0.0pp  imp=0.594     imp=0.406  OOB=84.6+/-5.9%
+
+================================================================================
+TEST SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model    Acc%  Prec1    Rec1  Prec0    Rec0  Base%  BaseAcc  vs Base       Note
+----------------------------------------------------------------------------------------------------
+  1w    LR   60.0%   68.4%   76.5%   33.3%   25.0%   68.0%     68.0%    -8.0pp           
+  1w    RF   24.0%    0.0%    0.0%   26.1%   75.0%   68.0%     68.0%   -44.0pp           
+  2w    LR   64.0%   76.9%   62.5%   50.0%   66.7%   64.0%     64.0%    +0.0pp           
+  2w    RF   36.0%    0.0%    0.0%   36.0%  100.0%   64.0%     64.0%   -28.0pp    [all-0]
+  3w    LR   60.0%   61.5%   61.5%   58.3%   58.3%   52.0%     52.0%    +8.0pp           
+  3w    RF   48.0%    0.0%    0.0%   48.0%  100.0%   52.0%     52.0%    -4.0pp    [all-0]
+  4w    LR   60.0%   57.9%   84.6%   66.7%   33.3%   52.0%     52.0%    +8.0pp           
+  4w    RF   48.0%    0.0%    0.0%   48.0%  100.0%   52.0%     52.0%    -4.0pp    [all-0]
+  5w    LR   60.0%   53.8%   63.6%   66.7%   57.1%   44.0%     56.0%    +4.0pp           
+  5w    RF   56.0%    0.0%    0.0%   56.0%  100.0%   44.0%     56.0%    +0.0pp    [all-0]
+  6w    LR   56.0%   47.4%   90.0%   83.3%   33.3%   40.0%     60.0%    -4.0pp           
+  6w    RF   60.0%    0.0%    0.0%   60.0%  100.0%   40.0%     60.0%    +0.0pp    [all-0]
+  7w    LR   64.0%   50.0%   77.8%   81.8%   56.2%   36.0%     64.0%    +0.0pp           
+  7w    RF   64.0%    0.0%    0.0%   64.0%  100.0%   36.0%     64.0%    +0.0pp    [all-0]
+  8w    LR   68.0%   46.2%   85.7%   91.7%   61.1%   28.0%     72.0%    -4.0pp           
+  8w    RF   72.0%    0.0%    0.0%   72.0%  100.0%   28.0%     72.0%    +0.0pp    [all-0]
+
+================================================================================
+FEATURE DIRECTION ON TEST SET (median-split gap)
+================================================================================
+
+ Hz         enso_oni gap   dir   exp    ok   production_yoy gap   dir   exp    ok
+  --------------------------------------------------------------------------------
+  1w             +1.8pp   pos   neg    NO            +34.6pp   pos   pos   YES
+  2w             -3.5pp   neg   neg   YES            +26.9pp   pos   pos   YES
+  3w             +2.6pp   pos   neg    NO            +19.9pp   pos   pos   YES
+  4w            +24.6pp   pos   neg    NO            +19.9pp   pos   pos   YES
+  5w            +14.0pp   pos   neg    NO            +20.5pp   pos   pos   YES
+  6w            +30.7pp   pos   neg    NO            +28.8pp   pos   pos   YES
+  7w            +25.4pp   pos   neg    NO            +37.2pp   pos   pos   YES
+  8w            +36.8pp   pos   neg    NO            +37.8pp   pos   pos   YES
+
+  Direction stability summary:
+    enso_oni                     1/8 correct on test (expected: negative)
+    production_yoy_pct           8/8 correct on test (expected: positive)
+    enso_oni: first test-set direction flip at 1w
+
+
+================================================================================
+12c. BEFORE/AFTER COMPARISON — ORIGINAL vs REDUCED FEATURE SETS
+================================================================================
+
+Side-by-side comparison of test-set performance.
+ORIGINAL = Phase B initial feature set; NEW = independently-confirmed features only.
+
+  ======================================================================
+  SHAPE 1 (Backwardation)
+  Original: ['usd_myr', 'enso_oni', 'stock_to_usage_ratio']
+  New:      ['usd_myr', 'enso_oni']
+  ======================================================================
+
+   Hz       --- ORIGINAL (LR-W) ---        --- NEW (LR-W) ---         --- ORIGINAL (RF) ---          --- NEW (RF) ---
+        Acc% vs base    degen   Acc% vs base    degen   Acc% vs base    degen   Acc% vs base    degen  delta LR delta RF
+  -------------------------------------------------------------------------------------------------------------------------------------------------
+  1w   64.3%  -10.7pp            53.6%  -21.4pp            75.0%   +0.0pp  [all-1]   75.0%   +0.0pp  [all-1]    -10.7pp    +0.0pp
+  2w   51.9%  -18.5pp            55.6%  -14.8pp            70.4%   +0.0pp  [all-1]   70.4%   +0.0pp  [all-1]     +3.7pp    +0.0pp
+  3w   61.5%   +0.0pp            61.5%   +0.0pp            65.4%   +3.8pp            61.5%   +0.0pp  [all-1]     +0.0pp    -3.8pp
+  4w   72.0%  +12.0pp            48.0%  -12.0pp            60.0%   +0.0pp  [all-1]   60.0%   +0.0pp  [all-1]    -24.0pp    +0.0pp
+  5w   70.8%  +16.7pp            45.8%   -8.3pp            54.2%   +0.0pp  [all-1]   54.2%   +0.0pp  [all-1]    -25.0pp    +0.0pp
+  6w   78.3%  +26.1pp            43.5%   -8.7pp            47.8%   -4.3pp  [all-1]   47.8%   -4.3pp  [all-1]    -34.8pp    +0.0pp
+  7w   68.2%  +13.6pp            36.4%  -18.2pp            45.5%   -9.1pp  [all-1]   45.5%   -9.1pp  [all-1]    -31.8pp    +0.0pp
+  8w   47.6%  -23.8pp            61.9%   -9.5pp            28.6%  -42.9pp  [all-1]   28.6%  -42.9pp  [all-1]    +14.3pp    +0.0pp
+
+  ======================================================================
+  SHAPE 2 (Flat)
+  Original: ['enso_oni', 'crude_oil_price', 'palm_soy_spread', 'production_yoy_pct']
+  New:      ['enso_oni', 'production_yoy_pct']
+  ======================================================================
+
+   Hz       --- ORIGINAL (LR-W) ---        --- NEW (LR-W) ---         --- ORIGINAL (RF) ---          --- NEW (RF) ---
+        Acc% vs base    degen   Acc% vs base    degen   Acc% vs base    degen   Acc% vs base    degen  delta LR delta RF
+  -------------------------------------------------------------------------------------------------------------------------------------------------
+  1w   36.0%  -32.0pp            60.0%   -8.0pp            36.0%  -32.0pp            24.0%  -44.0pp             +24.0pp   -12.0pp
+  2w   48.0%  -16.0pp            64.0%   +0.0pp            36.0%  -28.0pp  [all-0]   36.0%  -28.0pp  [all-0]    +16.0pp    +0.0pp
+  3w   48.0%   -4.0pp            60.0%   +8.0pp            48.0%   -4.0pp  [all-0]   48.0%   -4.0pp  [all-0]    +12.0pp    +0.0pp
+  4w   44.0%   -8.0pp            60.0%   +8.0pp            48.0%   -4.0pp  [all-0]   48.0%   -4.0pp  [all-0]    +16.0pp    +0.0pp
+  5w   52.0%   -4.0pp            60.0%   +4.0pp            56.0%   +0.0pp  [all-0]   56.0%   +0.0pp  [all-0]     +8.0pp    +0.0pp
+  6w   44.0%  -16.0pp            56.0%   -4.0pp            60.0%   +0.0pp  [all-0]   60.0%   +0.0pp  [all-0]    +12.0pp    +0.0pp
+  7w   44.0%  -20.0pp            64.0%   +0.0pp            64.0%   +0.0pp  [all-0]   64.0%   +0.0pp  [all-0]    +20.0pp    +0.0pp
+  8w   80.0%   +8.0pp            68.0%   -4.0pp            72.0%   +0.0pp  [all-0]   72.0%   +0.0pp  [all-0]    -12.0pp    +0.0pp
+
+
+================================================================================
+12d. UPDATED USABLE-RANGE CONCLUSION
+================================================================================
+
+  ======================================================================
+  SHAPE 1 (Backwardation) — 2-feature model: ['usd_myr', 'enso_oni']
+  ======================================================================
+
+  LR-W STATUS:
+    Does not beat baseline at any horizon.
+
+  RF STATUS:
+    Degenerate at horizons: [1, 2, 3, 4, 5, 6, 7, 8]
+    Does not beat baseline at any horizon.
+
+  DIRECTION STABILITY:
+    All directions hold at: [1, 2, 3, 4]
+    Direction flips at:     [5, 6, 7, 8]
+
+  USABLE HORIZONS (beats baseline + correct directions):
+    LR-W: none
+    RF:   none
+    Either: none
+
+  NO USABLE HORIZON: the 2-feature model does not beat baseline with correct
+  directions at any horizon on the 2025-2026 test set.
+
+  ======================================================================
+  SHAPE 2 (Flat) — 2-feature model: ['enso_oni', 'production_yoy_pct']
+  ======================================================================
+
+  LR-W STATUS:
+    Beats baseline at horizons: [3, 4, 5]
+      3w: 60.0% vs 52.0% baseline (+8.0pp)
+      4w: 60.0% vs 52.0% baseline (+8.0pp)
+      5w: 60.0% vs 56.0% baseline (+4.0pp)
+
+  RF STATUS:
+    Degenerate at horizons: [2, 3, 4, 5, 6, 7, 8]
+    Does not beat baseline at any horizon.
+
+  DIRECTION STABILITY:
+    All directions hold at: [2]
+    Direction flips at:     [1, 3, 4, 5, 6, 7, 8]
+
+  USABLE HORIZONS (beats baseline + correct directions):
+    LR-W: none
+    RF:   none
+    Either: none
+
+  NO USABLE HORIZON: the 2-feature model does not beat baseline with correct
+  directions at any horizon on the 2025-2026 test set.
+
+
+================================================================================
+12e. OVERALL CONCLUSION — PHASE B MODEL STATUS AFTER FEATURE PRUNING
+================================================================================
+
+  This section completes the Phase B model build by stripping each shape's model
+  down to only the features that independently confirmed their expected direction
+  in single-feature testing (Section 11). The results below replace the earlier
+  conclusions from Sections 8-9.
+
+  SHAPE 0.0 (Contango):
+    Status: NO MODEL. No reliable feature combination found (Sections 10-11).
+    Prediction: unconditional base rate only.
+
+  SHAPE 0.1 (Mild Contango):
+    Status: NO MODEL. No validated driver (Phase A). Base rate only.
+
+  SHAPE 0.2 (Steep Backwardation):
+    Status: NO MODEL. Insufficient data (n=26). Base rate only.
+
+  SHAPE 1 (Backwardation):
+    Features: ['usd_myr', 'enso_oni']
+    Usable horizons: NONE
+    The 2-feature model does not produce a usable result on the test set.
+
+  SHAPE 2 (Flat):
+    Features: ['enso_oni', 'production_yoy_pct']
+    Usable horizons: NONE
+    The 2-feature model does not produce a usable result on the test set.
+
+================================================================================
+END OF SECTION 12
+================================================================================
