@@ -1036,3 +1036,260 @@ Expected directions from Phase A shown for reference.
 ================================================================================
 END OF SECTION 9
 ================================================================================
+
+
+================================================================================
+SECTION 10: SHAPE 0.0 (CONTANGO) DEEP-DIVE — FEATURES + MODEL DIAGNOSIS
+================================================================================
+Generated: 2026-06-30 10:06
+Shape 0.0 training weeks: 172, test weeks: 15
+
+
+================================================================================
+10a. WITHIN-SHAPE CORRELATION CHECK
+================================================================================
+
+  Pooled correlation (all shapes, training set): 0.422
+  Within-Shape-0.0 correlation (Contango weeks only): 0.702
+  Difference in |r|: +0.280
+
+  FINDING: Within-shape correlation is HIGH (0.702). The two features
+  are substantially entangled during Contango weeks. This directly explains why LR
+  produces unstable/flipped coefficients — the model cannot reliably separate their
+  individual contributions when they move together this closely.
+
+  Expanded feature correlation matrix (Shape 0.0 training weeks only):
+                   usd_myr  enso_oni  crude_oil_price  palm_soy_spread
+usd_myr            1.000     0.702            0.237            0.294
+enso_oni           0.702     1.000           -0.114            0.031
+crude_oil_price    0.237    -0.114            1.000           -0.126
+palm_soy_spread    0.294     0.031           -0.126            1.000
+
+
+================================================================================
+10b. SINGLE-FEATURE MODELS (isolating each variable)
+================================================================================
+
+  If a feature holds its correct direction alone but breaks when combined,
+  that confirms a multicollinearity/interaction problem.
+
+   Hz    usd_myr alone   dir  match   acc%   enso_oni alone   dir  match   acc%
+  --------------------------------------------------------------------------------
+    1w  coeff= -0.0450   neg    YES  55.8%  coeff= -0.2740   neg     NO  59.9%
+    2w  coeff= -0.1413   neg    YES  55.8%  coeff= -0.3692   neg     NO  61.0%
+    3w  coeff= -0.1142   neg    YES  57.6%  coeff= -0.3401   neg     NO  60.5%
+    4w  coeff= -0.1679   neg    YES  58.7%  coeff= -0.4131   neg     NO  59.3%
+    5w  coeff= -0.2461   neg    YES  61.0%  coeff= -0.3357   neg     NO  58.7%
+    6w  coeff= -0.1857   neg    YES  61.6%  coeff= -0.3609   neg     NO  60.5%
+    7w  coeff= -0.3177   neg    YES  62.8%  coeff= -0.4240   neg     NO  61.0%
+    8w  coeff= -0.4165   neg    YES  64.5%  coeff= -0.4529   neg     NO  61.0%
+
+  Comparison: direction when ALONE vs when COMBINED (from Section 9):
+   Hz   usd alone  usd combined  changed?   oni alone  oni combined  changed?
+  ----------------------------------------------------------------------
+    1w         neg           pos   FLIPPED         neg           neg      same
+    2w         neg           pos   FLIPPED         neg           neg      same
+    3w         neg           pos   FLIPPED         neg           neg      same
+    4w         neg           pos   FLIPPED         neg           neg      same
+    5w         neg           neg      same         neg           neg      same
+    6w         neg           pos   FLIPPED         neg           neg      same
+    7w         neg           neg      same         neg           neg      same
+    8w         neg           neg      same         neg           neg      same
+
+  usd_myr correct direction alone: 8/8 horizons
+  enso_oni correct direction alone: 0/8 horizons
+
+
+================================================================================
+10c. EXPANDED 4-FEATURE MODELS — TRAINING SET
+================================================================================
+  Features: ['usd_myr', 'enso_oni', 'crude_oil_price', 'palm_soy_spread']
+  Adding crude_oil_price (Phase A: -20.8pp moderate) and palm_soy_spread (+17.8pp moderate)
+
+   Hz Model   Acc%  Base%    Lift     usd_myr    enso_oni    crude_oi    palm_soy        Dirs
+  -------------------------------------------------------------------------------------------------------
+    1w  LR-W  62.2%  84.3%  -22.1pp     +0.4307     -0.5574     -0.2297     -0.3585         1/4
+    1w    RF  89.0%  84.3%   +4.7pp       0.284       0.255       0.288       0.173  OOB=82.1±2.3%
+    2w  LR-W  64.0%  78.5%  -14.5pp     +0.4978     -0.7529     -0.3421     -0.3195         1/4
+    2w    RF  89.0%  78.5%  +10.5pp       0.304       0.258       0.262       0.176  OOB=76.0±6.3%
+    3w  LR-W  65.1%  77.9%  -12.8pp     +0.5682     -0.8029     -0.3935     -0.1648         1/4
+    3w    RF  90.1%  77.9%  +12.2pp       0.329       0.220       0.281       0.170  OOB=78.2±4.1%
+    4w  LR-W  67.4%  73.3%   -5.8pp     +0.5554     -0.8579     -0.4069     -0.2426         1/4
+    4w    RF  86.6%  73.3%  +13.4pp       0.314       0.247       0.287       0.152  OOB=76.2±4.6%
+    5w  LR-W  60.5%  71.5%  -11.0pp     +0.1791     -0.5110     -0.2723     -0.0609         1/4
+    5w    RF  86.6%  71.5%  +15.1pp       0.283       0.257       0.312       0.148  OOB=75.3±4.5%
+    6w  LR-W  65.7%  68.6%   -2.9pp     +0.4046     -0.6910     -0.3353     -0.2218         1/4
+    6w    RF  90.7%  68.6%  +22.1pp       0.270       0.317       0.256       0.157  OOB=76.8±4.7%
+    7w  LR-W  64.5%  65.7%   -1.2pp     +0.3837     -0.7685     -0.4736     -0.3418         1/4
+    7w    RF  93.0%  65.7%  +27.3pp       0.328       0.309       0.179       0.184  OOB=76.8±6.3%
+    8w  LR-W  70.3%  69.2%   +1.2pp     +0.3847     -0.8917     -0.6884     -0.2454         1/4
+    8w    RF  94.8%  69.2%  +25.6pp       0.354       0.263       0.191       0.192  OOB=76.9±4.8%
+
+================================================================================
+10c (cont). EXPANDED 4-FEATURE — TEST SET RESULTS
+================================================================================
+
+   Hz Model   Acc%  Prec1   Rec1  Prec0   Rec0  Base%  BaseAcc  vs Base Note          
+  ----------------------------------------------------------------------------------------------------
+    1w  LR-W  46.7% 100.0%  20.0%  38.5% 100.0%  66.7%    66.7%   -20.0pp               
+    1w    RF  66.7%   0.0%   0.0%   0.0%   0.0%  66.7%    66.7%    +0.0pp [all-1]       
+    2w  LR-W  40.0%  66.7%  20.0%  33.3%  80.0%  66.7%    66.7%   -26.7pp               
+    2w    RF  66.7%   0.0%   0.0%   0.0%   0.0%  66.7%    66.7%    +0.0pp [all-1]       
+    3w  LR-W  60.0%  66.7%  66.7%  50.0%  50.0%  60.0%    60.0%    +0.0pp               
+    3w    RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+    4w  LR-W  53.3%  75.0%  33.3%  45.5%  83.3%  60.0%    60.0%    -6.7pp               
+    4w    RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+    5w  LR-W  60.0%  80.0%  44.4%  50.0%  83.3%  60.0%    60.0%    +0.0pp               
+    5w    RF  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]       
+    6w  LR-W  73.3%  75.0%  50.0%  72.7%  88.9%  40.0%    40.0%   +33.3pp               
+    6w    RF  40.0%   0.0%   0.0%   0.0%   0.0%  40.0%    40.0%    +0.0pp [all-1]       
+    7w  LR-W  46.7%   0.0%   0.0%   0.0%   0.0%  53.3%    53.3%    -6.7pp [all-0]       
+    7w    RF  20.0%  30.0%  37.5%   0.0%   0.0%  53.3%    53.3%   -33.3pp               
+    8w  LR-W  60.0% 100.0%  14.3%  57.1% 100.0%  46.7%    46.7%   +13.3pp               
+    8w    RF  46.7%   0.0%   0.0%   0.0%   0.0%  46.7%    46.7%    +0.0pp [all-1]       
+
+  Expanded-set coefficient direction stability:
+
+  usd_myr (expected: negative):
+   Hz   2-feat LR-W  4-feat LR-W   Test gap
+  ---------------------------------------------
+    1w           pos          pos     +8.9pp
+    2w           pos          pos    +35.7pp
+    3w           pos          pos    +21.4pp
+    4w           pos          pos     -5.4pp
+    5w           neg          pos     -5.4pp
+    6w           pos          pos     +5.4pp
+    7w           neg          pos    +33.9pp
+    8w           neg          pos    +19.6pp
+
+  enso_oni (expected: positive):
+   Hz   2-feat LR-W  4-feat LR-W   Test gap
+  ---------------------------------------------
+    1w           neg          neg    -44.6pp
+    2w           neg          neg    -17.9pp
+    3w           neg          neg    -32.1pp
+    4w           neg          neg    -58.9pp
+    5w           neg          neg    -32.1pp
+    6w           neg          neg    -75.0pp
+    7w           neg          neg    -46.4pp
+    8w           neg          neg    -60.7pp
+
+  crude_oil_price (expected: negative):
+   Hz   2-feat LR-W  4-feat LR-W   Test gap
+  ---------------------------------------------
+    1w           N/A          neg    +35.7pp
+    2w           N/A          neg    +35.7pp
+    3w           N/A          neg    +21.4pp
+    4w           N/A          neg    +48.2pp
+    5w           N/A          neg    +21.4pp
+    6w           N/A          neg    +58.9pp
+    7w           N/A          neg    +60.7pp
+    8w           N/A          neg    +46.4pp
+
+  palm_soy_spread (expected: positive):
+   Hz   2-feat LR-W  4-feat LR-W   Test gap
+  ---------------------------------------------
+    1w           N/A          neg    +35.7pp
+    2w           N/A          neg    +35.7pp
+    3w           N/A          neg    +21.4pp
+    4w           N/A          neg    +48.2pp
+    5w           N/A          neg    +21.4pp
+    6w           N/A          neg     +5.4pp
+    7w           N/A          neg     +7.1pp
+    8w           N/A          neg     -7.1pp
+
+
+================================================================================
+10d. LR vs RF COHERENCE COMPARISON
+================================================================================
+
+  Question: Does RF's feature-importance behavior tell a more coherent story
+  than LR's flipped coefficients?
+
+  2-FEATURE SET: LR-W vs RF, test-set comparison
+   Hz   LR-W acc  vs base  LR dirs   RF acc  vs base  RF degen?  RF imp usd RF imp oni
+  ------------------------------------------------------------------------------------------
+    1w      73.3%    +6.7pp  pos/neg    66.7%    +0.0pp        YES       0.525      0.475
+    2w      60.0%    -6.7pp  pos/neg    66.7%    +0.0pp        YES       0.526      0.474
+    3w      66.7%    +6.7pp  pos/neg    60.0%    +0.0pp        YES       0.548      0.452
+    4w      80.0%   +20.0pp  pos/neg    60.0%    +0.0pp        YES       0.541      0.459
+    5w      60.0%    +0.0pp  neg/neg    60.0%    +0.0pp        YES       0.528      0.472
+    6w      86.7%   +46.7pp  pos/neg    53.3%   +13.3pp         no       0.490      0.510
+    7w      66.7%   +13.3pp  neg/neg    60.0%    +6.7pp         no       0.522      0.478
+    8w      60.0%   +13.3pp  neg/neg    46.7%    +0.0pp        YES       0.519      0.481
+
+  4-FEATURE SET: LR-W vs RF, test-set comparison
+   Hz   LR-W acc  vs base  dirs ok   RF acc  vs base  RF degen?  RF importances (4 feats)
+  ----------------------------------------------------------------------------------------------------
+    1w      46.7%   -20.0pp     1/4     66.7%    +0.0pp        YES  0.284  0.255  0.288  0.173
+    2w      40.0%   -26.7pp     1/4     66.7%    +0.0pp        YES  0.304  0.258  0.262  0.176
+    3w      60.0%    +0.0pp     1/4     60.0%    +0.0pp        YES  0.329  0.220  0.281  0.170
+    4w      53.3%    -6.7pp     1/4     60.0%    +0.0pp        YES  0.314  0.247  0.287  0.152
+    5w      60.0%    +0.0pp     1/4     60.0%    +0.0pp        YES  0.283  0.257  0.312  0.148
+    6w      73.3%   +33.3pp     1/4     40.0%    +0.0pp        YES  0.270  0.317  0.256  0.157
+    7w      46.7%    -6.7pp     1/4     20.0%   -33.3pp         no  0.328  0.309  0.179  0.184
+    8w      60.0%   +13.3pp     1/4     46.7%    +0.0pp        YES  0.354  0.263  0.191  0.192
+
+  RF IMPORTANCE STABILITY (4-feature, across horizons):
+  Does RF concentrate importance on specific features or spread evenly?
+
+  Feature               Mean imp   Std imp       Min       Max        CV
+  -----------------------------------------------------------------
+  usd_myr                  0.308     0.027     0.270     0.354      0.09
+  enso_oni                 0.266     0.030     0.220     0.317      0.11
+  crude_oil_price          0.257     0.045     0.179     0.312      0.17
+  palm_soy_spread          0.169     0.014     0.148     0.192      0.09
+
+
+================================================================================
+10e. VERDICT — SHAPE 0.0 (CONTANGO) DIAGNOSIS
+================================================================================
+
+  Evidence summary:
+  (a) Missing features?
+      Adding crude_oil + palm_soy: best test lift = LR-W at 6w (+33.3pp)
+      Horizon 6w: 1/4 directions correct
+      Horizon 8w: 1/4 directions correct
+
+  (b) Multicollinearity within Shape 0.0?
+      Within-shape r(usd_myr, enso_oni) = 0.702 vs pooled 0.422
+      Elevated within-shape correlation contributes to instability
+
+  (c) LR linear-assumption mismatch?
+      usd_myr correct direction ALONE: 8/8
+      enso_oni correct direction ALONE: 0/8
+      Mixed: one feature holds alone, the other doesn't. Partial interaction effect.
+
+  (d) RF performance (model-assumption check):
+      2-feature RF: degenerate 6/8, beats baseline 2/8
+      4-feature RF: degenerate 7/8, beats baseline 0/8
+
+  ============================================================
+  FINAL VERDICT:
+
+  Single-feature test check (usd_myr alone, LR-W balanced):
+    1w: acc=26.7%, bl=66.7%, vs=-40.0pp, dir=neg, 
+    2w: acc=26.7%, bl=66.7%, vs=-40.0pp, dir=neg, 
+    3w: acc=33.3%, bl=60.0%, vs=-26.7pp, dir=neg, 
+    4w: acc=33.3%, bl=60.0%, vs=-26.7pp, dir=neg, 
+    5w: acc=33.3%, bl=60.0%, vs=-26.7pp, dir=neg, 
+    6w: acc=53.3%, bl=40.0%, vs=+13.3pp, dir=neg, 
+    7w: acc=40.0%, bl=53.3%, vs=-13.3pp, dir=neg, 
+    8w: acc=46.7%, bl=46.7%, vs=+0.0pp, dir=neg, 
+
+  Single-feature test check (enso_oni alone, LR-W balanced):
+    1w: acc=73.3%, bl=66.7%, vs=+6.7pp, dir=neg, 
+    2w: acc=60.0%, bl=66.7%, vs=-6.7pp, dir=neg, 
+    3w: acc=66.7%, bl=60.0%, vs=+6.7pp, dir=neg, 
+    4w: acc=80.0%, bl=60.0%, vs=+20.0pp, dir=neg, 
+    5w: acc=60.0%, bl=60.0%, vs=+0.0pp, dir=neg, 
+    6w: acc=66.7%, bl=40.0%, vs=+26.7pp, dir=neg, 
+    7w: acc=66.7%, bl=53.3%, vs=+13.3pp, dir=neg, 
+    8w: acc=73.3%, bl=46.7%, vs=+26.7pp, dir=neg, 
+
+  PARTIAL RESULT: Single-feature (usd_myr) LR-W at 6w — 53.3% vs baseline (+13.3pp), correct direction.
+  Multi-feature models do not produce a clean result.
+
+================================================================================
+END OF SECTION 10
+================================================================================
