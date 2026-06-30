@@ -411,3 +411,265 @@ Feature sets (from Phase A, not re-derived):
 PHASE B: PERSISTENCE MODEL BUILD — COMPLETE
 ================================================================================
 Output saved to: C:\ClaudeCode\research\outputs\Phase_B_Persistence_Model.txt
+
+
+================================================================================
+SECTION 8: SHAPE 1 (BACKWARDATION) — HORIZON SWEEP (1w to 8w)
+================================================================================
+Generated: 2026-06-30 09:33
+Features: ['usd_myr', 'enso_oni', 'stock_to_usage_ratio']
+Train: 2017-01-05 to 2024-12-27 (417 weeks)
+Test:  2025-01-03 to 2026-06-26 (78 weeks)
+
+================================================================================
+8a. SAMPLE SIZE & BASE RATE AT EACH HORIZON
+================================================================================
+
+ Hz   Train n  Persist    Break   Base%     Flag   Test n  Persist    Break   Base%     Flag
+----------------------------------------------------------------------------------------------------
+  1w      138      120       18   87.0%                28       21        7   75.0%         
+  2w      138      115       23   83.3%                27       19        8   70.4%         
+  3w      138      112       26   81.2%                26       16       10   61.5%         
+  4w      138      111       27   80.4%                25       15       10   60.0%         
+  5w      138      110       28   79.7%                24       13       11   54.2%         
+  6w      138      105       33   76.1%                23       11       12   47.8%         
+  7w      138      102       36   73.9%                22       10       12   45.5%         
+  8w      138       98       40   71.0%                21        6       15   28.6%         
+
+No horizon flagged as trivial (all base rates ≤90%).
+
+================================================================================
+8b. TRAINING SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model   Acc%  Base%    Lift     usd_myr   enso_oni    stk_usg  Dirs match?   
+-----------------------------------------------------------------------------------------------
+  1w    LR  87.0%  87.0%   +0.0pp     -0.4899    +0.6349    -0.5834  ALL YES       
+  1w    RF  94.9%  87.0%   +8.0pp  imp=0.405     imp=0.325     imp=0.270  OOB=85.2±3.9%
+  2w    LR  84.1%  83.3%   +0.7pp     -0.5603    +0.5729    -0.2038  ALL YES       
+  2w    RF  94.2%  83.3%  +10.9pp  imp=0.391     imp=0.342     imp=0.268  OOB=84.5±5.1%
+  3w    LR  82.6%  81.2%   +1.4pp     -0.5732    +0.4626    -0.3096  ALL YES       
+  3w    RF  92.0%  81.2%  +10.9pp  imp=0.387     imp=0.344     imp=0.269  OOB=83.8±4.0%
+  4w    LR  81.2%  80.4%   +0.7pp     -0.6903    +0.3663    -0.2948  ALL YES       
+  4w    RF  90.6%  80.4%  +10.1pp  imp=0.437     imp=0.324     imp=0.239  OOB=80.3±4.9%
+  5w    LR  82.6%  79.7%   +2.9pp     -0.8439    +0.4287    -0.3701  ALL YES       
+  5w    RF  89.9%  79.7%  +10.1pp  imp=0.474     imp=0.301     imp=0.226  OOB=82.7±3.4%
+  6w    LR  78.3%  76.1%   +2.2pp     -0.9119    +0.5069    -0.3610  ALL YES       
+  6w    RF  92.8%  76.1%  +16.7pp  imp=0.400     imp=0.349     imp=0.251  OOB=81.4±5.3%
+  7w    LR  74.6%  73.9%   +0.7pp     -0.8172    +0.4176    -0.2107  ALL YES       
+  7w    RF  89.9%  73.9%  +15.9pp  imp=0.405     imp=0.332     imp=0.264  OOB=79.7±5.6%
+  8w    LR  73.2%  71.0%   +2.2pp     -0.9390    +0.5521    -0.3749  ALL YES       
+  8w    RF  92.0%  71.0%  +21.0pp  imp=0.405     imp=0.336     imp=0.259  OOB=80.2±4.6%
+
+================================================================================
+8c. TEST SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model   Acc%  Prec1   Rec1  Prec0   Rec0  Base%  BaseAcc  vs Base Note        
+----------------------------------------------------------------------------------------------------
+  1w    LR  75.0%   0.0%   0.0%   0.0%   0.0%  75.0%    75.0%    +0.0pp [all-1]     
+  1w    RF  78.6%  77.8% 100.0% 100.0%  14.3%  75.0%    75.0%    +3.6pp             
+  2w    LR  70.4%   0.0%   0.0%   0.0%   0.0%  70.4%    70.4%    +0.0pp [all-1]     
+  2w    RF  74.1%  73.1% 100.0% 100.0%  12.5%  70.4%    70.4%    +3.7pp             
+  3w    LR  61.5%   0.0%   0.0%   0.0%   0.0%  61.5%    61.5%    +0.0pp [all-1]     
+  3w    RF  61.5%  66.7%  75.0%  50.0%  40.0%  61.5%    61.5%    +0.0pp             
+  4w    LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]     
+  4w    RF  72.0%  68.2% 100.0% 100.0%  30.0%  60.0%    60.0%   +12.0pp             
+  5w    LR  54.2%   0.0%   0.0%   0.0%   0.0%  54.2%    54.2%    +0.0pp [all-1]     
+  5w    RF  54.2%   0.0%   0.0%   0.0%   0.0%  54.2%    54.2%    +0.0pp [all-1]     
+  6w    LR  47.8%   0.0%   0.0%   0.0%   0.0%  47.8%    47.8%    +0.0pp [all-1]     
+  6w    RF  47.8%   0.0%   0.0%   0.0%   0.0%  47.8%    47.8%    +0.0pp [all-1]     
+  7w    LR  45.5%   0.0%   0.0%   0.0%   0.0%  45.5%    45.5%    +0.0pp [all-1]     
+  7w    RF  45.5%   0.0%   0.0%   0.0%   0.0%  45.5%    45.5%    +0.0pp [all-1]     
+  8w    LR  28.6%   0.0%   0.0%   0.0%   0.0%  28.6%    28.6%    +0.0pp [all-1]     
+  8w    RF  47.6%  35.3% 100.0% 100.0%  26.7%  28.6%    28.6%   +19.0pp             
+
+================================================================================
+8d. USD/MYR COEFFICIENT DIRECTION BY HORIZON
+================================================================================
+
+Tracking where usd_myr's LR coefficient direction matches/flips vs Phase A expectation (negative).
+Phase A found: higher USD/MYR → lower persistence (negative direction, -33.6pp gap at 12w).
+
+ Hz    LR coeff  Direction   Expected  Match  Test gap check                
+--------------------------------------------------------------------------------
+  1w     -0.4899   negative   negative    YES  gap=-21.4pp (negative)        
+  2w     -0.5603   negative   negative    YES  gap=-17.0pp (negative)        
+  3w     -0.5732   negative   negative    YES  gap=-15.4pp (negative)        
+  4w     -0.6903   negative   negative    YES  gap=-3.2pp (negative)         
+  5w     -0.8439   negative   negative    YES  gap=+8.3pp (positive)         
+  6w     -0.9119   negative   negative    YES  gap=+12.9pp (positive)        
+  7w     -0.8172   negative   negative    YES  gap=+36.4pp (positive)        
+  8w     -0.9390   negative   negative    YES  gap=+21.8pp (positive)        
+
+================================================================================
+8e. USABLE RANGE IDENTIFICATION
+================================================================================
+
+  Practical floor (shortest non-trivial horizon): 1w
+  Practical ceiling (longest horizon beating baseline + correct dirs): 8w
+  RF-only ceiling (ignoring coefficient directions): 8w
+
+  USD/MYR direction transition:
+    1w: coeff=-0.4899 (neg)
+    2w: coeff=-0.5603 (neg)
+    3w: coeff=-0.5732 (neg)
+    4w: coeff=-0.6903 (neg)
+    5w: coeff=-0.8439 (neg)
+    6w: coeff=-0.9119 (neg)
+    7w: coeff=-0.8172 (neg)
+    8w: coeff=-0.9390 (neg)
+
+================================================================================
+CONCLUSION
+================================================================================
+
+  Shape 1 persistence is reliably predictable from week 1 to week 8.
+
+================================================================================
+END OF SECTION 8
+================================================================================
+
+
+================================================================================
+SECTION 8: SHAPE 1 (BACKWARDATION) — HORIZON SWEEP (1w to 8w)
+================================================================================
+Generated: 2026-06-30 09:34
+Features: ['usd_myr', 'enso_oni', 'stock_to_usage_ratio']
+Train: 2017-01-05 to 2024-12-27 (417 weeks)
+Test:  2025-01-03 to 2026-06-26 (78 weeks)
+
+================================================================================
+8a. SAMPLE SIZE & BASE RATE AT EACH HORIZON
+================================================================================
+
+ Hz   Train n  Persist    Break   Base%     Flag   Test n  Persist    Break   Base%     Flag
+----------------------------------------------------------------------------------------------------
+  1w      138      120       18   87.0%                28       21        7   75.0%         
+  2w      138      115       23   83.3%                27       19        8   70.4%         
+  3w      138      112       26   81.2%                26       16       10   61.5%         
+  4w      138      111       27   80.4%                25       15       10   60.0%         
+  5w      138      110       28   79.7%                24       13       11   54.2%         
+  6w      138      105       33   76.1%                23       11       12   47.8%         
+  7w      138      102       36   73.9%                22       10       12   45.5%         
+  8w      138       98       40   71.0%                21        6       15   28.6%         
+
+No horizon flagged as trivial (all base rates ≤90%).
+
+================================================================================
+8b. TRAINING SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model   Acc%  Base%    Lift     usd_myr   enso_oni    stk_usg  Dirs match?   
+-----------------------------------------------------------------------------------------------
+  1w    LR  87.0%  87.0%   +0.0pp     -0.4899    +0.6349    -0.5834  ALL YES       
+  1w    RF  94.9%  87.0%   +8.0pp  imp=0.405     imp=0.325     imp=0.270  OOB=85.9±5.6%
+  2w    LR  84.1%  83.3%   +0.7pp     -0.5603    +0.5729    -0.2038  ALL YES       
+  2w    RF  94.2%  83.3%  +10.9pp  imp=0.391     imp=0.342     imp=0.268  OOB=86.8±4.5%
+  3w    LR  82.6%  81.2%   +1.4pp     -0.5732    +0.4626    -0.3096  ALL YES       
+  3w    RF  92.0%  81.2%  +10.9pp  imp=0.387     imp=0.344     imp=0.269  OOB=81.3±4.3%
+  4w    LR  81.2%  80.4%   +0.7pp     -0.6903    +0.3663    -0.2948  ALL YES       
+  4w    RF  90.6%  80.4%  +10.1pp  imp=0.437     imp=0.324     imp=0.239  OOB=82.1±4.5%
+  5w    LR  82.6%  79.7%   +2.9pp     -0.8439    +0.4287    -0.3701  ALL YES       
+  5w    RF  89.9%  79.7%  +10.1pp  imp=0.474     imp=0.301     imp=0.226  OOB=81.0±5.0%
+  6w    LR  78.3%  76.1%   +2.2pp     -0.9119    +0.5069    -0.3610  ALL YES       
+  6w    RF  92.8%  76.1%  +16.7pp  imp=0.400     imp=0.349     imp=0.251  OOB=81.8±3.2%
+  7w    LR  74.6%  73.9%   +0.7pp     -0.8172    +0.4176    -0.2107  ALL YES       
+  7w    RF  89.9%  73.9%  +15.9pp  imp=0.405     imp=0.332     imp=0.264  OOB=78.9±5.6%
+  8w    LR  73.2%  71.0%   +2.2pp     -0.9390    +0.5521    -0.3749  ALL YES       
+  8w    RF  92.0%  71.0%  +21.0pp  imp=0.405     imp=0.336     imp=0.259  OOB=78.2±7.0%
+
+================================================================================
+8c. TEST SET RESULTS (all 8 horizons)
+================================================================================
+
+ Hz Model   Acc%  Prec1   Rec1  Prec0   Rec0  Base%  BaseAcc  vs Base Note        
+----------------------------------------------------------------------------------------------------
+  1w    LR  75.0%   0.0%   0.0%   0.0%   0.0%  75.0%    75.0%    +0.0pp [all-1]     
+  1w    RF  78.6%  77.8% 100.0% 100.0%  14.3%  75.0%    75.0%    +3.6pp             
+  2w    LR  70.4%   0.0%   0.0%   0.0%   0.0%  70.4%    70.4%    +0.0pp [all-1]     
+  2w    RF  74.1%  73.1% 100.0% 100.0%  12.5%  70.4%    70.4%    +3.7pp             
+  3w    LR  61.5%   0.0%   0.0%   0.0%   0.0%  61.5%    61.5%    +0.0pp [all-1]     
+  3w    RF  61.5%  66.7%  75.0%  50.0%  40.0%  61.5%    61.5%    +0.0pp             
+  4w    LR  60.0%   0.0%   0.0%   0.0%   0.0%  60.0%    60.0%    +0.0pp [all-1]     
+  4w    RF  72.0%  68.2% 100.0% 100.0%  30.0%  60.0%    60.0%   +12.0pp             
+  5w    LR  54.2%   0.0%   0.0%   0.0%   0.0%  54.2%    54.2%    +0.0pp [all-1]     
+  5w    RF  54.2%   0.0%   0.0%   0.0%   0.0%  54.2%    54.2%    +0.0pp [all-1]     
+  6w    LR  47.8%   0.0%   0.0%   0.0%   0.0%  47.8%    47.8%    +0.0pp [all-1]     
+  6w    RF  47.8%   0.0%   0.0%   0.0%   0.0%  47.8%    47.8%    +0.0pp [all-1]     
+  7w    LR  45.5%   0.0%   0.0%   0.0%   0.0%  45.5%    45.5%    +0.0pp [all-1]     
+  7w    RF  45.5%   0.0%   0.0%   0.0%   0.0%  45.5%    45.5%    +0.0pp [all-1]     
+  8w    LR  28.6%   0.0%   0.0%   0.0%   0.0%  28.6%    28.6%    +0.0pp [all-1]     
+  8w    RF  47.6%  35.3% 100.0% 100.0%  26.7%  28.6%    28.6%   +19.0pp             
+
+================================================================================
+8d. USD/MYR COEFFICIENT DIRECTION BY HORIZON
+================================================================================
+
+Tracking where usd_myr's LR coefficient direction matches/flips vs Phase A expectation (negative).
+Phase A found: higher USD/MYR → lower persistence (negative direction, -33.6pp gap at 12w).
+
+ Hz    LR coeff  Direction   Expected  Match  Test gap check                
+--------------------------------------------------------------------------------
+  1w     -0.4899   negative   negative    YES  gap=-21.4pp (negative)        
+  2w     -0.5603   negative   negative    YES  gap=-17.0pp (negative)        
+  3w     -0.5732   negative   negative    YES  gap=-15.4pp (negative)        
+  4w     -0.6903   negative   negative    YES  gap=-3.2pp (negative)         
+  5w     -0.8439   negative   negative    YES  gap=+8.3pp (positive)         
+  6w     -0.9119   negative   negative    YES  gap=+12.9pp (positive)        
+  7w     -0.8172   negative   negative    YES  gap=+36.4pp (positive)        
+  8w     -0.9390   negative   negative    YES  gap=+21.8pp (positive)        
+
+================================================================================
+8e. USABLE RANGE IDENTIFICATION
+================================================================================
+
+  Practical floor (shortest non-trivial horizon): 1w
+
+  LR MODEL STATUS: Degenerate (predicts all-1) at EVERY horizon on the test set.
+  LR cannot be used as a standalone predictor — it collapses to the majority class.
+
+  RF beats baseline at horizons: [1, 2, 4, 8]
+    1w: 78.6% vs 75.0% baseline (+3.6pp, n=7500)
+    2w: 74.1% vs 70.4% baseline (+3.7pp, n=7037)
+    4w: 72.0% vs 60.0% baseline (+12.0pp, n=6000)
+    8w: 47.6% vs 28.6% baseline (+19.0pp, n=2857)
+  RF degenerate (all-1 or all-0) at horizons: [5, 6, 7]
+
+  USD/MYR direction analysis:
+  Training LR coefficient: negative at ALL horizons 1-8w (consistent with Phase A).
+  Test-set actual gap:
+    1w: gap=-21.4pp (HOLDS)
+    2w: gap=-17.0pp (HOLDS)
+    3w: gap=-15.4pp (HOLDS)
+    4w: gap=-3.2pp (HOLDS)
+    5w: gap=+8.3pp (FLIPPED)
+    6w: gap=+12.9pp (FLIPPED)
+    7w: gap=+36.4pp (FLIPPED)
+    8w: gap=+21.8pp (FLIPPED)
+
+  USD/MYR test-set direction flips at 5w.
+  Below 5w the Phase A finding (higher FX → lower persistence) holds on 2025-2026 data.
+  At 5w and beyond, the relationship reverses — the model's main feature
+  is working in the opposite direction to what it learned.
+
+  Horizons where RF beats baseline AND USD/MYR direction holds on test: [1, 2, 4]
+
+================================================================================
+CONCLUSION
+================================================================================
+
+  Shape 1 (Backwardation) RF model beats baseline at non-contiguous horizons: [1, 2, 4].
+  This is based on the RF model only — LR collapses to a trivial all-1 classifier
+  at every horizon on the 2025-2026 test set.
+
+  The primary mechanism (USD/MYR depressing persistence) holds on the test set through
+  4w but flips direction at 5w, suggesting the model's
+  interpretable basis degrades beyond the short-term horizon.
+
+  Best out-of-sample result: RF at 4w — 72.0% accuracy
+  vs 60.0% baseline (+12.0pp lift).
+
+================================================================================
+END OF SECTION 8
+================================================================================
