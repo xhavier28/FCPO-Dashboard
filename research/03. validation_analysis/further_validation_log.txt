@@ -1,0 +1,5 @@
+FURTHER VALIDATION LOG
+======================
+Created: 2026-07-03
+Studies: Further Study 1 (Prediction), Further Study 2 (Transition), Further Study 3 (Threshold)
+
