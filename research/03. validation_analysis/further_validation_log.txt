@@ -592,3 +592,264 @@ SUMMARY — TRANSITIONS THAT CAN BE RULED OUT:
   F   (Flat/Back-Inversion):
     1-week ruled out: ['SB', 'MB']
     2-week ruled out: ['MB']
+
+======================================================================
+FURTHER STUDY 1 � BACKUP MODEL REFERENCE
+Run: 2026-07-03 13:37
+======================================================================
+BACKUP MODEL (74.8% reference � DO NOT REPLACE)
+CV accuracy:   46.8%
+Test accuracy: 55.6%
+
+Per-shape results:
+  SB  (Steep Backwardation): F1=56%  Prec=89%  Rec=41%
+  MB  (Mild Backwardation): F1=0%  Prec=0%  Rec=0%
+  TB  (Transitional Backwardation): F1=21%  Prec=12%  Rec=100%
+  C   (Contango): F1=72%  Prec=61%  Rec=89%
+  F   (Flat/Back-Inversion): F1=54%  Prec=81%  Rec=41%
+
+======================================================================
+FURTHER STUDY 1 � NEW MODEL (FULL VARIABLES)
+Run: 2026-07-03 13:37
+======================================================================
+NEW MODEL � FULL VARIABLE SET
+CV accuracy:   84.7%
+Test accuracy: 80.8%
+vs backup:     +25.3pp
+
+Per-shape comparison:
+  SB  (Steep Backwardation): backup F1=56%  new F1=90%  diff=+34pp ***
+  MB  (Mild Backwardation): backup F1=0%  new F1=27%  diff=+27pp ***
+  TB  (Transitional Backwardation): backup F1=21%  new F1=36%  diff=+15pp ***
+  C   (Contango): backup F1=72%  new F1=83%  diff=+11pp ***
+  F   (Flat/Back-Inversion): backup F1=54%  new F1=84%  diff=+30pp ***
+
+Feature importance:
+  Prior Shape                        0.245
+  Stock Percentile                   0.201
+  Production Mom 3m                  0.114
+  Days in Current Shape              0.106
+  ENSO ONI                           0.066
+  Stock x Production Quad            0.060
+  Palm-Soy Spread 4w                 0.045
+  Production Mom 1m                  0.044
+  Calendar Month                     0.041
+  Production YoY                     0.025
+  USD/MYR Change 4w                  0.021
+  Export YoY                         0.018
+  Crude Oil Change 4w                0.014
+
+======================================================================
+FURTHER STUDY 1 � VARIABLE OPTIMIZATION
+Run: 2026-07-03 13:37
+======================================================================
+VARIABLE OPTIMIZATION � RFECV RESULTS
+Optimal feature count: 11
+Best CV score: 86.9%
+
+Selected features:
+  Stock Percentile
+  Production Mom 1m
+  Production Mom 3m
+  Production YoY
+  ENSO ONI
+  USD/MYR Change 4w
+  Palm-Soy Spread 4w
+  Days in Current Shape
+  Prior Shape
+  Calendar Month
+  Stock x Production Quad
+
+Removed features:
+  Export YoY � added noise, removed
+  Crude Oil Change 4w � added noise, removed
+
+======================================================================
+FURTHER STUDY 1 � OPTIMIZED MODEL FINAL
+Run: 2026-07-03 13:37
+======================================================================
+OPTIMIZED MODEL � FINAL COMPARISON
+Model                      CV     Test  vs Backup
+Backup:           46.8%   55.6%   �
+Full variables:   84.7%   80.8%   +25.3pp
+Optimized subset: 85.0%   84.7%   +29.2pp
+
+Per-shape F1:
+  SB  (Steep Backwardation): backup=56%  full=90%  optimized=92%
+  MB  (Mild Backwardation): backup=0%  full=27%  optimized=26%
+  TB  (Transitional Backwardation): backup=21%  full=36%  optimized=32%
+  C   (Contango): backup=72%  full=83%  optimized=87%
+  F   (Flat/Back-Inversion): backup=54%  full=84%  optimized=91%
+
+VERDICT: Best model = Optimized at 84.7% test accuracy
+
+======================================================================
+FURTHER STUDY 1 — BACKUP MODEL REFERENCE
+Run: 2026-07-03 13:37
+======================================================================
+BACKUP MODEL (74.8% reference — DO NOT REPLACE)
+CV accuracy:   46.8%
+Test accuracy: 55.6%
+
+Per-shape results:
+  SB  (Steep Backwardation): F1=56%  Prec=89%  Rec=41%
+  MB  (Mild Backwardation): F1=0%  Prec=0%  Rec=0%
+  TB  (Transitional Backwardation): F1=21%  Prec=12%  Rec=100%
+  C   (Contango): F1=72%  Prec=61%  Rec=89%
+  F   (Flat/Back-Inversion): F1=54%  Prec=81%  Rec=41%
+
+======================================================================
+FURTHER STUDY 1 — NEW MODEL (FULL VARIABLES)
+Run: 2026-07-03 13:37
+======================================================================
+NEW MODEL — FULL VARIABLE SET
+CV accuracy:   84.7%
+Test accuracy: 80.8%
+vs backup:     +25.3pp
+
+Per-shape comparison:
+  SB  (Steep Backwardation): backup F1=56%  new F1=90%  diff=+34pp ***
+  MB  (Mild Backwardation): backup F1=0%  new F1=27%  diff=+27pp ***
+  TB  (Transitional Backwardation): backup F1=21%  new F1=36%  diff=+15pp ***
+  C   (Contango): backup F1=72%  new F1=83%  diff=+11pp ***
+  F   (Flat/Back-Inversion): backup F1=54%  new F1=84%  diff=+30pp ***
+
+Feature importance:
+  Prior Shape                        0.245
+  Stock Percentile                   0.201
+  Production Mom 3m                  0.114
+  Days in Current Shape              0.106
+  ENSO ONI                           0.066
+  Stock x Production Quad            0.060
+  Palm-Soy Spread 4w                 0.045
+  Production Mom 1m                  0.044
+  Calendar Month                     0.041
+  Production YoY                     0.025
+  USD/MYR Change 4w                  0.021
+  Export YoY                         0.018
+  Crude Oil Change 4w                0.014
+
+======================================================================
+FURTHER STUDY 1 — VARIABLE OPTIMIZATION
+Run: 2026-07-03 13:37
+======================================================================
+VARIABLE OPTIMIZATION — RFECV RESULTS
+Optimal feature count: 11
+Best CV score: 86.9%
+
+Selected features:
+  Stock Percentile
+  Production Mom 1m
+  Production Mom 3m
+  Production YoY
+  ENSO ONI
+  USD/MYR Change 4w
+  Palm-Soy Spread 4w
+  Days in Current Shape
+  Prior Shape
+  Calendar Month
+  Stock x Production Quad
+
+Removed features:
+  Export YoY — added noise, removed
+  Crude Oil Change 4w — added noise, removed
+
+======================================================================
+FURTHER STUDY 1 — OPTIMIZED MODEL FINAL
+Run: 2026-07-03 13:37
+======================================================================
+OPTIMIZED MODEL — FINAL COMPARISON
+Model                      CV     Test  vs Backup
+Backup:           46.8%   55.6%   —
+Full variables:   84.7%   80.8%   +25.3pp
+Optimized subset: 85.0%   84.7%   +29.2pp
+
+Per-shape F1:
+  SB  (Steep Backwardation): backup=56%  full=90%  optimized=92%
+  MB  (Mild Backwardation): backup=0%  full=27%  optimized=26%
+  TB  (Transitional Backwardation): backup=21%  full=36%  optimized=32%
+  C   (Contango): backup=72%  full=83%  optimized=87%
+  F   (Flat/Back-Inversion): backup=54%  full=84%  optimized=91%
+
+VERDICT: Best model = Optimized at 84.7% test accuracy
+
+======================================================================
+FURTHER STUDY 1 — YEAR BY YEAR ACCURACY CHECK
+Run: 2026-07-03 13:37
+======================================================================
+YEAR-BY-YEAR ACCURACY — FULL DATASET CHECK
+======================================================================
+Year    Split   Accuracy      n       Dominant Shape    Dom%
+  2018  TRAIN      97.8%     185                     C     85%  
+  2019  TRAIN      99.6%     244                     C     83%  
+  2020  TRAIN      96.0%     248                    SB     69%  
+  2021  TRAIN      99.2%     245                    SB     92%  
+  2022  TRAIN      91.8%     243                    SB     36%  
+  2023  TRAIN      94.3%     244                     C     37%  
+  2024  TRAIN      93.5%     247                    SB     51%  
+───────────────────────────────────────────────────────────────── TEST SET BELOW
+  2025   TEST      84.0%     244                    SB     33%  
+  2026   TEST      86.2%     116                     F     54%  
+
+PER-SHAPE ACCURACY BY YEAR
+======================================================================
+
+  SB  (Steep Backwardation):
+  Year    Split   Accuracy      n
+    2020  TRAIN     100.0%     170
+    2021  TRAIN     100.0%     225
+    2022  TRAIN     100.0%      87
+    2023  TRAIN     100.0%      52
+    2024  TRAIN     100.0%     126
+    2025   TEST      98.8%      80
+
+  MB  (Mild Backwardation):
+  Year    Split   Accuracy      n
+    2018  TRAIN      25.0%       4 (low n)
+    2019  TRAIN     100.0%      16
+    2020  TRAIN      90.2%      41
+    2021  TRAIN      90.0%      20
+    2022  TRAIN      96.3%      27
+    2023  TRAIN     100.0%      25
+    2024  TRAIN      98.8%      86
+    2025   TEST      22.2%      18 *** WEAK
+    2026   TEST       0.0%       7 *** WEAK
+
+  TB  (Transitional Backwardation):
+  Year    Split   Accuracy      n
+    2018  TRAIN       0.0%       1 (low n)
+    2020  TRAIN      93.9%      33
+    2022  TRAIN     100.0%      21
+    2023  TRAIN      94.7%      19
+    2024  TRAIN     100.0%      17
+    2025   TEST      71.4%       7 (low n)
+
+  C   (Contango):
+  Year    Split   Accuracy      n
+    2018  TRAIN     100.0%     158
+    2019  TRAIN     100.0%     202
+    2020  TRAIN       0.0%       2 (low n)
+    2022  TRAIN      73.6%      72
+    2023  TRAIN      86.8%      91
+    2024  TRAIN       0.0%       9 (low n)
+    2025   TEST      89.3%      75
+    2026   TEST      95.7%      46
+
+  F   (Flat/Back-Inversion):
+  Year    Split   Accuracy      n
+    2018  TRAIN     100.0%      22
+    2019  TRAIN      96.2%      26
+    2020  TRAIN       0.0%       2 (low n)
+    2022  TRAIN     100.0%      36
+    2023  TRAIN      98.2%      57
+    2024  TRAIN      33.3%       9 (low n)
+    2025   TEST      78.1%      64
+    2026   TEST      88.9%      63
+
+CONSISTENCY SUMMARY
+========================================
+
+Train accuracy: 96.0%
+Test accuracy:  85.1%
+Gap: 10.9pp
+Verdict: MODERATE GAP — some overfitting possible. 84.7% is slightly optimistic.
