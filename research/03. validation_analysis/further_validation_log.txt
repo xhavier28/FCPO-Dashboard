@@ -3,3 +3,592 @@ FURTHER VALIDATION LOG
 Created: 2026-07-03
 Studies: Further Study 1 (Prediction), Further Study 2 (Transition), Further Study 3 (Threshold)
 
+
+======================================================================
+FURTHER STUDY 1 � BACKUP MODEL REFERENCE
+Run: 2026-07-03 13:14
+======================================================================
+BACKUP MODEL (74.8% reference � DO NOT REPLACE)
+CV accuracy:   46.8%
+Test accuracy: 55.6%
+
+Per-shape results:
+  SB  (Steep Backwardation): F1=56%  Prec=89%  Rec=41%
+  MB  (Mild Backwardation): F1=0%  Prec=0%  Rec=0%
+  TB  (Transitional Backwardation): F1=21%  Prec=12%  Rec=100%
+  C   (Contango): F1=72%  Prec=61%  Rec=89%
+  F   (Flat/Back-Inversion): F1=54%  Prec=81%  Rec=41%
+
+======================================================================
+FURTHER STUDY 1 � NEW MODEL (FULL VARIABLES)
+Run: 2026-07-03 13:14
+======================================================================
+NEW MODEL � FULL VARIABLE SET
+CV accuracy:   84.7%
+Test accuracy: 80.8%
+vs backup:     +25.3pp
+
+Per-shape comparison:
+  SB  (Steep Backwardation): backup F1=56%  new F1=90%  diff=+34pp ***
+  MB  (Mild Backwardation): backup F1=0%  new F1=27%  diff=+27pp ***
+  TB  (Transitional Backwardation): backup F1=21%  new F1=36%  diff=+15pp ***
+  C   (Contango): backup F1=72%  new F1=83%  diff=+11pp ***
+  F   (Flat/Back-Inversion): backup F1=54%  new F1=84%  diff=+30pp ***
+
+Feature importance:
+  Prior Shape                        0.245
+  Stock Percentile                   0.201
+  Production Mom 3m                  0.114
+  Days in Current Shape              0.106
+  ENSO ONI                           0.066
+  Stock x Production Quad            0.060
+  Palm-Soy Spread 4w                 0.045
+  Production Mom 1m                  0.044
+  Calendar Month                     0.041
+  Production YoY                     0.025
+  USD/MYR Change 4w                  0.021
+  Export YoY                         0.018
+  Crude Oil Change 4w                0.014
+
+======================================================================
+FURTHER STUDY 1 � VARIABLE OPTIMIZATION
+Run: 2026-07-03 13:14
+======================================================================
+VARIABLE OPTIMIZATION � RFECV RESULTS
+Optimal feature count: 11
+Best CV score: 86.9%
+
+Selected features:
+  Stock Percentile
+  Production Mom 1m
+  Production Mom 3m
+  Production YoY
+  ENSO ONI
+  USD/MYR Change 4w
+  Palm-Soy Spread 4w
+  Days in Current Shape
+  Prior Shape
+  Calendar Month
+  Stock x Production Quad
+
+Removed features:
+  Export YoY � added noise, removed
+  Crude Oil Change 4w � added noise, removed
+
+======================================================================
+FURTHER STUDY 1 � OPTIMIZED MODEL FINAL
+Run: 2026-07-03 13:14
+======================================================================
+OPTIMIZED MODEL � FINAL COMPARISON
+Model                      CV     Test  vs Backup
+Backup:           46.8%   55.6%   �
+Full variables:   84.7%   80.8%   +25.3pp
+Optimized subset: 85.0%   84.7%   +29.2pp
+
+Per-shape F1:
+  SB  (Steep Backwardation): backup=56%  full=90%  optimized=92%
+  MB  (Mild Backwardation): backup=0%  full=27%  optimized=26%
+  TB  (Transitional Backwardation): backup=21%  full=36%  optimized=32%
+  C   (Contango): backup=72%  full=83%  optimized=87%
+  F   (Flat/Back-Inversion): backup=54%  full=84%  optimized=91%
+
+VERDICT: Best model = Optimized at 84.7% test accuracy
+
+======================================================================
+FURTHER STUDY 2 � ACCURACY COMPARISON
+Run: 2026-07-03 13:15
+======================================================================
+TRANSITION MODEL � ACCURACY COMPARISON
+1-WEEK (+5 days) vs 2-WEEK (+14 days)
+======================================================================
+
+Shape   1w Base   1w CV  1w Test   1w vs  2w Base   2w CV  2w Test   2w vs
+  SB      85.2%   62.7%    55.0% -30.2pp    80.2%   59.2%    56.2% -23.9pp
+  MB      56.6%   44.2%    44.0% -12.6pp    47.5%   54.3%    24.0% -23.5pp
+  TB      54.9%   49.4%    14.3% -40.7pp    34.1%   56.0%    14.3% -19.8pp
+  C       89.7%   81.8%    57.7% -32.0pp    86.5%   79.4%    61.3% -25.3pp
+  F       55.3%   37.5%    33.9% -21.4pp    45.4%   35.6%    29.9% -15.5pp
+
+======================================================================
+FURTHER STUDY 2 � CALIBRATION 1-WEEK
+Run: 2026-07-03 13:15
+======================================================================
+CALIBRATION CHECK � 1-WEEK HORIZON
+======================================================================
+
+  SB  (Steep Backwardation) (test n=80):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> SB       82.5%  92.5%   72.5% +20.0pp        YES ***
+    -> TB        3.8%   7.5%    0.0%  +7.5pp        YES ***
+    -> C         3.8%   7.5%    0.0%  +7.5pp        YES ***
+    -> MB        8.8%  10.0%    7.5%  +2.5pp    PARTIAL
+    -> F         1.2%   0.0%    1.5%  -1.5pp         NO
+
+  MB  (Mild Backwardation) (test n=25):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> F        28.0%  58.3%    0.0% +58.3pp        YES ***
+    -> SB       20.0%  41.7%    0.0% +41.7pp        YES ***
+    -> C         4.0%   8.3%    0.0%  +8.3pp        YES ***
+    -> TB        8.0%   0.0%   15.4% -15.4pp         NO
+    -> MB       40.0%  16.7%   61.5% -44.9pp         NO
+
+  TB  (Transitional Backwardation) (test n=7):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> TB       14.3%  33.3%    0.0% +33.3pp        YES ***
+    -> C        14.3%  33.3%    0.0% +33.3pp        YES ***
+    -> MB       14.3%   0.0%   25.0% -25.0pp         NO
+    -> SB       28.6%   0.0%   50.0% -50.0pp         NO
+    -> F        28.6%   0.0%   50.0% -50.0pp         NO
+
+  C   (Contango) (test n=111):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> F        33.3%  41.8%   25.0% +16.8pp        YES ***
+    -> C        64.9%  69.1%   60.7%  +8.4pp        YES ***
+    -> SB        0.9%   1.8%    0.0%  +1.8pp         NO
+    -> TB        0.9%   1.8%    0.0%  +1.8pp         NO
+    -> MB        0.0%   0.0%    0.0%  +0.0pp         NO
+
+  F   (Flat/Back-Inversion) (test n=127):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> MB        5.5%   9.5%    1.6%  +8.0pp        YES ***
+    -> F        63.0%  66.7%   59.4%  +7.3pp        YES ***
+    -> SB        0.8%   1.6%    0.0%  +1.6pp         NO
+    -> TB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> C        30.7%  17.5%   43.8% -26.3pp         NO
+
+======================================================================
+FURTHER STUDY 2 � CALIBRATION 2-WEEK
+Run: 2026-07-03 13:15
+======================================================================
+CALIBRATION CHECK � 2-WEEK HORIZON
+======================================================================
+
+  SB  (Steep Backwardation) (test n=80):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> SB       76.2%  92.5%   60.0% +32.5pp        YES ***
+    -> C         5.0%  10.0%    0.0% +10.0pp        YES ***
+    -> TB        3.8%   7.7%    0.0%  +7.7pp        YES ***
+    -> F         3.8%   5.1%    2.4%  +2.7pp    PARTIAL
+    -> MB       11.2%  10.0%   12.5%  -2.5pp         NO
+
+  MB  (Mild Backwardation) (test n=25):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> F        40.0%  77.8%   18.8% +59.0pp        YES ***
+    -> SB       20.0%  41.7%    0.0% +41.7pp        YES ***
+    -> TB        8.0%  16.7%    0.0% +16.7pp        YES ***
+    -> C        12.0%  16.7%    7.7%  +9.0pp        YES ***
+    -> MB       20.0%   0.0%   38.5% -38.5pp         NO
+
+  TB  (Transitional Backwardation) (test n=7):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> C        28.6%  33.3%   25.0%  +8.3pp        YES ***
+    -> TB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> F         0.0%   0.0%    0.0%  +0.0pp         NO
+    -> MB       14.3%   0.0%   25.0% -25.0pp         NO
+    -> SB       57.1%  33.3%   75.0% -41.7pp         NO
+
+  C   (Contango) (test n=111):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> C        64.0%  70.9%   57.1% +13.8pp        YES ***
+    -> TB        1.8%   3.6%    0.0%  +3.6pp    PARTIAL
+    -> F        33.3%  34.5%   32.1%  +2.4pp    PARTIAL
+    -> MB        0.9%   1.8%    0.0%  +1.8pp         NO
+    -> SB        0.0%   0.0%    0.0%  +0.0pp         NO
+
+  F   (Flat/Back-Inversion) (test n=127):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> MB        7.1%  11.1%    3.1%  +8.0pp        YES ***
+    -> F        60.6%  61.9%   59.4%  +2.5pp    PARTIAL
+    -> SB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> TB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> C        32.3%  17.5%   46.9% -29.4pp         NO
+
+======================================================================
+FURTHER STUDY 2 — ACCURACY COMPARISON
+Run: 2026-07-03 13:16
+======================================================================
+TRANSITION MODEL — ACCURACY COMPARISON
+1-WEEK (+5 days) vs 2-WEEK (+14 days)
+======================================================================
+
+Shape   1w Base   1w CV  1w Test   1w vs  2w Base   2w CV  2w Test   2w vs
+  SB      85.2%   62.7%    55.0% -30.2pp    80.2%   59.2%    56.2% -23.9pp
+  MB      56.6%   44.2%    44.0% -12.6pp    47.5%   54.3%    24.0% -23.5pp
+  TB      54.9%   49.4%    14.3% -40.7pp    34.1%   56.0%    14.3% -19.8pp
+  C       89.7%   81.8%    57.7% -32.0pp    86.5%   79.4%    61.3% -25.3pp
+  F       55.3%   37.5%    33.9% -21.4pp    45.4%   35.6%    29.9% -15.5pp
+
+======================================================================
+FURTHER STUDY 2 — CALIBRATION 1-WEEK
+Run: 2026-07-03 13:16
+======================================================================
+CALIBRATION CHECK — 1-WEEK HORIZON
+======================================================================
+
+  SB  (Steep Backwardation) (test n=80):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> SB       82.5%  92.5%   72.5% +20.0pp        YES ***
+    -> TB        3.8%   7.5%    0.0%  +7.5pp        YES ***
+    -> C         3.8%   7.5%    0.0%  +7.5pp        YES ***
+    -> MB        8.8%  10.0%    7.5%  +2.5pp    PARTIAL
+    -> F         1.2%   0.0%    1.5%  -1.5pp         NO
+
+  MB  (Mild Backwardation) (test n=25):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> F        28.0%  58.3%    0.0% +58.3pp        YES ***
+    -> SB       20.0%  41.7%    0.0% +41.7pp        YES ***
+    -> C         4.0%   8.3%    0.0%  +8.3pp        YES ***
+    -> TB        8.0%   0.0%   15.4% -15.4pp         NO
+    -> MB       40.0%  16.7%   61.5% -44.9pp         NO
+
+  TB  (Transitional Backwardation) (test n=7):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> TB       14.3%  33.3%    0.0% +33.3pp        YES ***
+    -> C        14.3%  33.3%    0.0% +33.3pp        YES ***
+    -> MB       14.3%   0.0%   25.0% -25.0pp         NO
+    -> SB       28.6%   0.0%   50.0% -50.0pp         NO
+    -> F        28.6%   0.0%   50.0% -50.0pp         NO
+
+  C   (Contango) (test n=111):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> F        33.3%  41.8%   25.0% +16.8pp        YES ***
+    -> C        64.9%  69.1%   60.7%  +8.4pp        YES ***
+    -> SB        0.9%   1.8%    0.0%  +1.8pp         NO
+    -> TB        0.9%   1.8%    0.0%  +1.8pp         NO
+    -> MB        0.0%   0.0%    0.0%  +0.0pp         NO
+
+  F   (Flat/Back-Inversion) (test n=127):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> MB        5.5%   9.5%    1.6%  +8.0pp        YES ***
+    -> F        63.0%  66.7%   59.4%  +7.3pp        YES ***
+    -> SB        0.8%   1.6%    0.0%  +1.6pp         NO
+    -> TB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> C        30.7%  17.5%   43.8% -26.3pp         NO
+
+======================================================================
+FURTHER STUDY 2 — CALIBRATION 2-WEEK
+Run: 2026-07-03 13:16
+======================================================================
+CALIBRATION CHECK — 2-WEEK HORIZON
+======================================================================
+
+  SB  (Steep Backwardation) (test n=80):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> SB       76.2%  92.5%   60.0% +32.5pp        YES ***
+    -> C         5.0%  10.0%    0.0% +10.0pp        YES ***
+    -> TB        3.8%   7.7%    0.0%  +7.7pp        YES ***
+    -> F         3.8%   5.1%    2.4%  +2.7pp    PARTIAL
+    -> MB       11.2%  10.0%   12.5%  -2.5pp         NO
+
+  MB  (Mild Backwardation) (test n=25):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> F        40.0%  77.8%   18.8% +59.0pp        YES ***
+    -> SB       20.0%  41.7%    0.0% +41.7pp        YES ***
+    -> TB        8.0%  16.7%    0.0% +16.7pp        YES ***
+    -> C        12.0%  16.7%    7.7%  +9.0pp        YES ***
+    -> MB       20.0%   0.0%   38.5% -38.5pp         NO
+
+  TB  (Transitional Backwardation) (test n=7):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> C        28.6%  33.3%   25.0%  +8.3pp        YES ***
+    -> TB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> F         0.0%   0.0%    0.0%  +0.0pp         NO
+    -> MB       14.3%   0.0%   25.0% -25.0pp         NO
+    -> SB       57.1%  33.3%   75.0% -41.7pp         NO
+
+  C   (Contango) (test n=111):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> C        64.0%  70.9%   57.1% +13.8pp        YES ***
+    -> TB        1.8%   3.6%    0.0%  +3.6pp    PARTIAL
+    -> F        33.3%  34.5%   32.1%  +2.4pp    PARTIAL
+    -> MB        0.9%   1.8%    0.0%  +1.8pp         NO
+    -> SB        0.0%   0.0%    0.0%  +0.0pp         NO
+
+  F   (Flat/Back-Inversion) (test n=127):
+  Next Shape   Base%   High%    Low%    Gap     Status
+    -> MB        7.1%  11.1%    3.1%  +8.0pp        YES ***
+    -> F        60.6%  61.9%   59.4%  +2.5pp    PARTIAL
+    -> SB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> TB        0.0%   0.0%    0.0%  +0.0pp         NO
+    -> C        32.3%  17.5%   46.9% -29.4pp         NO
+
+======================================================================
+FURTHER STUDY 2 — VERDICT AND LIVE READ
+Run: 2026-07-03 13:16
+======================================================================
+TRANSITION MODEL — OVERALL VERDICT
+======================================================================
+
+1-week calibrated cells: 12 of 25
+2-week calibrated cells: 10 of 25
+
+BEST CALIBRATED EDGES (1-week):
+  MB -> F: gap=+58.3pp  base=28.0%  high=58.3%
+  MB -> SB: gap=+41.7pp  base=20.0%  high=41.7%
+  TB -> TB: gap=+33.3pp  base=14.3%  high=33.3%
+  TB -> C: gap=+33.3pp  base=14.3%  high=33.3%
+  SB -> SB: gap=+20.0pp  base=82.5%  high=92.5%
+  C -> F: gap=+16.8pp  base=33.3%  high=41.8%
+  C -> C: gap=+8.4pp  base=64.9%  high=69.1%
+  MB -> C: gap=+8.3pp  base=4.0%  high=8.3%
+  F -> MB: gap=+8.0pp  base=5.5%  high=9.5%
+  SB -> TB: gap=+7.5pp  base=3.8%  high=7.5%
+  SB -> C: gap=+7.5pp  base=3.8%  high=7.5%
+  F -> F: gap=+7.3pp  base=63.0%  high=66.7%
+
+BEST CALIBRATED EDGES (2-week):
+  MB -> F: gap=+59.0pp  base=40.0%  high=77.8%
+  MB -> SB: gap=+41.7pp  base=20.0%  high=41.7%
+  SB -> SB: gap=+32.5pp  base=76.2%  high=92.5%
+  MB -> TB: gap=+16.7pp  base=8.0%  high=16.7%
+  C -> C: gap=+13.8pp  base=64.0%  high=70.9%
+  SB -> C: gap=+10.0pp  base=5.0%  high=10.0%
+  MB -> C: gap=+9.0pp  base=12.0%  high=16.7%
+  TB -> C: gap=+8.3pp  base=28.6%  high=33.3%
+  F -> MB: gap=+8.0pp  base=7.1%  high=11.1%
+  SB -> TB: gap=+7.7pp  base=3.8%  high=7.7%
+
+TODAY'S LIVE READ — 2026-06-11
+Current shape: C   (Contango)
+
+  1-WEEK OUTLOOK:
+    C     78.4%  ███████████████████        unconditional=89.7%  edge=-11.3pp  USE
+    F     16.1%  ████                       unconditional=8.1%  edge=+8.0pp  USE
+    TB     3.9%                             unconditional=1.5%  edge=+2.4pp  IGNORE
+    MB     1.5%                             unconditional=0.6%  edge=+0.9pp  IGNORE
+    SB     0.0%                             unconditional=0.2%  edge=-0.2pp  IGNORE
+
+  2-WEEK OUTLOOK:
+    C     68.6%  █████████████████          unconditional=86.5%  edge=-17.9pp  USE
+    F     22.0%  █████                      unconditional=10.5%  edge=+11.5pp  SOFT
+    SB     6.9%  █                          unconditional=0.6%  edge=+6.3pp  IGNORE
+    TB     2.1%                             unconditional=1.9%  edge=+0.2pp  SOFT
+    MB     0.4%                             unconditional=0.6%  edge=-0.2pp  IGNORE
+
+======================================================================
+FURTHER STUDY 3 — THRESHOLD TEST 1-WEEK
+Run: 2026-07-03 13:17
+======================================================================
+THRESHOLD TEST — 1-WEEK
+======================================================================
+Shows: when model probability < threshold,
+       how often does that transition still occur?
+SAFE TO IGNORE = actual rate < 50% of base rate
+
+  SB  (Steep Backwardation):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    MB       5%         7    8.8%    14.3%      -5.5pp
+    MB       8%        14    8.8%     7.1%      +1.6pp
+    MB      10%        21    8.8%     9.5%      -0.8pp
+    MB      15%        24    8.8%     8.3%      +0.4pp
+    TB       5%        12    3.8%     0.0%      +3.8pp SAFE
+    TB       8%        38    3.8%     0.0%      +3.8pp SAFE
+    TB      10%        51    3.8%     0.0%      +3.8pp SAFE
+    TB      15%        54    3.8%     0.0%      +3.8pp SAFE
+    C        5%        49    3.8%     0.0%      +3.8pp SAFE
+    C        8%        53    3.8%     0.0%      +3.8pp SAFE
+    C       10%        61    3.8%     0.0%      +3.8pp SAFE
+    C       15%        70    3.8%     1.4%      +2.3pp SAFE
+    F        5%        80    1.2%     1.2%      +0.0pp
+    F        8%        80    1.2%     1.2%      +0.0pp
+    F       10%        80    1.2%     1.2%      +0.0pp
+    F       15%        80    1.2%     1.2%      +0.0pp
+
+  MB  (Mild Backwardation):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    SB       5%         6   20.0%     0.0%     +20.0pp SAFE
+    SB       8%         7   20.0%     0.0%     +20.0pp SAFE
+    SB      10%         7   20.0%     0.0%     +20.0pp SAFE
+    SB      15%         7   20.0%     0.0%     +20.0pp SAFE
+    TB       5%         9    8.0%     0.0%      +8.0pp SAFE
+    TB       8%         9    8.0%     0.0%      +8.0pp SAFE
+    TB      10%        13    8.0%    15.4%      -7.4pp
+    TB      15%        19    8.0%    10.5%      -2.5pp
+    C        5%         5    4.0%     0.0%      +4.0pp SAFE
+    C        8%         5    4.0%     0.0%      +4.0pp SAFE
+    C       10%         5    4.0%     0.0%      +4.0pp SAFE
+    C       15%        13    4.0%     0.0%      +4.0pp SAFE
+    F        8%        17   28.0%     5.9%     +22.1pp SAFE
+    F       10%        17   28.0%     5.9%     +22.1pp SAFE
+    F       15%        18   28.0%     5.6%     +22.4pp SAFE
+
+  TB  (Transitional Backwardation):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    MB      15%         7   14.3%    14.3%      +0.0pp
+    F        5%         7   28.6%    28.6%      +0.0pp
+    F        8%         7   28.6%    28.6%      +0.0pp
+    F       10%         7   28.6%    28.6%      +0.0pp
+    F       15%         7   28.6%    28.6%      +0.0pp
+
+  C   (Contango):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    SB       5%        92    0.9%     0.0%      +0.9pp SAFE
+    SB       8%       104    0.9%     0.0%      +0.9pp SAFE
+    SB      10%       109    0.9%     0.9%      -0.0pp
+    SB      15%       111    0.9%     0.9%      +0.0pp
+    MB       5%        42    0.0%     0.0%      +0.0pp
+    MB       8%        68    0.0%     0.0%      +0.0pp
+    MB      10%        74    0.0%     0.0%      +0.0pp
+    MB      15%        92    0.0%     0.0%      +0.0pp
+    TB       5%        25    0.9%     0.0%      +0.9pp SAFE
+    TB       8%        52    0.9%     0.0%      +0.9pp SAFE
+    TB      10%        75    0.9%     0.0%      +0.9pp SAFE
+    TB      15%       102    0.9%     1.0%      -0.1pp
+    F        8%         7   33.3%     0.0%     +33.3pp SAFE
+    F       10%         8   33.3%     0.0%     +33.3pp SAFE
+    F       15%        13   33.3%     0.0%     +33.3pp SAFE
+
+  F   (Flat/Back-Inversion):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    SB       5%        47    0.8%     0.0%      +0.8pp SAFE
+    SB       8%        63    0.8%     0.0%      +0.8pp SAFE
+    SB      10%        63    0.8%     0.0%      +0.8pp SAFE
+    SB      15%        67    0.8%     0.0%      +0.8pp SAFE
+    MB       8%        27    5.5%     0.0%      +5.5pp SAFE
+    MB      10%        39    5.5%     0.0%      +5.5pp SAFE
+    MB      15%        65    5.5%     1.5%      +4.0pp SAFE
+    TB       5%        58    0.0%     0.0%      +0.0pp
+    TB       8%        80    0.0%     0.0%      +0.0pp
+    TB      10%        97    0.0%     0.0%      +0.0pp
+    TB      15%       118    0.0%     0.0%      +0.0pp
+
+======================================================================
+FURTHER STUDY 3 — THRESHOLD TEST 2-WEEK
+Run: 2026-07-03 13:17
+======================================================================
+THRESHOLD TEST — 2-WEEK
+======================================================================
+Shows: when model probability < threshold,
+       how often does that transition still occur?
+SAFE TO IGNORE = actual rate < 50% of base rate
+
+  SB  (Steep Backwardation):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    MB       8%        13   11.2%    15.4%      -4.1pp
+    MB      10%        17   11.2%    11.8%      -0.5pp
+    MB      15%        24   11.2%    16.7%      -5.4pp
+    TB       5%        33    3.8%     0.0%      +3.8pp SAFE
+    TB       8%        39    3.8%     0.0%      +3.8pp SAFE
+    TB      10%        42    3.8%     0.0%      +3.8pp SAFE
+    TB      15%        54    3.8%     0.0%      +3.8pp SAFE
+    C        5%        52    5.0%     0.0%      +5.0pp SAFE
+    C        8%        54    5.0%     0.0%      +5.0pp SAFE
+    C       10%        55    5.0%     0.0%      +5.0pp SAFE
+    C       15%        61    5.0%     1.6%      +3.4pp SAFE
+    F        5%        72    3.8%     4.2%      -0.4pp
+    F        8%        76    3.8%     3.9%      -0.2pp
+    F       10%        78    3.8%     3.8%      -0.1pp
+    F       15%        80    3.8%     3.8%      +0.0pp
+
+  MB  (Mild Backwardation):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    SB       8%         7   20.0%     0.0%     +20.0pp SAFE
+    SB      10%         7   20.0%     0.0%     +20.0pp SAFE
+    SB      15%         7   20.0%     0.0%     +20.0pp SAFE
+    TB       5%        10    8.0%     0.0%      +8.0pp SAFE
+    TB       8%        10    8.0%     0.0%      +8.0pp SAFE
+    TB      10%        15    8.0%     0.0%      +8.0pp SAFE
+    TB      15%        22    8.0%     9.1%      -1.1pp
+    C        5%        18   12.0%    16.7%      -4.7pp
+    C        8%        18   12.0%    16.7%      -4.7pp
+    C       10%        18   12.0%    16.7%      -4.7pp
+    C       15%        18   12.0%    16.7%      -4.7pp
+    F        5%        16   40.0%    18.8%     +21.2pp SAFE
+    F        8%        17   40.0%    17.6%     +22.4pp SAFE
+    F       10%        18   40.0%    16.7%     +23.3pp SAFE
+    F       15%        18   40.0%    16.7%     +23.3pp SAFE
+
+  TB  (Transitional Backwardation):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    C       15%         5   28.6%    20.0%      +8.6pp
+    F        5%         5    0.0%     0.0%      +0.0pp
+    F        8%         7    0.0%     0.0%      +0.0pp
+    F       10%         7    0.0%     0.0%      +0.0pp
+    F       15%         7    0.0%     0.0%      +0.0pp
+
+  C   (Contango):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    SB       5%        59    0.0%     0.0%      +0.0pp
+    SB       8%        81    0.0%     0.0%      +0.0pp
+    SB      10%        83    0.0%     0.0%      +0.0pp
+    SB      15%       105    0.0%     0.0%      +0.0pp
+    MB       5%        59    0.9%     0.0%      +0.9pp SAFE
+    MB       8%        75    0.9%     0.0%      +0.9pp SAFE
+    MB      10%        85    0.9%     0.0%      +0.9pp SAFE
+    MB      15%        92    0.9%     1.1%      -0.2pp
+    TB       5%        46    1.8%     0.0%      +1.8pp SAFE
+    TB       8%        51    1.8%     0.0%      +1.8pp SAFE
+    TB      10%        51    1.8%     0.0%      +1.8pp SAFE
+    TB      15%        64    1.8%     0.0%      +1.8pp SAFE
+    F       10%        12   33.3%     0.0%     +33.3pp SAFE
+    F       15%        24   33.3%    16.7%     +16.7pp
+
+  F   (Flat/Back-Inversion):
+  Next    Thresh  n<thresh   Base%  Actual%  Reduction    Safe?
+    SB       5%        42    0.0%     0.0%      +0.0pp
+    SB       8%        68    0.0%     0.0%      +0.0pp
+    SB      10%        77    0.0%     0.0%      +0.0pp
+    SB      15%       101    0.0%     0.0%      +0.0pp
+    MB       5%         8    7.1%     0.0%      +7.1pp SAFE
+    MB       8%        25    7.1%     0.0%      +7.1pp SAFE
+    MB      10%        40    7.1%     2.5%      +4.6pp SAFE
+    MB      15%        66    7.1%     3.0%      +4.1pp SAFE
+    TB       5%        50    0.0%     0.0%      +0.0pp
+    TB       8%        58    0.0%     0.0%      +0.0pp
+    TB      10%        58    0.0%     0.0%      +0.0pp
+    TB      15%        74    0.0%     0.0%      +0.0pp
+
+======================================================================
+FURTHER STUDY 3 — RULING OUT TABLE
+Run: 2026-07-03 13:17
+======================================================================
+THRESHOLD TEST — RULING OUT TABLE
+The practical output: which transitions can be
+safely ignored at which probability threshold
+across both horizons?
+======================================================================
+
+Current Next   Horizon   Threshold   Base%  Below thresh%  Reduction
+-----------------------------------------------------------------
+  SB   -> TB   1-week   < 5%        3.8%           0.0%       +3.8pp
+  SB   -> C    1-week   < 5%        3.8%           0.0%       +3.8pp
+  SB   -> C    2-week   < 5%        5.0%           0.0%       +5.0pp
+  SB   -> TB   2-week   < 5%        3.8%           0.0%       +3.8pp
+  MB   -> F    1-week   < 8%       28.0%           5.9%      +22.1pp
+  MB   -> SB   1-week   < 5%       20.0%           0.0%      +20.0pp
+  MB   -> TB   1-week   < 5%        8.0%           0.0%       +8.0pp
+  MB   -> C    1-week   < 5%        4.0%           0.0%       +4.0pp
+  MB   -> F    2-week   < 5%       40.0%          18.8%      +21.2pp
+  MB   -> SB   2-week   < 8%       20.0%           0.0%      +20.0pp
+  MB   -> TB   2-week   < 5%        8.0%           0.0%       +8.0pp
+  C    -> F    1-week   < 8%       33.3%           0.0%      +33.3pp
+  C    -> SB   1-week   < 5%        0.9%           0.0%       +0.9pp
+  C    -> TB   1-week   < 5%        0.9%           0.0%       +0.9pp
+  C    -> F    2-week   < 10%       33.3%           0.0%      +33.3pp
+  C    -> TB   2-week   < 5%        1.8%           0.0%       +1.8pp
+  C    -> MB   2-week   < 5%        0.9%           0.0%       +0.9pp
+  F    -> MB   1-week   < 8%        5.5%           0.0%       +5.5pp
+  F    -> SB   1-week   < 5%        0.8%           0.0%       +0.8pp
+  F    -> MB   2-week   < 5%        7.1%           0.0%       +7.1pp
+
+SUMMARY — TRANSITIONS THAT CAN BE RULED OUT:
+
+  SB  (Steep Backwardation):
+    1-week ruled out: ['TB', 'C']
+    2-week ruled out: ['TB', 'C']
+
+  MB  (Mild Backwardation):
+    1-week ruled out: ['SB', 'TB', 'C', 'F']
+    2-week ruled out: ['SB', 'TB', 'F']
+
+  TB  (Transitional Backwardation):
+    1-week ruled out: none
+    2-week ruled out: none
+
+  C   (Contango):
+    1-week ruled out: ['SB', 'TB', 'F']
+    2-week ruled out: ['MB', 'TB', 'F']
+
+  F   (Flat/Back-Inversion):
+    1-week ruled out: ['SB', 'MB']
+    2-week ruled out: ['MB']
