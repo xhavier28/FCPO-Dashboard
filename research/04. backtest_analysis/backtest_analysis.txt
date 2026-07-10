@@ -4,3 +4,106 @@ FCPO CALENDAR SPREAD — BACKTEST ANALYSIS LOG
 All results from research/04. backtest_analysis/ are appended below.
 Each section has a dated header.
 
+
+CALIBRATION ANALYSIS — 2026-07-10 08:55
+======================================================================
+
+--- TM 1w CALIBRATION ---
+Total predictions: 350
+Overall top-1 accuracy: 46.6%
+
+  Bucket         N   Accuracy    CI Note
+  ----------------------------------------
+  <30%          22      22.7%           
+  30-50%       245      41.2%           
+  50-70%        68      63.2%           
+  70%+          15      93.3%           
+
+  Per-shape accuracy:
+    Shape 0.0: 55.0% (n=80)
+    Shape 0.1: 44.0% (n=25)
+    Shape 0.2: 14.3% (n=7)
+    Shape 1: 57.7% (n=111)
+    Shape 2: 33.9% (n=127)
+
+--- TM 2w CALIBRATION ---
+Total predictions: 350
+Overall top-1 accuracy: 60.9%
+
+  Bucket         N   Accuracy    CI Note
+  ----------------------------------------
+  30-50%        96      54.2%           
+  50-70%       106      57.5%           
+  70%+         148      67.6%           
+
+  Per-shape accuracy:
+    Shape 0.0: 76.2% (n=80)
+    Shape 0.1: 36.0% (n=25)
+    Shape 0.2: 0.0% (n=7)
+    Shape 1: 56.8% (n=111)
+    Shape 2: 63.0% (n=127)
+
+--- PM CALIBRATION ---
+  4w: accuracy=54.1% (n=74)
+  12w: accuracy=53.0% (n=66)
+
+--- DERIVED THRESHOLDS ---
+
+  1w horizon:
+    Shape 0.0:
+      -> 0.0: gap=+20.0pp  rating=USE
+      -> 0.1: gap=+2.5pp  rating=SOFT
+      -> 0.2: gap=+7.5pp  rating=USE
+      -> 1: gap=+7.5pp  rating=USE
+      -> 2: gap=-1.5pp  rating=IGNORE
+    Shape 0.1:
+      -> 0.0: gap=+41.7pp  rating=USE
+      -> 0.1: gap=-44.9pp  rating=IGNORE
+      -> 0.2: gap=-15.4pp  rating=IGNORE
+      -> 1: gap=+8.3pp  rating=USE
+      -> 2: gap=+58.3pp  rating=USE
+    Shape 0.2:
+      -> 0.0: gap=-50.0pp  rating=IGNORE
+      -> 0.1: gap=-25.0pp  rating=IGNORE
+      -> 0.2: gap=+33.3pp  rating=USE
+      -> 1: gap=+33.3pp  rating=USE
+      -> 2: gap=-50.0pp  rating=IGNORE
+    Shape 1:
+      -> 0.0: gap=+1.8pp  rating=IGNORE
+      -> 0.1: gap=+0.0pp  rating=IGNORE
+      -> 0.2: gap=+1.8pp  rating=IGNORE
+      -> 1: gap=+8.4pp  rating=USE
+      -> 2: gap=+16.8pp  rating=USE
+    Shape 2:
+      -> 0.0: gap=+1.6pp  rating=IGNORE
+      -> 0.1: gap=+8.0pp  rating=USE
+      -> 0.2: gap=+0.0pp  rating=IGNORE
+      -> 1: gap=-26.3pp  rating=IGNORE
+      -> 2: gap=+7.3pp  rating=USE
+
+  2w horizon:
+    Shape 0.0:
+      -> 0.0: gap=+27.5pp  rating=USE
+      -> 0.1: gap=-2.5pp  rating=IGNORE
+      -> 0.2: gap=+7.7pp  rating=USE
+      -> 1: gap=+10.0pp  rating=USE
+      -> 2: gap=+7.7pp  rating=USE
+    Shape 0.1:
+      -> 0.0: gap=+50.0pp  rating=USE
+      -> 0.1: gap=-16.7pp  rating=IGNORE
+      -> 0.2: gap=-12.5pp  rating=IGNORE
+      -> 1: gap=+33.3pp  rating=USE
+      -> 2: gap=-10.4pp  rating=IGNORE
+    Shape 0.2:
+    Shape 1:
+      -> 0.0: gap=+0.0pp  rating=IGNORE
+      -> 0.1: gap=+1.8pp  rating=IGNORE
+      -> 0.2: gap=+3.6pp  rating=SOFT
+      -> 1: gap=+3.0pp  rating=SOFT
+      -> 2: gap=+2.4pp  rating=SOFT
+    Shape 2:
+      -> 0.0: gap=+0.0pp  rating=IGNORE
+      -> 0.1: gap=+11.1pp  rating=USE
+      -> 0.2: gap=+0.0pp  rating=IGNORE
+      -> 1: gap=+14.7pp  rating=USE
+      -> 2: gap=+27.7pp  rating=USE
