@@ -5,10 +5,10 @@ Studies: Further Study 1 (Prediction), Further Study 2 (Transition), Further Stu
 
 
 ======================================================================
-FURTHER STUDY 1 � BACKUP MODEL REFERENCE
+FURTHER STUDY 1 � BACKUP MODEL REFERENCE
 Run: 2026-07-03 13:14
 ======================================================================
-BACKUP MODEL (74.8% reference � DO NOT REPLACE)
+BACKUP MODEL (74.8% reference � DO NOT REPLACE)
 CV accuracy:   46.8%
 Test accuracy: 55.6%
 
@@ -20,10 +20,10 @@ Per-shape results:
   F   (Flat/Back-Inversion): F1=54%  Prec=81%  Rec=41%
 
 ======================================================================
-FURTHER STUDY 1 � NEW MODEL (FULL VARIABLES)
+FURTHER STUDY 1 � NEW MODEL (FULL VARIABLES)
 Run: 2026-07-03 13:14
 ======================================================================
-NEW MODEL � FULL VARIABLE SET
+NEW MODEL � FULL VARIABLE SET
 CV accuracy:   84.7%
 Test accuracy: 80.8%
 vs backup:     +25.3pp
@@ -51,10 +51,10 @@ Feature importance:
   Crude Oil Change 4w                0.014
 
 ======================================================================
-FURTHER STUDY 1 � VARIABLE OPTIMIZATION
+FURTHER STUDY 1 � VARIABLE OPTIMIZATION
 Run: 2026-07-03 13:14
 ======================================================================
-VARIABLE OPTIMIZATION � RFECV RESULTS
+VARIABLE OPTIMIZATION � RFECV RESULTS
 Optimal feature count: 11
 Best CV score: 86.9%
 
@@ -72,16 +72,16 @@ Selected features:
   Stock x Production Quad
 
 Removed features:
-  Export YoY � added noise, removed
-  Crude Oil Change 4w � added noise, removed
+  Export YoY � added noise, removed
+  Crude Oil Change 4w � added noise, removed
 
 ======================================================================
-FURTHER STUDY 1 � OPTIMIZED MODEL FINAL
+FURTHER STUDY 1 � OPTIMIZED MODEL FINAL
 Run: 2026-07-03 13:14
 ======================================================================
-OPTIMIZED MODEL � FINAL COMPARISON
+OPTIMIZED MODEL � FINAL COMPARISON
 Model                      CV     Test  vs Backup
-Backup:           46.8%   55.6%   �
+Backup:           46.8%   55.6%   �
 Full variables:   84.7%   80.8%   +25.3pp
 Optimized subset: 85.0%   84.7%   +29.2pp
 
@@ -95,10 +95,10 @@ Per-shape F1:
 VERDICT: Best model = Optimized at 84.7% test accuracy
 
 ======================================================================
-FURTHER STUDY 2 � ACCURACY COMPARISON
+FURTHER STUDY 2 � ACCURACY COMPARISON
 Run: 2026-07-03 13:15
 ======================================================================
-TRANSITION MODEL � ACCURACY COMPARISON
+TRANSITION MODEL � ACCURACY COMPARISON
 1-WEEK (+5 days) vs 2-WEEK (+14 days)
 ======================================================================
 
@@ -110,10 +110,10 @@ Shape   1w Base   1w CV  1w Test   1w vs  2w Base   2w CV  2w Test   2w vs
   F       55.3%   37.5%    33.9% -21.4pp    45.4%   35.6%    29.9% -15.5pp
 
 ======================================================================
-FURTHER STUDY 2 � CALIBRATION 1-WEEK
+FURTHER STUDY 2 � CALIBRATION 1-WEEK
 Run: 2026-07-03 13:15
 ======================================================================
-CALIBRATION CHECK � 1-WEEK HORIZON
+CALIBRATION CHECK � 1-WEEK HORIZON
 ======================================================================
 
   SB  (Steep Backwardation) (test n=80):
@@ -157,10 +157,10 @@ CALIBRATION CHECK � 1-WEEK HORIZON
     -> C        30.7%  17.5%   43.8% -26.3pp         NO
 
 ======================================================================
-FURTHER STUDY 2 � CALIBRATION 2-WEEK
+FURTHER STUDY 2 � CALIBRATION 2-WEEK
 Run: 2026-07-03 13:15
 ======================================================================
-CALIBRATION CHECK � 2-WEEK HORIZON
+CALIBRATION CHECK � 2-WEEK HORIZON
 ======================================================================
 
   SB  (Steep Backwardation) (test n=80):
@@ -594,10 +594,10 @@ SUMMARY — TRANSITIONS THAT CAN BE RULED OUT:
     2-week ruled out: ['MB']
 
 ======================================================================
-FURTHER STUDY 1 � BACKUP MODEL REFERENCE
+FURTHER STUDY 1 � BACKUP MODEL REFERENCE
 Run: 2026-07-03 13:37
 ======================================================================
-BACKUP MODEL (74.8% reference � DO NOT REPLACE)
+BACKUP MODEL (74.8% reference � DO NOT REPLACE)
 CV accuracy:   46.8%
 Test accuracy: 55.6%
 
@@ -609,10 +609,10 @@ Per-shape results:
   F   (Flat/Back-Inversion): F1=54%  Prec=81%  Rec=41%
 
 ======================================================================
-FURTHER STUDY 1 � NEW MODEL (FULL VARIABLES)
+FURTHER STUDY 1 � NEW MODEL (FULL VARIABLES)
 Run: 2026-07-03 13:37
 ======================================================================
-NEW MODEL � FULL VARIABLE SET
+NEW MODEL � FULL VARIABLE SET
 CV accuracy:   84.7%
 Test accuracy: 80.8%
 vs backup:     +25.3pp
@@ -640,10 +640,10 @@ Feature importance:
   Crude Oil Change 4w                0.014
 
 ======================================================================
-FURTHER STUDY 1 � VARIABLE OPTIMIZATION
+FURTHER STUDY 1 � VARIABLE OPTIMIZATION
 Run: 2026-07-03 13:37
 ======================================================================
-VARIABLE OPTIMIZATION � RFECV RESULTS
+VARIABLE OPTIMIZATION � RFECV RESULTS
 Optimal feature count: 11
 Best CV score: 86.9%
 
@@ -661,16 +661,16 @@ Selected features:
   Stock x Production Quad
 
 Removed features:
-  Export YoY � added noise, removed
-  Crude Oil Change 4w � added noise, removed
+  Export YoY � added noise, removed
+  Crude Oil Change 4w � added noise, removed
 
 ======================================================================
-FURTHER STUDY 1 � OPTIMIZED MODEL FINAL
+FURTHER STUDY 1 � OPTIMIZED MODEL FINAL
 Run: 2026-07-03 13:37
 ======================================================================
-OPTIMIZED MODEL � FINAL COMPARISON
+OPTIMIZED MODEL � FINAL COMPARISON
 Model                      CV     Test  vs Backup
-Backup:           46.8%   55.6%   �
+Backup:           46.8%   55.6%   �
 Full variables:   84.7%   80.8%   +25.3pp
 Optimized subset: 85.0%   84.7%   +29.2pp
 
@@ -853,3 +853,887 @@ Train accuracy: 96.0%
 Test accuracy:  85.1%
 Gap: 10.9pp
 Verdict: MODERATE GAP — some overfitting possible. 84.7% is slightly optimistic.
+
+======================================================================
+MODEL IMPROVEMENTS — PREDICTION MODEL COMPARISON
+Run: 2026-07-07 13:31
+======================================================================
+PREDICTION MODEL — FULL COMPARISON
+======================================================================
+
+Model                                            CV%   Test%    vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%   +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%   +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%   +1.3pp *** BEST
+  D: XGBoost + Quick win features              87.3%  87.8%   -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%   +0.0pp
+
+PER-SHAPE F1:
+  SB       92%     91%     92%     93%     92%
+  MB       51%     53%     38%     38%     56%
+  TB       34%     29%     38%     36%     30%
+  C        92%     93%     94%     92%     92%
+  F        93%     95%     96%     92%     92%
+
+======================================================================
+MODEL IMPROVEMENTS — FEATURE IMPORTANCE (XGB)
+Run: 2026-07-07 13:31
+======================================================================
+FEATURE IMPORTANCE — XGBoost Improved Model (D)
+============================================================
+  Quad: Abundant but Tightening                0.247  █████████████████████████████████████████████████ << NEW
+  Quad: Tight & Worsening                      0.186  █████████████████████████████████████ << NEW
+  Stock Percentile                             0.131  ██████████████████████████
+  Prior Shape                                  0.111  ██████████████████████
+  MB Direction Indicator                       0.073  ██████████████ << NEW
+  Production Mom 3m                            0.061  ████████████
+  Quad: Tight but Recovering                   0.041  ████████ << NEW
+  Days in Current Shape                        0.035  ██████
+  Quad: Abundant & Building                    0.028  █████ << NEW
+  ENSO ONI                                     0.028  █████
+  Calendar Month                               0.017  ███
+  Export YoY                                   0.014  ██
+  Production YoY                               0.012  ██
+  Palm-Soy Spread 4w                           0.011  ██
+  USD/MYR Change 4w                            0.006  █
+
+======================================================================
+MODEL IMPROVEMENTS — OPEN-2 F SHAPE DEEP DIVE
+Run: 2026-07-07 13:31
+======================================================================
+OPEN-2 DEEP DIVE — CRUDE OIL x PALM-SOY INTERACTION
+For F (Flat/Back-Inversion) shape specifically
+=================================================================
+
+  F shape results:
+  Metric          Model D    Model E    Delta
+  --------------------------------------------
+  F1                92.0%      92.0%    +0.0pp
+  Precision         99.1%      99.1%    +0.0pp
+  Recall            85.8%      85.8%    +0.0pp
+
+  Overall accuracy: D=87.8%  E=88.1%  delta=+0.3pp
+
+VERDICT: OPEN-2 NEUTRAL — interaction term adds no meaningful improvement for F. Does not justify extra complexity.
+
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON
+Run: 2026-07-07 13:32
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON SUMMARY
+======================================================================
+
+PREDICTION MODEL COMPARISON
+Model                                            CV%   Test%     vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%    +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%    +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%    +1.3pp  BEST
+  D: XGBoost + Quick win features              87.3%  87.8%    -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%    +0.0pp
+
+  Per-shape F1:
+  Shape    A_RF_b   B_RF_i   C_XGB_   D_XGB_   E_XGB_
+  SB          92%      91%      92%      93%      92%
+  MB          51%      53%      38%      38%      56%
+  TB          34%      29%      38%      36%      30%
+  C           92%      93%      94%      92%      92%
+  F           93%      95%      96%      92%      92%
+
+
+TRANSITION MODEL COMPARISON
+Variant                   Horizon    Calibrated cells   Best gap
+-----------------------------------------------------------------
+  RF_baseline_1w          1-week                   12 cells    +58.3pp best
+  RF_baseline_2w          2-week                   10 cells    +59.0pp best
+  XGB_improved_1w         1-week                   12 cells    +58.3pp best
+  XGB_improved_2w         2-week                   11 cells    +51.3pp best
+  XGB_open2_1w            1-week                    6 cells    +58.3pp best
+  XGB_open2_2w            2-week                    5 cells    +35.3pp best
+
+
+OPEN-2 VERDICT
+
+  Prediction Model — F shape F1:
+    Without Open-2 (D): 92.0%
+    With Open-2 (E):    92.0%
+    Delta: +0.0pp
+    Overall accuracy delta: +0.3pp
+
+  Transition Model — calibrated cells:
+    Without Open-2 (improved): 1w=12  2w=11
+    With Open-2:               1w=6  2w=5
+    Delta: 1w=-6  2w=-6
+
+  FINAL OPEN-2 VERDICT: CLOSED — no meaningful improvement in either model. Crude x palmsoy interaction does not help. This line is permanently closed.
+
+======================================================================
+MODEL IMPROVEMENTS — PREDICTION MODEL COMPARISON
+Run: 2026-07-07 13:33
+======================================================================
+PREDICTION MODEL — FULL COMPARISON
+======================================================================
+
+Model                                            CV%   Test%    vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%   +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%   +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%   +1.3pp *** BEST
+  D: XGBoost + Quick win features              87.3%  87.8%   -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%   +0.0pp
+
+PER-SHAPE F1:
+  SB       92%     91%     92%     93%     92%
+  MB       51%     53%     38%     38%     56%
+  TB       34%     29%     38%     36%     30%
+  C        92%     93%     94%     92%     92%
+  F        93%     95%     96%     92%     92%
+
+======================================================================
+MODEL IMPROVEMENTS — FEATURE IMPORTANCE (XGB)
+Run: 2026-07-07 13:33
+======================================================================
+FEATURE IMPORTANCE — XGBoost Improved Model (D)
+============================================================
+  Quad: Abundant but Tightening                0.247  █████████████████████████████████████████████████ << NEW
+  Quad: Tight & Worsening                      0.186  █████████████████████████████████████ << NEW
+  Stock Percentile                             0.131  ██████████████████████████
+  Prior Shape                                  0.111  ██████████████████████
+  MB Direction Indicator                       0.073  ██████████████ << NEW
+  Production Mom 3m                            0.061  ████████████
+  Quad: Tight but Recovering                   0.041  ████████ << NEW
+  Days in Current Shape                        0.035  ██████
+  Quad: Abundant & Building                    0.028  █████ << NEW
+  ENSO ONI                                     0.028  █████
+  Calendar Month                               0.017  ███
+  Export YoY                                   0.014  ██
+  Production YoY                               0.012  ██
+  Palm-Soy Spread 4w                           0.011  ██
+  USD/MYR Change 4w                            0.006  █
+
+======================================================================
+MODEL IMPROVEMENTS — OPEN-2 F SHAPE DEEP DIVE
+Run: 2026-07-07 13:33
+======================================================================
+OPEN-2 DEEP DIVE — CRUDE OIL x PALM-SOY INTERACTION
+For F (Flat/Back-Inversion) shape specifically
+=================================================================
+
+  F shape results:
+  Metric          Model D    Model E    Delta
+  --------------------------------------------
+  F1                92.0%      92.0%    +0.0pp
+  Precision         99.1%      99.1%    +0.0pp
+  Recall            85.8%      85.8%    +0.0pp
+
+  Overall accuracy: D=87.8%  E=88.1%  delta=+0.3pp
+
+VERDICT: OPEN-2 NEUTRAL — interaction term adds no meaningful improvement for F. Does not justify extra complexity.
+
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON
+Run: 2026-07-07 13:33
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON SUMMARY
+======================================================================
+
+PREDICTION MODEL COMPARISON
+Model                                            CV%   Test%     vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%    +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%    +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%    +1.3pp  BEST
+  D: XGBoost + Quick win features              87.3%  87.8%    -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%    +0.0pp
+
+  Per-shape F1:
+  Shape    A_RF_b   B_RF_i   C_XGB_   D_XGB_   E_XGB_
+  SB          92%      91%      92%      93%      92%
+  MB          51%      53%      38%      38%      56%
+  TB          34%      29%      38%      36%      30%
+  C           92%      93%      94%      92%      92%
+  F           93%      95%      96%      92%      92%
+
+
+TRANSITION MODEL COMPARISON
+Variant                   Horizon    Calibrated cells   Best gap
+-----------------------------------------------------------------
+  RF_baseline_1w          1-week                   12 cells    +58.3pp best
+  RF_baseline_2w          2-week                   10 cells    +59.0pp best
+  XGB_improved_1w         1-week                   12 cells    +58.3pp best
+  XGB_improved_2w         2-week                   11 cells    +51.3pp best
+  XGB_open2_1w            1-week                    6 cells    +58.3pp best
+  XGB_open2_2w            2-week                    5 cells    +35.3pp best
+
+
+OPEN-2 VERDICT
+
+  Prediction Model — F shape F1:
+    Without Open-2 (D): 92.0%
+    With Open-2 (E):    92.0%
+    Delta: +0.0pp
+    Overall accuracy delta: +0.3pp
+
+  Transition Model — calibrated cells:
+    Without Open-2 (improved): 1w=12  2w=11
+    With Open-2:               1w=6  2w=5
+    Delta: 1w=-6  2w=-6
+
+  FINAL OPEN-2 VERDICT: CLOSED — no meaningful improvement in either model. Crude x palmsoy interaction does not help. This line is permanently closed.
+
+======================================================================
+MODEL IMPROVEMENTS — LIVE READ
+Run: 2026-07-07 13:33
+======================================================================
+BEST MODEL SELECTION AND TODAY'S LIVE READ
+======================================================================
+
+Best Prediction Model: C: XGBoost + Baseline features
+  Test accuracy: 89.4%
+
+Best 1-week TM: RF_baseline_1w
+  Calibrated cells: 12
+
+Best 2-week TM: XGB_improved_2w
+  Calibrated cells: 11
+
+Current shape: C
+
+Prediction Model output:
+  C     99.6%  █████████████████████████████
+  TB     0.3%  
+  SB     0.0%  
+  MB     0.0%  
+  F      0.0%  
+
+======================================================================
+MODEL IMPROVEMENTS — PREDICTION MODEL COMPARISON
+Run: 2026-07-07 13:41
+======================================================================
+PREDICTION MODEL — FULL COMPARISON
+======================================================================
+
+Model                                            CV%   Test%    vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%   +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%   +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%   +1.3pp *** BEST
+  D: XGBoost + Quick win features              87.3%  87.8%   -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%   +0.0pp
+
+PER-SHAPE F1:
+  SB       92%     91%     92%     93%     92%
+  MB       51%     53%     38%     38%     56%
+  TB       34%     29%     38%     36%     30%
+  C        92%     93%     94%     92%     92%
+  F        93%     95%     96%     92%     92%
+
+======================================================================
+MODEL IMPROVEMENTS — FEATURE IMPORTANCE (XGB)
+Run: 2026-07-07 13:41
+======================================================================
+FEATURE IMPORTANCE — XGBoost Improved Model (D)
+============================================================
+  Quad: Abundant but Tightening                0.247  █████████████████████████████████████████████████ << NEW
+  Quad: Tight & Worsening                      0.186  █████████████████████████████████████ << NEW
+  Stock Percentile                             0.131  ██████████████████████████
+  Prior Shape                                  0.111  ██████████████████████
+  MB Direction Indicator                       0.073  ██████████████ << NEW
+  Production Mom 3m                            0.061  ████████████
+  Quad: Tight but Recovering                   0.041  ████████ << NEW
+  Days in Current Shape                        0.035  ██████
+  Quad: Abundant & Building                    0.028  █████ << NEW
+  ENSO ONI                                     0.028  █████
+  Calendar Month                               0.017  ███
+  Export YoY                                   0.014  ██
+  Production YoY                               0.012  ██
+  Palm-Soy Spread 4w                           0.011  ██
+  USD/MYR Change 4w                            0.006  █
+
+======================================================================
+MODEL IMPROVEMENTS — OPEN-2 F SHAPE DEEP DIVE
+Run: 2026-07-07 13:41
+======================================================================
+OPEN-2 DEEP DIVE — CRUDE OIL x PALM-SOY INTERACTION
+For F (Flat/Back-Inversion) shape specifically
+=================================================================
+
+  F shape results:
+  Metric          Model D    Model E    Delta
+  --------------------------------------------
+  F1                92.0%      92.0%    +0.0pp
+  Precision         99.1%      99.1%    +0.0pp
+  Recall            85.8%      85.8%    +0.0pp
+
+  Overall accuracy: D=87.8%  E=88.1%  delta=+0.3pp
+
+VERDICT: OPEN-2 NEUTRAL — interaction term adds no meaningful improvement for F. Does not justify extra complexity.
+
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON
+Run: 2026-07-07 13:41
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON SUMMARY
+======================================================================
+
+PREDICTION MODEL COMPARISON
+Model                                            CV%   Test%     vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%    +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%    +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%    +1.3pp  BEST
+  D: XGBoost + Quick win features              87.3%  87.8%    -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%    +0.0pp
+
+  Per-shape F1:
+  Shape    A_RF_b   B_RF_i   C_XGB_   D_XGB_   E_XGB_
+  SB          92%      91%      92%      93%      92%
+  MB          51%      53%      38%      38%      56%
+  TB          34%      29%      38%      36%      30%
+  C           92%      93%      94%      92%      92%
+  F           93%      95%      96%      92%      92%
+
+
+TRANSITION MODEL COMPARISON
+Variant                   Horizon    Calibrated cells   Best gap
+-----------------------------------------------------------------
+  RF_baseline_1w          1-week                   12 cells    +58.3pp best
+  RF_baseline_2w          2-week                   10 cells    +59.0pp best
+  XGB_improved_1w         1-week                   12 cells    +58.3pp best
+  XGB_improved_2w         2-week                   11 cells    +51.3pp best
+  XGB_open2_1w            1-week                    6 cells    +58.3pp best
+  XGB_open2_2w            2-week                    5 cells    +35.3pp best
+
+
+OPEN-2 VERDICT
+
+  Prediction Model — F shape F1:
+    Without Open-2 (D): 92.0%
+    With Open-2 (E):    92.0%
+    Delta: +0.0pp
+    Overall accuracy delta: +0.3pp
+
+  Transition Model — calibrated cells:
+    Without Open-2 (improved): 1w=12  2w=11
+    With Open-2:               1w=6  2w=5
+    Delta: 1w=-6  2w=-6
+
+  FINAL OPEN-2 VERDICT: CLOSED — no meaningful improvement in either model. Crude x palmsoy interaction does not help. This line is permanently closed.
+
+======================================================================
+MODEL IMPROVEMENTS — LIVE READ
+Run: 2026-07-07 13:41
+======================================================================
+BEST MODEL SELECTION AND TODAY'S LIVE READ
+======================================================================
+
+Best Prediction Model: C: XGBoost + Baseline features
+  Test accuracy: 89.4%
+
+Best 1-week TM: RF_baseline_1w
+  Calibrated cells: 12
+
+Best 2-week TM: XGB_improved_2w
+  Calibrated cells: 11
+
+Current shape: C
+
+Prediction Model output:
+  C     99.6%  █████████████████████████████
+  TB     0.3%  
+  SB     0.0%  
+  MB     0.0%  
+  F      0.0%  
+
+======================================================================
+MODEL IMPROVEMENTS — PREDICTION MODEL COMPARISON
+Run: 2026-07-07 13:46
+======================================================================
+PREDICTION MODEL — FULL COMPARISON
+======================================================================
+
+Model                                            CV%   Test%    vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%   +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%   +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%   +1.3pp *** BEST
+  D: XGBoost + Quick win features              87.3%  87.8%   -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%   +0.0pp
+
+PER-SHAPE F1:
+  SB       92%     91%     92%     93%     92%
+  MB       51%     53%     38%     38%     56%
+  TB       34%     29%     38%     36%     30%
+  C        92%     93%     94%     92%     92%
+  F        93%     95%     96%     92%     92%
+
+======================================================================
+MODEL IMPROVEMENTS — FEATURE IMPORTANCE (XGB)
+Run: 2026-07-07 13:46
+======================================================================
+FEATURE IMPORTANCE — XGBoost Improved Model (D)
+============================================================
+  Quad: Abundant but Tightening                0.247  █████████████████████████████████████████████████ << NEW
+  Quad: Tight & Worsening                      0.186  █████████████████████████████████████ << NEW
+  Stock Percentile                             0.131  ██████████████████████████
+  Prior Shape                                  0.111  ██████████████████████
+  MB Direction Indicator                       0.073  ██████████████ << NEW
+  Production Mom 3m                            0.061  ████████████
+  Quad: Tight but Recovering                   0.041  ████████ << NEW
+  Days in Current Shape                        0.035  ██████
+  Quad: Abundant & Building                    0.028  █████ << NEW
+  ENSO ONI                                     0.028  █████
+  Calendar Month                               0.017  ███
+  Export YoY                                   0.014  ██
+  Production YoY                               0.012  ██
+  Palm-Soy Spread 4w                           0.011  ██
+  USD/MYR Change 4w                            0.006  █
+
+======================================================================
+MODEL IMPROVEMENTS — OPEN-2 F SHAPE DEEP DIVE
+Run: 2026-07-07 13:46
+======================================================================
+OPEN-2 DEEP DIVE — CRUDE OIL x PALM-SOY INTERACTION
+For F (Flat/Back-Inversion) shape specifically
+=================================================================
+
+  F shape results:
+  Metric          Model D    Model E    Delta
+  --------------------------------------------
+  F1                92.0%      92.0%    +0.0pp
+  Precision         99.1%      99.1%    +0.0pp
+  Recall            85.8%      85.8%    +0.0pp
+
+  Overall accuracy: D=87.8%  E=88.1%  delta=+0.3pp
+
+VERDICT: OPEN-2 NEUTRAL — interaction term adds no meaningful improvement for F. Does not justify extra complexity.
+
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON
+Run: 2026-07-07 13:47
+======================================================================
+MODEL IMPROVEMENTS — FULL COMPARISON SUMMARY
+======================================================================
+
+PREDICTION MODEL COMPARISON
+Model                                            CV%   Test%     vs A
+----------------------------------------------------------------------
+  A: RF + Baseline features                    85.7%  88.1%    +0.0pp
+  B: RF + Quick win features                   84.8%  88.3%    +0.2pp
+  C: XGBoost + Baseline features               86.5%  89.4%    +1.3pp  BEST
+  D: XGBoost + Quick win features              87.3%  87.8%    -0.3pp
+  E: XGBoost + Open-2 (+ crude x palmsoy)      85.9%  88.1%    +0.0pp
+
+  Per-shape F1:
+  Shape    A_RF_b   B_RF_i   C_XGB_   D_XGB_   E_XGB_
+  SB          92%      91%      92%      93%      92%
+  MB          51%      53%      38%      38%      56%
+  TB          34%      29%      38%      36%      30%
+  C           92%      93%      94%      92%      92%
+  F           93%      95%      96%      92%      92%
+
+
+TRANSITION MODEL COMPARISON
+Variant                   Horizon    Calibrated cells   Best gap
+-----------------------------------------------------------------
+  RF_baseline_1w          1-week                   12 cells    +58.3pp best
+  RF_baseline_2w          2-week                   10 cells    +59.0pp best
+  XGB_improved_1w         1-week                   12 cells    +58.3pp best
+  XGB_improved_2w         2-week                   11 cells    +51.3pp best
+  XGB_open2_1w            1-week                    6 cells    +58.3pp best
+  XGB_open2_2w            2-week                    5 cells    +35.3pp best
+
+
+OPEN-2 VERDICT
+
+  Prediction Model — F shape F1:
+    Without Open-2 (D): 92.0%
+    With Open-2 (E):    92.0%
+    Delta: +0.0pp
+    Overall accuracy delta: +0.3pp
+
+  Transition Model — calibrated cells:
+    Without Open-2 (improved): 1w=12  2w=11
+    With Open-2:               1w=6  2w=5
+    Delta: 1w=-6  2w=-6
+
+  FINAL OPEN-2 VERDICT: CLOSED — no meaningful improvement in either model. Crude x palmsoy interaction does not help. This line is permanently closed.
+
+======================================================================
+MODEL IMPROVEMENTS — LIVE READ
+Run: 2026-07-07 13:47
+======================================================================
+BEST MODEL SELECTION AND TODAY'S LIVE READ
+======================================================================
+
+Best Prediction Model: C: XGBoost + Baseline features
+  Test accuracy: 89.4%
+
+Best 1-week TM: RF_baseline_1w
+  Calibrated cells: 12
+
+Best 2-week TM: XGB_improved_2w
+  Calibrated cells: 11
+
+Current shape: C
+
+Prediction Model output:
+  C     99.6%  █████████████████████████████
+  TB     0.3%  
+  SB     0.0%  
+  MB     0.0%  
+  F      0.0%  
+
+======================================================================
+OPTION 2 — FIXED THRESHOLD COMPARISON
+Run: 2026-07-07 13:52
+======================================================================
+OPTION 2 — FIXED THRESHOLD COMPARISON
+======================================================================
+
+  Model                                               CV%   Test%    vs C
+  ----------------------------------------------------------------------
+  C:  XGB + pct rank (previous best)               86.5%  89.4%   +0.0pp  BEST
+  2A: XGB + fixed category (replaces pct rank)     83.3%  88.6%   -0.8pp
+  2B: XGB + fixed category + one-hot quadrant      79.2%  88.6%   -0.8pp
+  2C: XGB + both pct rank AND fixed category       86.2%  88.3%   -1.1pp
+
+  Per-shape F1:
+  Shape      C_ba     2A_f     2B_f     2C_b
+  SB         92%     92%     89%     94% *
+  MB         38%     51% *     47%     38%
+  TB         38% *     29%     29%     31%
+  C          94%     93%     94% *     94% *
+  F          96% *     94%     96% *     93%
+
+======================================================================
+OPTION 2 — FEATURE IMPORTANCE
+Run: 2026-07-07 13:52
+======================================================================
+FEATURE IMPORTANCE — C vs BEST OPTION 2
+============================================================
+  stock_pct                                  0.224    0.224   +0.000
+  prior_shape_enc                            0.209    0.209   +0.000
+  stock_prod_interaction                     0.201    0.201   +0.000
+  days_in_shape                              0.095    0.095   +0.000
+  prod_mom_3m                                0.094    0.094   +0.000
+  oni                                        0.048    0.048   +0.000
+  month                                      0.041    0.041   +0.000
+  prod_yoy                                   0.027    0.027   +0.000
+  export_yoy                                 0.026    0.026   +0.000
+  palm_soy_chg_4w                            0.021    0.021   +0.000
+  usd_myr_chg_4w                             0.014    0.014   +0.000
+
+======================================================================
+OPTION 2 — CONSISTENCY CHECK
+Run: 2026-07-07 13:52
+======================================================================
+CONSISTENCY CHECK
+============================================================
+
+Date:          2026-06-26
+Stock raw:     2,427,835 tonnes
+Stock level:   High (fixed threshold)
+Stock pct:     0.817 (continuous rank — for reference)
+Prod mom 3m:   10.13%
+ENSO ONI:      0.48
+
+Stock reading  — Option 2 fixed:  High (consistent)
+Stock reading  — Percentile rank: 0.817 -> HIGH (consistent)
+
+Model probabilities (C:  XGB + pct rank (previous best)):
+  C     99.6%  █████████████████████████████
+  TB     0.3%  
+  SB     0.0%  
+  MB     0.0%  
+  F      0.0%  
+
+  Previous 0.25 reading was a panel construction bug.
+  Correct reading is HIGH (2.43M > 2.26M threshold).
+
+======================================================================
+2-WEEK MODEL FIX -- FULL COMPARISON
+Run: 2026-07-08 09:22
+======================================================================
+2-WEEK MODEL FIX -- FULL COMPARISON
+======================================================================
+
+OVERFIT CHECK -- Train vs Test accuracy
+  ORIGINAL: Train~99%  Test~55%  Gap~44pp  BROKEN
+  Option A: RF 2-week direct                 CV~41.3%  Test=54.0%  Gap=-12.7pp  GOOD
+  Option B: XGBoost regularised 2-week       CV~54.0%  Test=59.7%  Gap=-5.7pp  GOOD
+  Option C: Chained 1-week x 2               (chained -- no train accuracy)  Test=57.4%
+
+
+MAIN COMPARISON -- Test set performance
+  Model                                        Top1   Top2   Blind Notes
+  ORIGINAL broken: ~55% top-1
+  1-WEEK RF reference: 70.7% top-1, 93.6% top-2  [CONTAMINATED — see correction below]
+  Option A: RF 2-week direct                  54.0%   84.0%    16.0%  NOT BETTER
+  Option B: XGBoost regularised 2-week        59.7%   85.4%    14.6%  NOT BETTER
+  Option C: Chained 1-week x 2                57.4%   86.3%    13.7%  NOT BETTER
+
+
+PER-SHAPE BREAKDOWN
+  Shape   Option A  Option B  Option C
+  SB        57.5%     76.2%*    66.2% 
+  MB        28.0%     28.0%     48.0%*
+  TB         0.0%      0.0%      0.0% 
+  C         63.1%     64.0%     73.0%*
+  F         52.0%     55.1%*    43.3% 
+
+
+CONVICTION ANALYSIS
+
+  Option A: RF 2-week direct:
+    Avg confidence on correct call: 45.0%
+    Min confidence on correct call: 26.3%
+    Correct calls below 30%:        1.6%
+
+  Option B: XGBoost regularised 2-week:
+    Avg confidence on correct call: 75.9%
+    Min confidence on correct call: 35.8%
+    Correct calls below 30%:        0.0%
+
+  Option C: Chained 1-week x 2:
+    Avg confidence on correct call: 39.9%
+    Min confidence on correct call: 23.8%
+    Correct calls below 30%:        7.0%
+
+
+BLIND SPOT ANALYSIS
+
+  Option A: RF 2-week direct -- 56 blind spots (16.0%)
+    Avg prob given to true outcome: 14.8%
+    Cases where model gave <1%: 0 (true surprise events)
+
+  Option B: XGBoost regularised 2-week -- 51 blind spots (14.6%)
+    Avg prob given to true outcome: 10.0%
+    Cases where model gave <1%: 0 (true surprise events)
+
+  Option C: Chained 1-week x 2 -- 48 blind spots (13.7%)
+    Avg prob given to true outcome: 16.3%
+    Cases where model gave <1%: 0 (true surprise events)
+
+
+DISTRIBUTION SPREAD CHECK
+  1-week RF (reference)                   : avg entropy = 1.301 (higher=more uncertain)
+  Option A: RF 2w direct                  : avg entropy = 1.323 (higher=more uncertain)
+  Option C: Chained 1w x 2                : avg entropy = 1.410 (higher=more uncertain)
+
+======================================================================
+2-WEEK MODEL FIX -- VERDICT AND LIVE READ
+Run: 2026-07-08 09:22
+======================================================================
+2-WEEK MODEL FIX -- VERDICT
+======================================================================
+
+FINAL VERDICT
+  Criterion                                Chained                XGB-Reg              RF Direct
+  Overfit risk                  NONE (inherits 1w)  LOW-MOD (regularised) NONE -- RF rarely overfits
+  Interpretability          HIGH -- path thru day 5       LOW -- black box HIGH -- transparent RF
+  Uncertainty honesty           BEST -- wider dist               MODERATE                   GOOD
+  Computational cost            MEDIUM -- 2x model                    LOW                    LOW
+
+  Top-1 hit rate (test):
+    Option C: Chained 1-week x 2              : 57.4%
+    Option B: XGBoost regularised 2-week      : 59.7%
+    Option A: RF 2-week direct                : 54.0%
+
+VERDICT: XGB REGULARISED IS BEST
+  XGB (59.7%) beats others
+  Confirm train-test gap < 15pp before deploying.
+
+
+TODAY'S 2-WEEK OUTLOOK
+
+  1-week (reference):
+    C     68.8%  #################
+    F     20.6%  #####
+    TB     6.8%  #
+    MB     3.3%  
+    SB     0.6%  
+
+  2-week chained:
+    C     55.9%  #############
+    F     24.4%  ######
+    TB     8.3%  ##
+    MB     6.2%  #
+    SB     5.2%  #
+
+  2-week RF direct:
+    C     62.3%  ###############
+    F     19.3%  ####
+    TB     8.9%  ##
+    SB     5.8%  #
+    MB     3.6%  
+
+  2-week XGB reg:
+    C     95.1%  #######################
+    F      2.1%  
+    MB     1.1%  
+    SB     1.0%  
+    TB     0.7%  
+
+======================================================================
+2-WEEK MODEL FIX -- FULL COMPARISON (WITH OPTION D)
+Run: 2026-07-08 13:03
+======================================================================
+2-WEEK MODEL FIX -- FULL COMPARISON (WITH OPTION D)
+======================================================================
+
+OVERFIT CHECK -- Train vs Test accuracy
+  ORIGINAL: Train~99%  Test~55%  Gap~44pp  BROKEN
+  Option A: RF 2-week direct                 CV~41.3%  Test=54.0%  Gap=-12.7pp  GOOD
+  Option B: XGBoost regularised 2-week       CV~54.0%  Test=59.7%  Gap=-5.7pp  GOOD
+  Option C: Chained 1-week x 2               (chained -- no train accuracy)  Test=57.4%
+  Option D: XGB 2017-2024 only               CV~63.5%  Test=58.6%  Gap=4.9pp  GOOD
+
+
+MAIN COMPARISON -- Test set performance
+  Model                                        Top1   Top2   Blind Notes
+  ORIGINAL broken: ~55% top-1
+  1-WEEK RF reference: 70.7% top-1, 93.6% top-2  [CONTAMINATED — see correction below]
+  Option A: RF 2-week direct                  54.0%   84.0%    16.0%  NOT BETTER
+  Option B: XGBoost regularised 2-week        59.7%   85.4%    14.6%  NOT BETTER
+  Option C: Chained 1-week x 2                57.4%   86.3%    13.7%  NOT BETTER
+  Option D: XGB 2017-2024 only                58.6%   86.0%    14.0%  NOT BETTER
+
+
+PER-SHAPE BREAKDOWN
+  Shape          A         B         C         D
+  SB        57.5%     76.2%*    66.2%     76.2%*
+  MB        28.0%     28.0%     48.0%*    36.0% 
+  TB         0.0%      0.0%      0.0%     14.3%*
+  C         63.1%     64.0%     73.0%*    65.8% 
+  F         52.0%     55.1%*    43.3%     48.0% 
+
+
+CONVICTION ANALYSIS
+
+  Option A: RF 2-week direct:
+    Avg confidence on correct call: 45.0%
+    Min confidence on correct call: 26.3%
+    Correct calls below 30%:        1.6%
+
+  Option B: XGBoost regularised 2-week:
+    Avg confidence on correct call: 75.9%
+    Min confidence on correct call: 35.8%
+    Correct calls below 30%:        0.0%
+
+  Option C: Chained 1-week x 2:
+    Avg confidence on correct call: 39.9%
+    Min confidence on correct call: 23.8%
+    Correct calls below 30%:        7.0%
+
+  Option D: XGB 2017-2024 only:
+    Avg confidence on correct call: 83.9%
+    Min confidence on correct call: 33.7%
+    Correct calls below 30%:        0.0%
+
+
+BLIND SPOT ANALYSIS
+
+  Option A: RF 2-week direct -- 56 blind spots (16.0%)
+    Avg prob given to true outcome: 14.8%
+    Cases where model gave <1%: 0 (true surprise events)
+
+  Option B: XGBoost regularised 2-week -- 51 blind spots (14.6%)
+    Avg prob given to true outcome: 10.0%
+    Cases where model gave <1%: 0 (true surprise events)
+
+  Option C: Chained 1-week x 2 -- 48 blind spots (13.7%)
+    Avg prob given to true outcome: 16.3%
+    Cases where model gave <1%: 0 (true surprise events)
+
+  Option D: XGB 2017-2024 only -- 49 blind spots (14.0%)
+    Avg prob given to true outcome: 4.2%
+    Cases where model gave <1%: 13 (true surprise events)
+
+
+DISTRIBUTION SPREAD CHECK
+  1-week RF (reference)                   : avg entropy = 1.301 (higher=more uncertain)
+  Option A: RF 2w direct                  : avg entropy = 1.323 (higher=more uncertain)
+  Option B: XGB regularised               : avg entropy = 0.829 (higher=more uncertain)
+  Option C: Chained 1w x 2                : avg entropy = 1.410 (higher=more uncertain)
+  Option D: XGB 2017-2024                 : avg entropy = 0.555 (higher=more uncertain)
+
+
+ERA-MIXING DIAGNOSIS
+  Option B (full 2008-2024, regularised): 59.7% top-1
+  Option D (2017-2024 only, original hp): 58.6% top-1
+  Option D avg train-test gap:            nanpp
+
+  CONCLUSION: ERA-MIXING IS NOT THE MAIN PROBLEM
+  2017-only (58.6%) ~ full-era (59.7%)
+  The 2-week signal is genuinely weak regardless of era.
+  Consider: 2-week horizon may be too far for this market.
+
+======================================================================
+2-WEEK MODEL FIX -- VERDICT (WITH OPTION D)
+Run: 2026-07-08 13:03
+======================================================================
+2-WEEK MODEL FIX -- VERDICT (WITH OPTION D)
+======================================================================
+
+FINAL VERDICT
+  Criterion                         A:RF    B:XGB-Reg      C:Chain       D:2017
+  Overfit risk                       LOW      LOW-MOD         NONE        CHECK
+  Era coverage                 2008-2024    2008-2024    2008-2024    2017-2024
+  Interpretability                  HIGH          LOW         HIGH          LOW
+  Uncertainty honesty               GOOD     MODERATE         BEST     MODERATE
+
+  Top-1 hit rate (test):
+    Option A: RF 2-week direct                : 54.0%
+    Option B: XGBoost regularised 2-week      : 59.7%
+    Option C: Chained 1-week x 2              : 57.4%
+    Option D: XGB 2017-2024 only              : 58.6%
+
+VERDICT: XGB REGULARISED IS BEST (59.7%)
+  Option D (58.6%) -- era-mixing is not the cause.
+  Confirm train-test gap < 15pp before deploying.
+
+
+TODAY'S 2-WEEK OUTLOOK
+
+  1-week (reference):
+    C     68.8%  #################
+    F     20.6%  #####
+    TB     6.8%  #
+    MB     3.3%  
+    SB     0.6%  
+
+  2w-A RF direct:
+    C     62.3%  ###############
+    F     19.3%  ####
+    TB     8.9%  ##
+    SB     5.8%  #
+    MB     3.6%  
+
+  2w-B XGB reg:
+    C     95.1%  #######################
+    F      2.1%  
+    MB     1.1%  
+    SB     1.0%  
+    TB     0.7%  
+
+  2w-C chained:
+    C     55.9%  #############
+    F     24.4%  ######
+    TB     8.3%  ##
+    MB     6.2%  #
+    SB     5.2%  #
+
+  2w-D XGB 2017-2024:
+    C     98.7%  ########################
+    F      1.1%
+    TB     0.1%
+    MB     0.0%
+    SB     0.0%
+
+CORRECTION [2026-07-10]: "1-WEEK RF reference: 70.7% top-1, 93.6% top-2"
+cited above was computed on the full panel (train+test pooled, n=3,808),
+NOT test-only. Clean test-only RF accuracy: 46.6% top-1 / 80.3% top-2.
+RF replaced by XGBoost Config B at 65.7% top-1 / 90.3% top-2 on identical
+clean test window. See models/MODEL_REFERENCE.txt for authoritative figures.

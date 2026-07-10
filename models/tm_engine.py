@@ -2,15 +2,21 @@
 Transition Model (TM) Engine.
 
 Predicts which shape the curve will transition to at 1-week and 2-week horizons.
-- 1-week: Random Forest (per-shape, class_weight='balanced')
-- 2-week: XGBoost regularised (per-shape, with LabelEncoder for targets)
+Both horizons use XGBoost regularised (Config B) with per-shape models:
+- 1-week: XGBoost regularised (max_depth=3, reg_alpha=1.0, reg_lambda=2.0)
+- 2-week: XGBoost regularised (same hyperparameter philosophy)
 
 Both trained on 2017-2024 daily panel, cached after first call.
+
+CONTAMINATION NOTE (July 2026):
+  The 1w model was originally RF (46.6% test-only top-1). The historically-
+  cited 70.7% top-1 / 93.6% top-2 were full-panel (train+test pooled, n=3,808)
+  figures, not test-only. XGBoost Config B replaced RF at 65.7% top-1 / 90.3%
+  top-2 on identical clean windows. See models/MODEL_REFERENCE.txt.
 """
 import warnings
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 
 from .feature_prep import build_tm_daily_panel, TM_FEATURES
@@ -21,14 +27,14 @@ TRAIN_END = '2024-12-31'
 TEST_START = '2025-01-01'
 
 # Module-level cache
-_models_1w = {}   # shape -> {'model': RF, 'classes': [...]}
+_models_1w = {}   # shape -> {'model': XGB, 'le': LabelEncoder, 'classes': [...]}
 _models_2w = {}   # shape -> {'model': XGB, 'le': LabelEncoder, 'classes': [...]}
 _daily_panel = None
 _loaded = False
 
 
 def _ensure_models_loaded():
-    """Lazy init: build daily panel, fit RF (1w) and XGBoost (2w) per shape."""
+    """Lazy init: build daily panel, fit XGBoost regularised for 1w and 2w per shape."""
     global _models_1w, _models_2w, _daily_panel, _loaded
 
     if _loaded:
@@ -41,7 +47,6 @@ def _ensure_models_loaded():
     df_train = df_tm[df_tm['date'] <= TRAIN_END].copy()
     shapes = sorted(df_tm['shape'].unique())
 
-    # Import XGBoost here (only needed at fit time)
     from xgboost import XGBClassifier
 
     for s in shapes:
@@ -52,24 +57,12 @@ def _ensure_models_loaded():
 
         X_tr = tr[TM_FEATURES].values
 
-        # ── 1-week: Random Forest ──
+        # ── 1-week: XGBoost regularised (Config B) ──
         y_1w = tr['target_1w'].values
-        rf = RandomForestClassifier(
-            n_estimators=300, max_depth=5,
-            min_samples_leaf=8, random_state=42,
-            class_weight='balanced')
-        rf.fit(X_tr, y_1w)
-        _models_1w[s] = {
-            'model': rf,
-            'classes': list(rf.classes_),
-        }
+        le_1w = LabelEncoder()
+        y_1w_enc = le_1w.fit_transform(y_1w)
 
-        # ── 2-week: XGBoost regularised ──
-        y_2w = tr['target_2w'].values
-        le = LabelEncoder()
-        y_2w_enc = le.fit_transform(y_2w)
-
-        xgb = XGBClassifier(
+        xgb_1w = XGBClassifier(
             n_estimators=300,
             max_depth=3,
             learning_rate=0.03,
@@ -82,11 +75,36 @@ def _ensure_models_loaded():
             eval_metric='mlogloss',
             random_state=42,
             verbosity=0)
-        xgb.fit(X_tr, y_2w_enc)
+        xgb_1w.fit(X_tr, y_1w_enc)
+        _models_1w[s] = {
+            'model': xgb_1w,
+            'le': le_1w,
+            'classes': list(le_1w.classes_),
+        }
+
+        # ── 2-week: XGBoost regularised (Config B) ──
+        y_2w = tr['target_2w'].values
+        le_2w = LabelEncoder()
+        y_2w_enc = le_2w.fit_transform(y_2w)
+
+        xgb_2w = XGBClassifier(
+            n_estimators=300,
+            max_depth=3,
+            learning_rate=0.03,
+            subsample=0.7,
+            colsample_bytree=0.7,
+            reg_alpha=1.0,
+            reg_lambda=2.0,
+            min_child_weight=20,
+            use_label_encoder=False,
+            eval_metric='mlogloss',
+            random_state=42,
+            verbosity=0)
+        xgb_2w.fit(X_tr, y_2w_enc)
         _models_2w[s] = {
-            'model': xgb,
-            'le': le,
-            'classes': list(le.classes_),
+            'model': xgb_2w,
+            'le': le_2w,
+            'classes': list(le_2w.classes_),
         }
 
     _loaded = True
@@ -146,15 +164,10 @@ def predict(date, horizon='1w'):
     model_info = models[current_shape]
     model = model_info['model']
 
-    if horizon == '1w':
-        # RF: predict_proba with string classes directly
-        probs_raw = model.predict_proba(X)[0]
-        classes = model.classes_
-    else:
-        # XGBoost: predict_proba returns encoded labels, decode
-        le = model_info['le']
-        probs_raw = model.predict_proba(X)[0]
-        classes = le.classes_
+    # Both horizons use XGBoost with LabelEncoder
+    le = model_info['le']
+    probs_raw = model.predict_proba(X)[0]
+    classes = le.classes_
 
     # Build probability dict
     all_probs = {str(cls): float(p) for cls, p in zip(classes, probs_raw)}

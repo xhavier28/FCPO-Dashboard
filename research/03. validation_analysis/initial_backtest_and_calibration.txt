@@ -1,0 +1,721 @@
+
+======================================================================
+STUDY 1 — DATA INTEGRITY CHECK
+Run: 2026-07-08 08:55
+======================================================================
+STUDY 1 — DATA INTEGRITY CHECK
+======================================================================
+
+1A — EARLIEST DATE PER VARIABLE
+Variable                           Earliest       Latest     Rows    NaN%
+---------------------------------------------------------------------------
+  Shape label                    2008-01-01   2026-06-26    4,070    0.0%
+  MPOB Stock (raw)               2008-01-01   2026-06-26    4,070    0.0%
+  MPOB Production (raw)          2008-01-01   2026-06-26    4,070    0.0%
+  MPOB Export (raw)              2008-01-01   2026-06-26    4,070    0.0%
+  ENSO ONI                       2008-01-01   2026-06-26    4,070    0.0%
+  USD/MYR                        2008-01-01   2026-06-26    4,070    0.0%
+  Palm-Soy Spread                2008-01-01   2026-06-26    4,070    0.0%
+  Crude Oil                      2008-01-01   2026-06-26    4,070    0.0%
+  Stock Percentile               2008-01-01   2026-06-26    4,070    0.0%
+  Production Mom 3m              2008-04-29   2026-06-26    4,007    1.5%
+  Production Mom 1m              2008-02-13   2026-06-26    4,049    0.5%
+  Production YoY                 2009-04-09   2026-06-26    3,818    6.2% *** HIGH NaN
+  Export YoY                     2009-04-09   2026-06-26    3,818    6.2% *** HIGH NaN
+  USD/MYR Change 4w              2008-02-12   2026-06-26    4,050    0.5%
+  Palm-Soy Change 4w             2008-02-12   2026-06-26    4,050    0.5%
+  Crude Oil Change 4w            2008-02-12   2026-06-26    4,050    0.5%
+  Days in Shape                  2008-01-01   2026-06-26    4,070    0.0%
+  Prior Shape (encoded)          2008-01-01   2026-06-26    4,070    0.0%
+  Stock x Prod 2D                2008-01-01   2026-06-26    4,070    0.0%
+
+Overall integrity: ISSUES FOUND
+
+1B — GAP DETECTION
+  No unexpected gaps found (>7 days)
+
+1C — MPOB FORWARD-FILL CHECK
+  Stock          : max 35 consecutive days on same reading OK — monthly data
+  Production     : max 35 consecutive days on same reading OK — monthly data
+  Export         : max 35 consecutive days on same reading OK — monthly data
+
+1D — OBSERVATIONS PER YEAR
+    Year   Days   Shapes  NaN Stock   NaN ENSO
+    2008    198        5          0          0 * LOW COUNT
+    2009    201        5          0          0
+    2010    201        5          0          0
+    2011    199        5          0          0 * LOW COUNT
+    2012    201        4          0          0
+    2013    200        5          0          0
+    2014    202        5          0          0
+    2015    198        5          0          0 * LOW COUNT
+    2016    202        5          0          0
+    2017    199        5          0          0 * LOW COUNT
+    2018    238        5          0          0
+    2019    244        3          0          0
+    2020    248        5          0          0
+    2021    245        2          0          0
+    2022    243        5          0          0
+    2023    244        5          0          0
+    2024    247        5          0          0
+    2025    244        5          0          0
+    2026    116        3          0          0 * LOW COUNT
+
+======================================================================
+STUDY 2 — PROBABILITY CALIBRATION
+Run: 2026-07-08 08:55
+======================================================================
+STUDY 2 — PROBABILITY CALIBRATION
+Bin calibration: does model probability match actual frequency?
+======================================================================
+
+==================================================
+1-WEEK HORIZON
+==================================================
+
+  Current shape: SB (test n=80)
+    -> SB   base= 82.5%  high= 95.0%  low= 70.0%  gap=+25.0pp  dir=✓
+      Bin detail (model% → actual%):
+         20.8% →  50.0%  n=16  UNDERCONFIDENT
+         33.5% →  87.5%  n=16  UNDERCONFIDENT
+         44.0% →  81.2%  n=16  UNDERCONFIDENT
+         45.4% → 100.0%  n=16  UNDERCONFIDENT
+         47.4% →  93.8%  n=16  UNDERCONFIDENT
+    -> C    base=  3.8%  high=  8.1%  low=  0.0%  gap= +8.1pp  dir=✓
+      Bin detail (model% → actual%):
+          0.9% →   0.0%  n=16  CALIBRATED
+          1.9% →   0.0%  n=18  CALIBRATED
+          2.7% →   0.0%  n=15  CALIBRATED
+          3.6% →   6.7%  n=15  CALIBRATED
+         11.2% →  12.5%  n=16  CALIBRATED
+    -> TB   base=  3.8%  high=  7.5%  low=  0.0%  gap= +7.5pp  dir=✓
+      Bin detail (model% → actual%):
+          5.0% →   0.0%  n=16  CALIBRATED
+          5.5% →   0.0%  n=16  OVERCONFIDENT
+          6.6% →   0.0%  n=16  OVERCONFIDENT
+         23.2% →  12.5%  n=16  OVERCONFIDENT
+         36.3% →   6.2%  n=16  OVERCONFIDENT
+    -> F    base=  1.2%  high=  2.5%  low=  0.0%  gap= +2.5pp  dir=✗
+    -> MB   base=  8.8%  high=  7.5%  low= 10.0%  gap= -2.5pp  dir=✗
+
+  Current shape: MB (test n=25)
+    -> F    base= 28.0%  high= 58.3%  low=  0.0%  gap=+58.3pp  dir=✓
+      Bin detail (model% → actual%):
+          7.5% →   0.0%  n=5  OVERCONFIDENT
+         15.8% →   0.0%  n=5  OVERCONFIDENT
+         20.0% →  20.0%  n=5  CALIBRATED
+         28.3% →  40.0%  n=5  UNDERCONFIDENT
+         43.9% →  80.0%  n=5  UNDERCONFIDENT
+    -> SB   base= 20.0%  high= 41.7%  low=  0.0%  gap=+41.7pp  dir=✓
+      Bin detail (model% → actual%):
+         10.2% →   0.0%  n=5  OVERCONFIDENT
+         16.2% →   0.0%  n=5  OVERCONFIDENT
+         25.9% →   0.0%  n=5  OVERCONFIDENT
+         37.1% →  20.0%  n=5  OVERCONFIDENT
+         56.6% →  80.0%  n=5  UNDERCONFIDENT
+    -> C    base=  4.0%  high=  8.3%  low=  0.0%  gap= +8.3pp  dir=✓
+      Bin detail (model% → actual%):
+          1.9% →   0.0%  n=5  CALIBRATED
+          8.3% →   0.0%  n=5  OVERCONFIDENT
+         11.0% →   0.0%  n=5  OVERCONFIDENT
+         14.0% →   0.0%  n=5  OVERCONFIDENT
+         19.7% →  20.0%  n=5  CALIBRATED
+    -> TB   base=  8.0%  high=  8.3%  low=  7.7%  gap= +0.6pp  dir=✗
+    -> MB   base= 40.0%  high= 25.0%  low= 53.8%  gap=-28.8pp  dir=✗
+
+  Current shape: C (test n=111)
+    -> C    base= 64.9%  high= 67.3%  low= 62.5%  gap= +4.8pp  dir=✗
+    -> SB   base=  0.9%  high=  1.8%  low=  0.0%  gap= +1.8pp  dir=✗
+    -> TB   base=  0.9%  high=  1.8%  low=  0.0%  gap= +1.8pp  dir=✗
+    -> MB   base=  0.0%  high=  0.0%  low=  0.0%  gap= +0.0pp  dir=✗
+    -> F    base= 33.3%  high= 32.7%  low= 33.9%  gap= -1.2pp  dir=✗
+
+  Current shape: F (test n=127)
+    -> MB   base=  5.5%  high=  9.5%  low=  1.6%  gap= +8.0pp  dir=✓
+      Bin detail (model% → actual%):
+          8.6% →   3.8%  n=26  CALIBRATED
+         14.0% →   0.0%  n=25  OVERCONFIDENT
+         17.7% →   0.0%  n=25  OVERCONFIDENT
+         21.2% →  20.0%  n=25  CALIBRATED
+         28.2% →   3.8%  n=26  OVERCONFIDENT
+    -> SB   base=  0.8%  high=  1.6%  low=  0.0%  gap= +1.6pp  dir=✗
+    -> TB   base=  0.0%  high=  0.0%  low=  0.0%  gap= +0.0pp  dir=✗
+    -> C    base= 30.7%  high= 28.6%  low= 32.8%  gap= -4.2pp  dir=✗
+    -> F    base= 63.0%  high= 58.1%  low= 67.7%  gap= -9.6pp  dir=✗
+
+==================================================
+2-WEEK HORIZON
+==================================================
+
+  Current shape: SB (test n=80)
+    -> SB   base= 76.2%  high= 95.0%  low= 57.5%  gap=+37.5pp  dir=✓
+      Bin detail (model% → actual%):
+         44.7% →  37.5%  n=16  OVERCONFIDENT
+         79.7% →  68.8%  n=16  OVERCONFIDENT
+         92.9% →  81.2%  n=16  OVERCONFIDENT
+         95.9% →  93.8%  n=16  CALIBRATED
+         98.6% → 100.0%  n=16  CALIBRATED
+    -> C    base=  5.0%  high= 10.0%  low=  0.0%  gap=+10.0pp  dir=✓
+      Bin detail (model% → actual%):
+          0.0% →   0.0%  n=16  CALIBRATED
+          0.0% →   0.0%  n=16  CALIBRATED
+          0.0% →   0.0%  n=16  CALIBRATED
+          0.2% →   6.2%  n=16  UNDERCONFIDENT
+          0.9% →  18.8%  n=16  UNDERCONFIDENT
+    -> TB   base=  3.8%  high=  7.5%  low=  0.0%  gap= +7.5pp  dir=✓
+      Bin detail (model% → actual%):
+          0.1% →   0.0%  n=16  CALIBRATED
+          0.2% →   0.0%  n=16  CALIBRATED
+          0.5% →   0.0%  n=16  CALIBRATED
+         11.4% →   6.2%  n=16  OVERCONFIDENT
+         48.4% →  12.5%  n=16  OVERCONFIDENT
+    -> F    base=  3.8%  high=  5.0%  low=  2.5%  gap= +2.5pp  dir=✗
+    -> MB   base= 11.2%  high= 10.0%  low= 12.5%  gap= -2.5pp  dir=✗
+
+  Current shape: MB (test n=25)
+    -> SB   base= 20.0%  high= 41.7%  low=  0.0%  gap=+41.7pp  dir=✓
+      Bin detail (model% → actual%):
+          6.8% →   0.0%  n=5  OVERCONFIDENT
+         11.5% →   0.0%  n=5  OVERCONFIDENT
+         33.7% →   0.0%  n=5  OVERCONFIDENT
+         62.8% →  20.0%  n=5  OVERCONFIDENT
+         91.7% →  80.0%  n=5  OVERCONFIDENT
+    -> F    base= 40.0%  high= 50.0%  low= 30.8%  gap=+19.2pp  dir=✓
+      Bin detail (model% → actual%):
+          0.3% →   0.0%  n=5  CALIBRATED
+          3.4% →  40.0%  n=5  UNDERCONFIDENT
+          7.7% →  60.0%  n=5  UNDERCONFIDENT
+         16.4% →  60.0%  n=5  UNDERCONFIDENT
+         35.5% →  40.0%  n=5  CALIBRATED
+    -> TB   base=  8.0%  high= 16.7%  low=  0.0%  gap=+16.7pp  dir=✓
+      Bin detail (model% → actual%):
+          0.0% →   0.0%  n=5  CALIBRATED
+          0.1% →   0.0%  n=5  CALIBRATED
+         15.1% →   0.0%  n=5  OVERCONFIDENT
+         53.8% →  20.0%  n=5  OVERCONFIDENT
+         75.8% →  20.0%  n=5  OVERCONFIDENT
+    -> C    base= 12.0%  high=  8.3%  low= 15.4%  gap= -7.1pp  dir=✗
+    -> MB   base= 20.0%  high=  0.0%  low= 38.5%  gap=-38.5pp  dir=✗
+
+  Current shape: C (test n=111)
+    -> C    base= 64.0%  high= 81.8%  low= 46.4%  gap=+35.4pp  dir=✓
+      Bin detail (model% → actual%):
+         80.2% →  34.8%  n=23  OVERCONFIDENT
+         93.6% →  36.4%  n=22  OVERCONFIDENT
+         97.4% →  81.8%  n=22  OVERCONFIDENT
+         99.0% →  77.3%  n=22  OVERCONFIDENT
+         99.8% →  90.9%  n=22  OVERCONFIDENT
+    -> F    base= 33.3%  high= 49.1%  low= 17.9%  gap=+31.2pp  dir=✓
+      Bin detail (model% → actual%):
+          0.1% →  17.4%  n=23  UNDERCONFIDENT
+          0.8% →  13.6%  n=22  UNDERCONFIDENT
+          2.1% →  27.3%  n=22  UNDERCONFIDENT
+          5.3% →  45.5%  n=22  UNDERCONFIDENT
+         17.0% →  63.6%  n=22  UNDERCONFIDENT
+    -> TB   base=  1.8%  high=  3.6%  low=  0.0%  gap= +3.6pp  dir=✗
+    -> MB   base=  0.9%  high=  1.8%  low=  0.0%  gap= +1.8pp  dir=✗
+    -> SB   base=  0.0%  high=  0.0%  low=  0.0%  gap= +0.0pp  dir=✗
+
+  Current shape: F (test n=127)
+    -> MB   base=  7.1%  high= 11.1%  low=  3.1%  gap= +8.0pp  dir=✓
+      Bin detail (model% → actual%):
+          0.4% →   3.8%  n=26  CALIBRATED
+          1.2% →   4.0%  n=25  CALIBRATED
+          2.4% →   0.0%  n=25  CALIBRATED
+          5.8% →  20.0%  n=25  UNDERCONFIDENT
+         24.1% →   7.7%  n=26  OVERCONFIDENT
+    -> F    base= 60.6%  high= 61.9%  low= 59.4%  gap= +2.5pp  dir=✗
+    -> SB   base=  0.0%  high=  0.0%  low=  0.0%  gap= +0.0pp  dir=✗
+    -> TB   base=  0.0%  high=  0.0%  low=  0.0%  gap= +0.0pp  dir=✗
+    -> C    base= 32.3%  high= 31.7%  low= 32.8%  gap= -1.1pp  dir=✗
+
+
+CORRECTION TABLE SUMMARY
+For calibrated cells: raw model output → true frequency
+============================================================
+Calibrated cells: 16 of 40 total
+  MB -> F (1-week): gap=+58.3pp  base=28.0%  high=58.3%  low=0.0%
+  MB -> SB (1-week): gap=+41.7pp  base=20.0%  high=41.7%  low=0.0%
+  MB -> SB (2-week): gap=+41.7pp  base=20.0%  high=41.7%  low=0.0%
+  SB -> SB (2-week): gap=+37.5pp  base=76.2%  high=95.0%  low=57.5%
+  C -> C (2-week): gap=+35.4pp  base=64.0%  high=81.8%  low=46.4%
+  C -> F (2-week): gap=+31.2pp  base=33.3%  high=49.1%  low=17.9%
+  SB -> SB (1-week): gap=+25.0pp  base=82.5%  high=95.0%  low=70.0%
+  MB -> F (2-week): gap=+19.2pp  base=40.0%  high=50.0%  low=30.8%
+  MB -> TB (2-week): gap=+16.7pp  base=8.0%  high=16.7%  low=0.0%
+  SB -> C (2-week): gap=+10.0pp  base=5.0%  high=10.0%  low=0.0%
+  MB -> C (1-week): gap=+8.3pp  base=4.0%  high=8.3%  low=0.0%
+  SB -> C (1-week): gap=+8.1pp  base=3.8%  high=8.1%  low=0.0%
+  F -> MB (1-week): gap=+8.0pp  base=5.5%  high=9.5%  low=1.6%
+  F -> MB (2-week): gap=+8.0pp  base=7.1%  high=11.1%  low=3.1%
+  SB -> TB (1-week): gap=+7.5pp  base=3.8%  high=7.5%  low=0.0%
+  SB -> TB (2-week): gap=+7.5pp  base=3.8%  high=7.5%  low=0.0%
+
+======================================================================
+STUDY 3 — PM STRESS TEST 2008-2026
+Run: 2026-07-08 08:55
+======================================================================
+STUDY 3 — PM STRESS TEST: FULL HISTORY 2008-2026
+======================================================================
+
+  Year    Split   Accuracy      n   Dominant   Dom%
+  2009  TRAIN     100.0%     147          SB     38%
+  2010  TRAIN     100.0%     201          SB     61%
+  2011  TRAIN     100.0%     199          SB     48%
+  2012  TRAIN     100.0%     201           C     54%
+  2013  TRAIN     100.0%     200           C     38%
+  2014  TRAIN     100.0%     202           C     28%
+  2015  TRAIN     100.0%     198           C     64%
+  2016  TRAIN     100.0%     202          SB     35%
+  2017  TRAIN      99.5%     199          SB     50%
+  2018  TRAIN     100.0%     238           C     67%
+  2019  TRAIN     100.0%     244           C     83%
+  2020  TRAIN     100.0%     248          SB     69%
+  2021  TRAIN     100.0%     245          SB     92%
+  2022  TRAIN     100.0%     243          SB     36%
+  2023  TRAIN     100.0%     244           C     37%
+  2024  TRAIN      99.6%     247          SB     51%
+  ─────────────────────────────────────────────────────── TEST BELOW
+  2025   TEST      89.8%     244          SB     33%
+  2026   TEST      90.5%     116           F     54%
+
+
+PER-SHAPE ACCURACY BY ERA
+
+  SB — SB (Steep Backwardation):
+    2008-2012      TEST     nan%  n=0 (low n)
+    2008-2012     TRAIN   100.0%  n=292
+    2013-2017      TEST     nan%  n=0 (low n)
+    2013-2017     TRAIN   100.0%  n=234
+    2018-2022      TEST     nan%  n=0 (low n)
+    2018-2022     TRAIN   100.0%  n=491
+    2023-2026      TEST    97.5%  n=80
+    2023-2026     TRAIN   100.0%  n=178
+
+  MB — MB (Mild Backwardation):
+    2008-2012      TEST     nan%  n=0 (low n)
+    2008-2012     TRAIN   100.0%  n=118
+    2013-2017      TEST     nan%  n=0 (low n)
+    2013-2017     TRAIN    99.4%  n=177
+    2018-2022      TEST     nan%  n=0 (low n)
+    2018-2022     TRAIN   100.0%  n=132
+    2023-2026      TEST    24.0%  n=25 *** WEAK
+    2023-2026     TRAIN   100.0%  n=111
+
+  TB — TB (Transitional Backwardation):
+    2008-2012      TEST     nan%  n=0 (low n)
+    2008-2012     TRAIN   100.0%  n=96
+    2013-2017      TEST     nan%  n=0 (low n)
+    2013-2017     TRAIN   100.0%  n=138
+    2018-2022      TEST     nan%  n=0 (low n)
+    2018-2022     TRAIN   100.0%  n=56
+    2023-2026      TEST    57.1%  n=7 *** WEAK (low n)
+    2023-2026     TRAIN   100.0%  n=36
+
+  C — C  (Contango):
+    2008-2012      TEST     nan%  n=0 (low n)
+    2008-2012     TRAIN   100.0%  n=163
+    2013-2017      TEST     nan%  n=0 (low n)
+    2013-2017     TRAIN   100.0%  n=332
+    2018-2022      TEST     nan%  n=0 (low n)
+    2018-2022     TRAIN   100.0%  n=436
+    2023-2026      TEST    97.5%  n=121
+    2023-2026     TRAIN   100.0%  n=100
+
+  F — F  (Flat/Back-Inversion):
+    2008-2012      TEST     nan%  n=0 (low n)
+    2008-2012     TRAIN   100.0%  n=79
+    2013-2017      TEST     nan%  n=0 (low n)
+    2013-2017     TRAIN   100.0%  n=120
+    2018-2022      TEST     nan%  n=0 (low n)
+    2018-2022     TRAIN   100.0%  n=103
+    2023-2026      TEST    92.9%  n=127
+    2023-2026     TRAIN    98.5%  n=66
+
+
+CRISIS PERIOD CHECK (2008-2009)
+
+  2008-2009 Crisis: 100.0% overall accuracy
+    SB: 100.0%
+    MB: 100.0%
+    TB: 100.0%
+    C: 100.0%
+    F: 100.0%
+
+  2017-2024 Normal: 99.9% overall accuracy
+    SB: 100.0%
+    MB: 99.6%
+    TB: 100.0%
+    C: 100.0%
+    F: 99.4%
+
+======================================================================
+STUDY 4 — DISAGREEMENT ANALYSIS
+Run: 2026-07-08 08:55
+======================================================================
+STUDY 4 — DISAGREEMENT ANALYSIS
+Direct observation vs Prediction Model
+======================================================================
+
+DISAGREEMENT FREQUENCY (full 2008-2026):
+  Hard disagree (PM top ≠ observed):  1.0% of days (38 days)
+  Soft disagree (PM confidence <70%): 3.2% of days (123 days)
+  Either type:                        3.2% of days (123 days)
+
+  LAG CHECK:
+  Of days with hard disagreement, model corrects
+  itself the next day: 31.6% of the time
+  → Not just lag — disagreement persists
+
+  PER-SHAPE DISAGREEMENT RATES:
+  Shape      Hard%   Soft%   n days  Avg PM conf
+  SB          0.2%     1.8%     1,275        97.6%
+  MB          3.6%     6.4%       563        93.2%
+  TB          0.9%     4.2%       333        94.5%
+  C           0.3%     1.2%     1,152        97.6%
+  F           2.0%     7.3%       495        91.2%
+
+  DOES DISAGREEMENT PREDICT SHAPE CHANGE?
+  Hard disagree         :  65.8% shape change in next 10 days  (n=38)
+  Soft disagree         :  71.5% shape change in next 10 days  (n=123)
+  No disagreement       :  35.3% shape change in next 10 days  (n=3,695)
+
+  DISAGREEMENT BY QUADRANT:
+  Abundant & Building           : hard=2.2%  soft=5.7%  n=1,292
+  Abundant but Tightening       : hard=0.7%  soft=2.3%  n=963
+  Tight but Recovering          : hard=0.2%  soft=2.7%  n=881
+  Tight & Worsening             : hard=0.0%  soft=0.4%  n=682
+
+======================================================================
+STUDY 5 — TM STRESS TEST 2008-2026
+Run: 2026-07-08 08:55
+======================================================================
+STUDY 5 — TM STRESS TEST: FULL HISTORY 2008-2026
+======================================================================
+
+=======================================================
+1-WEEK HORIZON
+
+  Total predictions: 3,808
+  Actual was TOP 1 (highest prob):  2,693 (70.7%)
+  Actual was TOP 2 (second highest): 871 (22.9%)
+  Either TOP 1 or TOP 2:            3,564 (93.6%)
+  BLIND SPOT (neither top 2):       244 (6.4%)
+
+  CONVICTION ANALYSIS — Correct top-1 predictions:
+  Avg top-1 probability when correct: 57.2%
+  Lowest 10% of correct calls: model was only 38.9% confident
+  Highest 10% of correct calls: model was 84.7% confident
+  Correct calls where model <30% confident: 28 (1.0%)
+  Correct calls where model <10% confident: 0 (lucky guesses at very low conviction)
+
+  PER-SHAPE BREAKDOWN:
+  Shape    Top1%   Top2%   Blind%  AvgConf  MinConf    <10%
+  SB       67.1%    27.8%      5.1%     51.5%     29.4%     0.0%
+  MB       73.9%    19.4%      6.7%     55.0%     23.9%     0.0%
+  TB       66.4%    23.1%     10.5%     46.3%     26.3%     0.0%
+  C        78.7%    16.1%      5.2%     70.4%     30.1%     0.0%
+  F        61.0%    29.5%      9.5%     44.9%     25.6%     0.0%
+
+  BLIND SPOT DEEP DIVE:
+  Probability the model gave to TRUE outcome (which it missed):
+  Average: 16.5%
+  Median:  16.2%
+  Min:     4.4%
+  Max:     31.2%
+  <1%:     0 cases (model essentially ignored true outcome)
+  1-5%:    5 cases
+  5-10%:   29 cases
+
+  Blind spots by current shape:
+    SB: 65 blind spots — most missed: SB (41), MB (14)
+    MB: 38 blind spots — most missed: SB (21), MB (12)
+    TB: 35 blind spots — most missed: TB (14), SB (13)
+    C: 59 blind spots — most missed: C (54), F (3)
+    F: 47 blind spots — most missed: F (31), C (8)
+
+  TOP-1 HIT RATE BY YEAR:
+  2009  TRAIN: top1= 67.3%  blind=  3.4%
+  2010  TRAIN: top1= 61.2%  blind=  6.5%
+  2011  TRAIN: top1= 62.8%  blind= 10.6%
+  2012  TRAIN: top1= 82.6%  blind=  6.0%
+  2013  TRAIN: top1= 67.0%  blind= 13.5%
+  2014  TRAIN: top1= 70.8%  blind=  4.5%
+  2015  TRAIN: top1= 93.9%  blind=  2.0%
+  2016  TRAIN: top1= 63.9%  blind=  8.4%
+  2017  TRAIN: top1= 58.8%  blind= 13.1%
+  2018  TRAIN: top1= 85.3%  blind=  5.0%
+  2019  TRAIN: top1= 92.6%  blind=  0.0%
+  2020  TRAIN: top1= 54.0%  blind=  3.6%
+  2021  TRAIN: top1= 89.4%  blind=  0.4%
+  2022  TRAIN: top1= 78.6%  blind=  4.5%
+  2023  TRAIN: top1= 75.0%  blind=  3.7%
+  2024  TRAIN: top1= 70.4%  blind=  6.9%
+  2025   TEST: top1= 40.6%  blind= 13.9%
+  2026   TEST: top1= 39.6%  blind= 16.0%
+
+=======================================================
+2-WEEK HORIZON
+
+  Total predictions: 3,808
+  Actual was TOP 1 (highest prob):  3,630 (95.3%)
+  Actual was TOP 2 (second highest): 116 (3.0%)
+  Either TOP 1 or TOP 2:            3,746 (98.4%)
+  BLIND SPOT (neither top 2):       62 (1.6%)
+
+  CONVICTION ANALYSIS — Correct top-1 predictions:
+  Avg top-1 probability when correct: 91.8%
+  Lowest 10% of correct calls: model was only 76.7% confident
+  Highest 10% of correct calls: model was 99.8% confident
+  Correct calls where model <30% confident: 0 (0.0%)
+  Correct calls where model <10% confident: 0 (lucky guesses at very low conviction)
+
+  PER-SHAPE BREAKDOWN:
+  Shape    Top1%   Top2%   Blind%  AvgConf  MinConf    <10%
+  SB       96.7%     2.4%      0.9%     90.9%     36.5%     0.0%
+  MB       96.6%     0.9%      2.5%     89.9%     51.4%     0.0%
+  TB       97.9%     0.3%      1.8%     91.1%     49.4%     0.0%
+  C        96.6%     2.9%      0.5%     95.9%     53.7%     0.0%
+  F        85.7%     9.3%      5.1%     86.9%     43.7%     0.0%
+
+  BLIND SPOT DEEP DIVE:
+  Probability the model gave to TRUE outcome (which it missed):
+  Average: 5.1%
+  Median:  1.6%
+  Min:     0.1%
+  Max:     27.7%
+  <1%:     21 cases (model essentially ignored true outcome)
+  1-5%:    21 cases
+  5-10%:   8 cases
+
+  Blind spots by current shape:
+    SB: 11 blind spots — most missed: MB (5), C (4)
+    MB: 14 blind spots — most missed: F (6), MB (5)
+    TB: 6 blind spots — most missed: SB (3), C (2)
+    C: 6 blind spots — most missed: F (3), TB (2)
+    F: 25 blind spots — most missed: F (20), MB (5)
+
+  TOP-1 HIT RATE BY YEAR:
+  2009  TRAIN: top1= 99.3%  blind=  0.0%
+  2010  TRAIN: top1= 98.0%  blind=  0.0%
+  2011  TRAIN: top1= 99.0%  blind=  0.0%
+  2012  TRAIN: top1= 99.5%  blind=  0.0%
+  2013  TRAIN: top1=100.0%  blind=  0.0%
+  2014  TRAIN: top1= 99.0%  blind=  0.0%
+  2015  TRAIN: top1=100.0%  blind=  0.0%
+  2016  TRAIN: top1= 99.5%  blind=  0.0%
+  2017  TRAIN: top1= 99.5%  blind=  0.0%
+  2018  TRAIN: top1=100.0%  blind=  0.0%
+  2019  TRAIN: top1=100.0%  blind=  0.0%
+  2020  TRAIN: top1= 98.8%  blind=  0.0%
+  2021  TRAIN: top1= 98.8%  blind=  0.0%
+  2022  TRAIN: top1= 99.2%  blind=  0.0%
+  2023  TRAIN: top1= 99.2%  blind=  0.0%
+  2024  TRAIN: top1=100.0%  blind=  0.0%
+  2025   TEST: top1= 54.9%  blind= 17.6%
+  2026   TEST: top1= 56.6%  blind= 17.9%
+
+======================================================================
+EXPANDING WINDOW + RECENCY WEIGHTING -- FULL RESULTS
+Run: 2026-07-08 13:13
+======================================================================
+EXPANDING WINDOW + RECENCY WEIGHTING -- FULL RESULTS
+======================================================================
+
+Question 1: Does the model improve as training window grows?
+Question 2: Does recency weighting improve over standard?
+Question 3: Which decay rate works best?
+======================================================================
+
+STANDARD MODEL ACROSS WINDOWS:
+Window            Top-1  Top-2 cov   Blind
+  2008-2021       60.1%       87.2%    12.8%       243
+  2008-2022       63.9%       88.9%    11.1%       244
+  2008-2023       58.7%       89.1%    10.9%       247
+  2008-2024       59.7%       85.4%    14.6%       350
+
+RECENCY WEIGHTING IMPACT PER WINDOW:
+  2008-2021         60.1%       56.4%       64.2%       65.4%       5yr
+  2008-2022         63.9%       64.3%       64.3%       68.0%       5yr
+  2008-2023         58.7%       50.2%       50.2%       58.3%       std
+  2008-2024         59.7%       62.3%       62.3%       60.6%       1yr
+
+BLIND SPOT COMPARISON:
+  2008-2021          12.8%              17.7%     +4.9pp  WORSE
+  2008-2022          11.1%              15.2%     +4.1pp  WORSE
+  2008-2023          10.9%              14.2%     +3.2pp  WORSE
+  2008-2024          14.6%              20.0%     +5.4pp  WORSE
+
+FINAL COMPARISON ALL APPROACHES:
+  Option B: XGB regularised (2008-2024)         59.7%       85.4%    14.6%
+  Option C: Chained 1w x 2                      57.4%       86.3%    13.7%
+  Option D: XGB 2017-2024 only                  58.6%       86.0%    14.0%
+
+  --- Expanding window results ---
+  Expanding 2008-2021 best=decay_5yr test=2022   65.4%       82.3%    17.7%
+  Expanding 2008-2022 best=decay_5yr test=2023   68.0%       84.8%    15.2%
+  Expanding 2008-2023 best=standard test=2024   58.7%       89.1%    10.9%
+  Expanding 2008-2024 best=decay_1yr test=2025   62.3%       80.0%    20.0%
+
+======================================================================
+EXPANDING WINDOW -- VERDICT
+Run: 2026-07-08 13:13
+======================================================================
+EXPANDING WINDOW + RECENCY WEIGHTING -- VERDICT
+======================================================================
+
+DOES MORE TRAINING DATA HELP?
+  No -- accuracy plateaus regardless of training size
+  Std top-1 across windows: 60.1% -> 63.9% -> 58.7% -> 59.7%
+
+DOES RECENCY WEIGHTING HELP?
+  No -- recency weighting does not improve accuracy
+  Average impact of weighting: -0.1pp
+
+WHAT THIS TELLS US ABOUT THE 2-WEEK SIGNAL:
+  The 2-week signal ceiling is structural.
+  It is not a data quantity problem.
+  It is not a recency problem.
+  58-60% top-1 is the realistic ceiling
+  for 2-week shape prediction in this market.
+  The 13-16% blind spot is irreducible
+  at this horizon without new forward-looking
+  variables (biodiesel calendar, ENSO forecast).
+
+BEST 2-WEEK MODEL FOR DEPLOYMENT:
+  Raw accuracy:    Option B XGB regularised (59.7%)
+  Blind spots:     Option C Chained (13.7%)
+  Honest uncertainty: Option C Chained
+  Recommended:     Use B for direction signal,
+                   C for risk management overlay.
+  When B and C disagree strongly:
+    -> reduce position size
+    -> tighten stops
+    -> treat as elevated uncertainty period
+
+======================================================================
+EXPANDING WINDOW + RECENCY WEIGHTING -- FULL RESULTS
+Run: 2026-07-08 13:16
+======================================================================
+EXPANDING WINDOW + RECENCY WEIGHTING -- FULL RESULTS
+======================================================================
+
+Question 1: Does the model improve as training window grows?
+Question 2: Does recency weighting improve over standard?
+Question 3: Which decay rate works best?
+======================================================================
+
+STANDARD MODEL ACROSS WINDOWS:
+Window            Top-1  Top-2 cov   Blind
+  2008-2021       60.1%       87.2%    12.8%       243
+  2008-2022       63.9%       88.9%    11.1%       244
+  2008-2023       58.7%       89.1%    10.9%       247
+  2008-2024       59.7%       85.4%    14.6%       350
+
+RECENCY WEIGHTING IMPACT PER WINDOW:
+  2008-2021         60.1%       56.4%       64.2%       65.4%       5yr
+  2008-2022         63.9%       64.3%       64.3%       68.0%       5yr
+  2008-2023         58.7%       50.2%       50.2%       58.3%       std
+  2008-2024         59.7%       62.3%       62.3%       60.6%       1yr
+
+BLIND SPOT COMPARISON:
+  2008-2021          12.8%              17.7%     +4.9pp  WORSE
+  2008-2022          11.1%              15.2%     +4.1pp  WORSE
+  2008-2023          10.9%              14.2%     +3.2pp  WORSE
+  2008-2024          14.6%              20.0%     +5.4pp  WORSE
+
+FINAL COMPARISON ALL APPROACHES:
+  Option B: XGB regularised (2008-2024)         59.7%       85.4%    14.6%
+  Option C: Chained 1w x 2                      57.4%       86.3%    13.7%
+  Option D: XGB 2017-2024 only                  58.6%       86.0%    14.0%
+
+  --- Expanding window results ---
+  Expanding 2008-2021 best=decay_5yr test=2022   65.4%       82.3%    17.7%
+  Expanding 2008-2022 best=decay_5yr test=2023   68.0%       84.8%    15.2%
+  Expanding 2008-2023 best=standard test=2024   58.7%       89.1%    10.9%
+  Expanding 2008-2024 best=decay_1yr test=2025   62.3%       80.0%    20.0%
+
+======================================================================
+EXPANDING WINDOW -- VERDICT
+Run: 2026-07-08 13:16
+======================================================================
+EXPANDING WINDOW + RECENCY WEIGHTING -- VERDICT
+======================================================================
+
+DOES MORE TRAINING DATA HELP?
+  No -- accuracy plateaus regardless of training size
+  Std top-1 across windows: 60.1% -> 63.9% -> 58.7% -> 59.7%
+
+DOES RECENCY WEIGHTING HELP?
+  No -- recency weighting does not improve accuracy
+  Average impact of weighting: -0.1pp
+
+WHAT THIS TELLS US ABOUT THE 2-WEEK SIGNAL:
+  The 2-week signal ceiling is structural.
+  It is not a data quantity problem.
+  It is not a recency problem.
+  58-60% top-1 is the realistic ceiling
+  for 2-week shape prediction in this market.
+  The 13-16% blind spot is irreducible
+  at this horizon without new forward-looking
+  variables (biodiesel calendar, ENSO forecast).
+
+BEST 2-WEEK MODEL FOR DEPLOYMENT:
+  Raw accuracy:    Option B XGB regularised (59.7%)
+  Blind spots:     Option C Chained (13.7%)
+  Honest uncertainty: Option C Chained
+  Recommended:     Use B for direction signal,
+                   C for risk management overlay.
+  When B and C disagree strongly:
+    -> reduce position size
+    -> tighten stops
+    -> treat as elevated uncertainty period
+
+======================================================================
+EXPANDING WINDOW -- PREDICTION MODEL
+Run: 2026-07-08 13:16
+======================================================================
+PREDICTION MODEL -- EXPANDING WINDOW RESULTS
+======================================================================
+
+Window              Std     1yr     3yr     5yr     Best   vs std
+  2008-2021       79.4%    75.7%    85.6%    80.2%       3yr     +6.2pp
+  2008-2022       87.3%    77.0%    79.9%    81.6%       std     +0.0pp
+  2008-2023       77.3%    78.5%    74.5%    76.5%       1yr     +1.2pp
+  2008-2024       90.0%    85.0%    88.6%    88.6%       std     +0.0pp
+
+MB F1 BY WINDOW AND DECAY:
+Window            Std MB   1yr MB   3yr MB   5yr MB
+  2008-2021          86%       77%       82%       82%         +0pp
+  2008-2022          52%       35%       36%       43%         +0pp
+  2008-2023          98%       99%       97%       98%         +1pp
+  2008-2024          39%       41%       39%       39%         +2pp
+
+======================================================================
+EXPANDING WINDOW -- 1-WEEK TM
+Run: 2026-07-08 13:17
+======================================================================
+1-WEEK TM -- EXPANDING WINDOW RESULTS
+======================================================================
+
+Window              Std     1yr     3yr     5yr     Best   vs std
+  2008-2021       55.6%    65.8%    57.6%    52.7%       1yr    +10.3pp
+  2008-2022       57.4%    65.2%    60.2%    62.3%       1yr     +7.8pp
+  2008-2023       45.3%    62.3%    57.9%    59.1%       1yr    +17.0pp
+  2008-2024       40.3%    60.0%    56.0%    51.4%       1yr    +19.7pp
+
+BLIND SPOT RATE:
+  2008-2021       13.2%    14.0%    16.9%    21.0%
+  2008-2022        9.4%    18.0%    11.1%    10.7%
+  2008-2023       18.2%     8.5%     9.3%    13.0%
+  2008-2024       14.6%    10.3%    11.7%    13.4%
+
+FINAL COMPARISON vs KNOWN 1-WEEK RESULT:
+  Known (2008-2024): 70.7% top-1  93.6% top-2  6.4% blind
+  No improvement -- 70.7% is the ceiling.
+
+CORRECTION [2026-07-10]: The 70.7% top-1 and 93.6% top-2 figures above
+were computed on the full panel (train+test pooled, n=3,808), NOT test-only.
+Clean test-only accuracy: RF 46.6% top-1 / 80.3% top-2.
+RF replaced by XGBoost Config B at 65.7% top-1 / 90.3% top-2.
+See models/MODEL_REFERENCE.txt for authoritative figures.

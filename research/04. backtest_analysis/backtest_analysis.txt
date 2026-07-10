@@ -250,3 +250,144 @@ Positive gap = model discriminates correctly. USE: gap>5pp, SOFT: gap>2pp, IGNOR
       -> 0.2: gap=+0.0pp  hi=0.0%(61)  lo=0.0%(66)  rating=IGNORE
       -> 1: gap=+14.7pp  hi=39.7%(63)  lo=25.0%(64)  rating=USE
       -> 2: gap=+27.7pp  hi=74.6%(63)  lo=46.9%(64)  rating=USE
+
+CALIBRATION ANALYSIS (post 1w model swap to XGB) — 2026-07-10 13:06
+======================================================================
+
+Changes vs prior run (2026-07-10 09:16):
+  - 1w model swapped from RF (46.6%) to XGBoost Config B (65.7%). All other models unchanged.
+  - Both TM horizons now use XGBoost regularised (Config B) with same hyperparameter philosophy.
+  - See models/MODEL_REFERENCE.txt for full model documentation.
+
+--- TM 1w CALIBRATION ---
+Date range: 2025-01-02 to 2026-06-11
+Total predictions: 350 (daily, one per trading day)
+Filter: test set dates with both target_1w and target_2w non-null
+Overall top-1 accuracy: 65.7%
+
+  Bucket         N   Accuracy    CI Note
+  ----------------------------------------
+  <30%           0          —    no data
+  30-50%        36      50.0%           
+  50-70%       125      62.4%           
+  70%+         189      70.9%           
+
+  Per-shape accuracy:
+    Shape 0.0: 82.5% (n=80)
+    Shape 0.1: 48.0% (n=25)
+    Shape 0.2: 14.3% (n=7)
+    Shape 1: 62.2% (n=111)
+    Shape 2: 64.6% (n=127)
+
+--- TM 2w CALIBRATION ---
+Date range: 2025-01-02 to 2026-06-11
+Total predictions: 350 (daily, one per trading day)
+Filter: test set dates with both target_1w and target_2w non-null
+Overall top-1 accuracy: 60.9%
+
+  Bucket         N   Accuracy    CI Note
+  ----------------------------------------
+  <30%           0          —    no data
+  30-50%        96      54.2%           
+  50-70%       106      57.5%           
+  70%+         148      67.6%           
+
+  Per-shape accuracy:
+    Shape 0.0: 76.2% (n=80)
+    Shape 0.1: 36.0% (n=25)
+    Shape 0.2: 0.0% (n=7)
+    Shape 1: 56.8% (n=111)
+    Shape 2: 63.0% (n=127)
+
+--- PM CALIBRATION (Model C — XGBoost shape classifier) ---
+Date range: 2025-01-02 to 2026-06-26
+Total predictions: 360 (daily, one per trading day)
+Filter: test set dates with all 11 TM features non-null
+Overall accuracy: 89.4%
+
+  Bucket         N   Accuracy    CI Note
+  ----------------------------------------
+  <50%           8      87.5%    wide CI
+  50-70%        23      56.5%    wide CI
+  70-90%        38      78.9%           
+  90%+         291      93.5%           
+
+  Per-shape accuracy:
+    Shape 0.0: 97.5% (n=80)
+    Shape 0.1: 24.0% (n=25)
+    Shape 0.2: 71.4% (n=7)
+    Shape 1: 96.7% (n=121)
+    Shape 2: 91.3% (n=127)
+
+  PM disagreement (predicted != observed):
+    Total disagreement days: 38 of 360 (10.6%)
+    Avg confidence on disagreement days: 81.4%
+    Avg confidence on agreement days: 93.6%
+
+--- DERIVED THRESHOLDS ---
+Gap = actual_occurrence_rate(high_prob_half) - actual_occurrence_rate(low_prob_half)
+Positive gap = model discriminates correctly. USE: gap>5pp, SOFT: gap>2pp, IGNORE: gap<=2pp
+
+  1w horizon:
+    Shape 0.0 (n=80 test days):
+      -> 0.0: gap=-15.0pp  hi=75.0%(40)  lo=90.0%(40)  rating=IGNORE
+      -> 0.1: gap=-2.5pp  hi=7.5%(40)  lo=10.0%(40)  rating=IGNORE
+      -> 0.2: gap=+7.5pp  hi=7.5%(40)  lo=0.0%(40)  rating=USE
+      -> 1: gap=+7.5pp  hi=7.5%(40)  lo=0.0%(40)  rating=USE
+      -> 2: gap=+2.6pp  hi=2.6%(38)  lo=0.0%(42)  rating=SOFT
+    Shape 0.1 (n=25 test days):
+      -> 0.0: gap=+55.6pp  hi=55.6%(9)  lo=0.0%(16)  rating=USE  [wide CI]
+      -> 0.1: gap=-22.7pp  hi=27.3%(11)  lo=50.0%(14)  rating=IGNORE  [wide CI]
+      -> 0.2: gap=+0.6pp  hi=8.3%(12)  lo=7.7%(13)  rating=IGNORE  [wide CI]
+      -> 1: gap=+8.3pp  hi=8.3%(12)  lo=0.0%(13)  rating=USE  [wide CI]
+      -> 2: gap=-37.8pp  hi=8.3%(12)  lo=46.2%(13)  rating=IGNORE  [wide CI]
+    Shape 0.2 (n=7 test days):
+      -> 0.0: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 0.1: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 0.2: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 1: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 2: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+    Shape 1 (n=111 test days):
+      -> 0.0: gap=+1.8pp  hi=1.8%(55)  lo=0.0%(56)  rating=IGNORE
+      -> 0.1: gap=+0.0pp  hi=0.0%(55)  lo=0.0%(56)  rating=IGNORE
+      -> 0.2: gap=+1.8pp  hi=1.8%(55)  lo=0.0%(56)  rating=IGNORE
+      -> 1: gap=+1.2pp  hi=65.5%(55)  lo=64.3%(56)  rating=IGNORE
+      -> 2: gap=-1.2pp  hi=32.7%(55)  lo=33.9%(56)  rating=IGNORE
+    Shape 2 (n=127 test days):
+      -> 0.0: gap=+1.6pp  hi=1.6%(62)  lo=0.0%(65)  rating=IGNORE
+      -> 0.1: gap=-4.5pp  hi=3.2%(62)  lo=7.7%(65)  rating=IGNORE
+      -> 0.2: gap=+0.0pp  hi=0.0%(62)  lo=0.0%(65)  rating=IGNORE
+      -> 1: gap=+28.1pp  hi=45.8%(59)  lo=17.6%(68)  rating=USE
+      -> 2: gap=+19.6pp  hi=73.3%(60)  lo=53.7%(67)  rating=USE
+
+  2w horizon:
+    Shape 0.0 (n=80 test days):
+      -> 0.0: gap=+27.5pp  hi=90.0%(40)  lo=62.5%(40)  rating=USE
+      -> 0.1: gap=-2.5pp  hi=10.0%(40)  lo=12.5%(40)  rating=IGNORE
+      -> 0.2: gap=+7.7pp  hi=7.7%(39)  lo=0.0%(41)  rating=USE
+      -> 1: gap=+10.0pp  hi=10.0%(40)  lo=0.0%(40)  rating=USE
+      -> 2: gap=+7.7pp  hi=7.7%(39)  lo=0.0%(41)  rating=USE
+    Shape 0.1 (n=25 test days):
+      -> 0.0: gap=+50.0pp  hi=50.0%(10)  lo=0.0%(15)  rating=USE  [wide CI]
+      -> 0.1: gap=-16.7pp  hi=10.0%(10)  lo=26.7%(15)  rating=IGNORE  [wide CI]
+      -> 0.2: gap=-12.5pp  hi=0.0%(9)  lo=12.5%(16)  rating=IGNORE  [wide CI]
+      -> 1: gap=+33.3pp  hi=33.3%(9)  lo=0.0%(16)  rating=USE  [wide CI]
+      -> 2: gap=-10.4pp  hi=33.3%(9)  lo=43.8%(16)  rating=IGNORE  [wide CI]
+    Shape 0.2 (n=7 test days):
+      -> 0.0: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 0.1: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 0.2: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 1: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+      -> 2: SKIPPED (n=7, but median split produced high=0/low=7 — need >=3 each)
+    Shape 1 (n=111 test days):
+      -> 0.0: gap=+0.0pp  hi=0.0%(55)  lo=0.0%(56)  rating=IGNORE
+      -> 0.1: gap=+1.8pp  hi=1.8%(55)  lo=0.0%(56)  rating=IGNORE
+      -> 0.2: gap=+3.6pp  hi=3.6%(55)  lo=0.0%(56)  rating=SOFT
+      -> 1: gap=+3.0pp  hi=65.5%(55)  lo=62.5%(56)  rating=SOFT
+      -> 2: gap=+2.4pp  hi=34.5%(55)  lo=32.1%(56)  rating=SOFT
+    Shape 2 (n=127 test days):
+      -> 0.0: gap=+0.0pp  hi=0.0%(61)  lo=0.0%(66)  rating=IGNORE
+      -> 0.1: gap=+11.1pp  hi=12.7%(63)  lo=1.6%(64)  rating=USE
+      -> 0.2: gap=+0.0pp  hi=0.0%(61)  lo=0.0%(66)  rating=IGNORE
+      -> 1: gap=+14.7pp  hi=39.7%(63)  lo=25.0%(64)  rating=USE
+      -> 2: gap=+27.7pp  hi=74.6%(63)  lo=46.9%(64)  rating=USE

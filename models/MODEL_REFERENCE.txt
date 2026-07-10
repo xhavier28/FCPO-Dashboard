@@ -1,0 +1,148 @@
+================================================================
+FCPO CALENDAR SPREAD — MODEL REFERENCE
+Last updated: 2026-07-10
+================================================================
+
+This file is the single source of truth for deployed model
+configurations and their validated performance figures. All
+figures are TEST-ONLY (out-of-sample) unless explicitly marked
+otherwise. Do not cite notebook headlines or full-panel pooled
+figures — use this file.
+
+STANDING RULE: if a model is retrained, this file must be
+updated with the new test-only figures before the retrained
+model is used anywhere. Stale figures here mean stale
+calibration everywhere downstream.
+
+----------------------------------------------------------------
+PREDICTION MODEL (pm_engine.py)
+----------------------------------------------------------------
+  Model name:     Model C
+  Algorithm:      XGBoost classifier
+  Task:           Predict current shape from today's fundamentals
+                  (nowcast — compared against observed shape for
+                  disagreement detection)
+  Feature set:    Unified 11 features (TM_FEATURES):
+                  stock_pct, prod_mom_3m, prod_yoy, export_yoy,
+                  oni, usd_myr_chg_4w, palm_soy_chg_4w,
+                  days_in_shape, prior_shape_enc, month,
+                  stock_prod_interaction
+  Training data:  2018-03-22 to 2024-12-31
+  Test window:    2025-01-02 to 2026-06-26 (n=360)
+  Test accuracy:  89.4%
+  Per-shape test: SB 97.5% (n=80), MB 24.0% (n=25), TB 57.1% (n=7),
+                  C 96.7% (n=121), F 91.3% (n=127)
+  Known weakness: MB (24.0%) — sample size small but consistently weak
+  Deploy status:  DEPLOYED
+
+----------------------------------------------------------------
+PM BACKUP (not deployed — preserved for reference)
+----------------------------------------------------------------
+  Model name:     Model A
+  Algorithm:      Random Forest
+  Task:           Same as Model C
+  Training data:  2008-2024
+  Test window:    2025-01-01+
+  Test accuracy:  88.1%
+  Deploy status:  PRESERVED — never replace, never deploy
+                  Exists as independent cross-check only
+
+----------------------------------------------------------------
+PERSISTENCE MODEL (persistence_engine.py)
+----------------------------------------------------------------
+  Model name:     Phase B Persistence Model
+  Algorithm:      Logistic Regression (per-shape)
+  Task:           Predict whether current shape persists at
+                  4-week and 12-week horizons (binary yes/no)
+  Feature set:    Shape-specific validated features from Phase A
+                  (2-4 features per shape, interpretable LR
+                  coefficients testing Phase A driver hypotheses)
+  Test accuracy:  4w: 54.1%, 12w: 53.0%
+  Deploy status:  NOT USED FOR DISAGREEMENT SIGNAL
+                  Separate purpose: interpretable persistence
+                  estimation, duration-based risk profiling
+  Note:           Was incorrectly wrapped as "pm_engine.py" in
+                  initial formalization — renamed July 2026
+
+----------------------------------------------------------------
+1-WEEK TRANSITION MODEL (tm_engine.py, horizon="1w")
+----------------------------------------------------------------
+  Model name:     TM 1w
+  Algorithm:      XGBoost regularised (Config B)
+                  max_depth=3, reg_alpha=1.0, reg_lambda=2.0,
+                  min_child_weight=20
+  Task:           Predict shape 5 trading days from now
+  Feature set:    Unified 11 features (TM_FEATURES):
+                  stock_pct, prod_mom_3m, prod_yoy, export_yoy,
+                  oni, usd_myr_chg_4w, palm_soy_chg_4w,
+                  days_in_shape, prior_shape_enc, month,
+                  stock_prod_interaction
+  Training data:  2018-03-22 to 2024-12-31 (n=1656)
+  Test window:    2025-01-02 to 2026-06-11 (n=350)
+  Test accuracy:  65.7% top-1 / 90.3% top-2
+  Train accuracy: 82.5%
+  Train/test gap: 16.8pp
+  Deploy status:  DEPLOYED
+
+  CONTAMINATION NOTE (July 2026):
+  Previously reported as 70.7% top-1 / 93.6% top-2 using RF.
+  Those figures were full-panel (train+test pooled, n=3,808)
+  from initial_backtest_and_calibration.ipynb, not test-only.
+  The RF model's genuine test-only accuracy was 46.6% top-1 /
+  80.3% top-2. XGBoost Config B was validated as the correct
+  replacement at 65.7% / 90.3% on identical clean windows.
+  The contaminated figures should not be cited anywhere.
+
+----------------------------------------------------------------
+2-WEEK TRANSITION MODEL (tm_engine.py, horizon="2w")
+----------------------------------------------------------------
+  Model name:     TM 2w (direction)
+  Algorithm:      XGBoost regularised (Config B)
+                  max_depth=3, reg_alpha=1.0, reg_lambda=2.0,
+                  min_child_weight=20
+  Task:           Predict shape 10 trading days from now
+  Feature set:    Same unified 11 features as 1w
+  Training data:  2018-03-22 to 2024-12-31 (n=1656)
+  Test window:    2025-01-02 to 2026-06-11 (n=350)
+  Test accuracy:  60.9% top-1
+  Structural ceiling: 58-64% top-1 confirmed across multiple
+                  approaches (expanding window, recency weighting,
+                  different training windows). Not a tuning
+                  problem — this is a signal property.
+  Deploy status:  DEPLOYED
+
+  Note: The 2week_model_fix notebook reported 59.7% using a
+  longer training window (2009-2024, n=3,458). tm_engine.py
+  trains from 2018-03-22 (enriched shape log start) and gets
+  60.9%. Both are clean test-only figures; the difference is
+  the training window, not contamination.
+
+----------------------------------------------------------------
+2-WEEK CHAINED MODEL (Option C — not in tm_engine.py)
+----------------------------------------------------------------
+  Model name:     TM 2w (uncertainty / chained)
+  Algorithm:      Chains 1w model output twice (no separate training)
+  Task:           Alternative 2-week estimate for risk overlay
+  Test accuracy:  57.4% top-1 / 86.3% top-2 / 13.7% blind
+  Deploy status:  READY — use alongside Option B for disagreement
+                  detection (when B and C disagree strongly,
+                  reduce position size / tighten stops)
+  Note:           Not currently wrapped in tm_engine.py. If
+                  deployed, add as horizon="2w_chained" or as
+                  a separate function.
+
+----------------------------------------------------------------
+SHAPE CLASSIFIER (shape_classifier.py — existing, not part of
+this formalization round)
+----------------------------------------------------------------
+  Task:           Classify observed curve shape from settlement
+                  prices (geometric, rule-based — not ML)
+  Shapes:         SB, MB, TB, C, F (five-shape taxonomy)
+  Note:           This is NOT a predictive model — it reads the
+                  current curve. PM (Model C) predicts shape
+                  from fundamentals; disagreement between PM
+                  and this classifier is the disagreement signal.
+
+================================================================
+END OF MODEL REFERENCE
+================================================================
