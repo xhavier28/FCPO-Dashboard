@@ -1,0 +1,6 @@
+================================================================
+FCPO CALENDAR SPREAD — BACKTEST ANALYSIS LOG
+================================================================
+All results from research/04. backtest_analysis/ are appended below.
+Each section has a dated header.
+
