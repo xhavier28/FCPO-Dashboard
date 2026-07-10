@@ -1,165 +1,145 @@
 """
-Persistence Model (PM) Engine.
+PM Engine — Prediction Model (Model C).
 
-Predicts whether the current curve shape will persist at 4-week and 12-week horizons.
-Uses per-shape Logistic Regression with StandardScaler, trained on 2017-2024 weekly panel.
+Predicts CURRENT shape from today's fundamentals using XGBoost.
+This is the model referenced by the backtest plan's disagreement signal:
+compare predicted_shape against the shape classifier's OBSERVED shape
+to detect disagreement.
 
-Modelable shapes: 0.0 (Contango), 1 (Backwardation), 2 (Flat)
-Non-modelable shapes (0.1, 0.2): return unconditional training base rates.
+NOT the same as the persistence engine (persistence_engine.py), which
+predicts whether a shape will persist at 4w/12w horizons.
+
+Source: research/03. validation_analysis/initial_backtest_and_calibration.ipynb
+Validated at ~90.0% OOS accuracy on 2025-2026 test set.
 """
 import warnings
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score
 
-from .feature_prep import build_pm_weekly_panel, load_daily_shape_log
+from .feature_prep import build_tm_daily_panel, TM_FEATURES
 
 warnings.filterwarnings('ignore')
 
-ALL_SHAPES = ['0.0', '0.1', '0.2', '1', '2']
-SHAPE_NAMES = {
-    '0.0': 'Contango', '0.1': 'Mild Contango', '0.2': 'Steep Backwardation',
-    '1': 'Backwardation', '2': 'Flat',
-}
-
-SHAPE_FEATURES = {
-    '0.0': ['usd_myr', 'enso_oni'],
-    '1':   ['usd_myr', 'enso_oni', 'stock_to_usage_ratio'],
-    '2':   ['enso_oni', 'crude_oil_price', 'palm_soy_spread', 'production_yoy_pct'],
-}
-MODELABLE_SHAPES = ['0.0', '1', '2']
-
-TRAIN_CUTOFF = pd.Timestamp('2024-12-31')
+TRAIN_END = '2024-12-31'
 
 # Module-level cache
-_fitted_models = {}   # (shape, horizon) -> {'lr': model, 'scaler': scaler, ...}
-_base_rates = {}      # (shape, horizon) -> float
-_weekly_panel = None
-_shape_log = None
+_model = None
+_le = None
+_daily_panel = None
+_loaded = False
 
 
-def _ensure_models_loaded():
-    """Lazy init: build weekly panel, fit LR + scaler per (shape, horizon)."""
-    global _fitted_models, _base_rates, _weekly_panel, _shape_log
+def _ensure_model_loaded():
+    """Lazy init: build daily panel, fit XGBoost Model C on 2017-2024 data."""
+    global _model, _le, _daily_panel, _loaded
 
-    if _fitted_models:
+    if _loaded:
         return
 
-    _weekly_panel = build_pm_weekly_panel()
-    train = _weekly_panel[_weekly_panel['week_end_date'] <= TRAIN_CUTOFF].copy()
+    from xgboost import XGBClassifier
 
-    # Fit modelable shapes
-    for s in MODELABLE_SHAPES:
-        features = SHAPE_FEATURES[s]
-        for N in [4, 12]:
-            target = f'persists_{N}w'
-            sub = train[(train['shape'] == s)][features + [target]].dropna()
-            X = sub[features].values
-            y = sub[target].values.astype(int)
+    _daily_panel = build_tm_daily_panel()
+    df = _daily_panel.dropna(subset=TM_FEATURES + ['shape']).copy()
 
-            if len(y) < 10:
-                continue
+    df_train = df[df['date'] <= TRAIN_END]
 
-            scaler = StandardScaler()
-            X_scaled = scaler.fit_transform(X)
+    X_tr = df_train[TM_FEATURES].values
+    y_tr = df_train['shape'].values
 
-            lr = LogisticRegression(random_state=42, max_iter=1000)
-            lr.fit(X_scaled, y)
+    _le = LabelEncoder()
+    y_tr_enc = _le.fit_transform(y_tr)
 
-            _fitted_models[(s, N)] = {
-                'lr': lr,
-                'scaler': scaler,
-                'features': features,
-                'base_rate': y.mean() * 100,
-                'train_n': len(y),
-            }
+    _model = XGBClassifier(
+        n_estimators=300, max_depth=5,
+        learning_rate=0.05, subsample=0.8,
+        colsample_bytree=0.8,
+        use_label_encoder=False,
+        eval_metric='mlogloss',
+        random_state=42, verbosity=0)
+    _model.fit(X_tr, y_tr_enc)
 
-    # Compute base rates for all shapes (including non-modelable)
-    for s in ALL_SHAPES:
-        for N in [4, 12]:
-            target = f'persists_{N}w'
-            sub = train[(train['shape'] == s)][target].dropna()
-            _base_rates[(s, N)] = sub.mean() * 100 if len(sub) > 0 else 0.0
-
-    # Load shape log for date->shape lookup
-    _shape_log = load_daily_shape_log()
-    _shape_log = _shape_log.set_index('date').sort_index()
+    _loaded = True
 
 
-def predict(date, shape=None):
+def predict(date):
     """
-    Predict persistence probabilities for a given date.
+    Predicts CURRENT shape from today's fundamentals.
 
     Args:
-        date: str or datetime-like, the date to predict for
-        shape: str or None. If None, looks up shape from shape log.
+        date: str or datetime-like
 
     Returns:
         dict with keys:
-            predicted_persists_4w: float (probability 0-1)
-            predicted_persists_12w: float (probability 0-1)
-            shape: str
-            features_used: list[str]
-            method: 'lr' or 'base_rate'
+            predicted_shape: str — model's top-1 shape prediction
+            confidence: float — probability of the top-1 shape (0-1)
+            shape_probs: dict — {shape: probability} for all shapes
+            observed_shape: str — the actual classified shape for this date
+            date: str
     """
-    _ensure_models_loaded()
+    _ensure_model_loaded()
 
     date = pd.Timestamp(date)
 
-    # Look up shape if not provided
-    if shape is None:
-        mask = _shape_log.index <= date
-        if not mask.any():
-            raise ValueError(f"No shape data available for {date.date()}")
-        shape = _shape_log.loc[mask, 'shape'].iloc[-1]
+    # Find the row for this date
+    df = _daily_panel.sort_values('date')
+    mask = df['date'] <= date
+    if not mask.any():
+        raise ValueError(f"No data available for {date.date()}")
 
-    result = {
-        'shape': shape,
-        'shape_name': SHAPE_NAMES.get(shape, shape),
+    row = df.loc[mask].iloc[-1]
+    observed_shape = row['shape']
+
+    X = row[TM_FEATURES].values.reshape(1, -1).astype(float)
+    if np.any(np.isnan(X)):
+        return {
+            'predicted_shape': None,
+            'confidence': None,
+            'shape_probs': {},
+            'observed_shape': observed_shape,
+            'date': str(date.date()),
+            'error': 'Missing features for this date',
+        }
+
+    pred_enc = _model.predict(X)[0]
+    predicted_shape = _le.inverse_transform([pred_enc])[0]
+
+    probs_raw = _model.predict_proba(X)[0]
+    shape_probs = {str(cls): float(p) for cls, p in zip(_le.classes_, probs_raw)}
+
+    confidence = float(max(probs_raw))
+
+    return {
+        'predicted_shape': predicted_shape,
+        'confidence': confidence,
+        'shape_probs': shape_probs,
+        'observed_shape': observed_shape,
         'date': str(date.date()),
     }
 
-    # Non-modelable shapes: return base rate
-    if shape not in MODELABLE_SHAPES:
-        result['predicted_persists_4w'] = _base_rates.get((shape, 4), 0.0) / 100
-        result['predicted_persists_12w'] = _base_rates.get((shape, 12), 0.0) / 100
-        result['features_used'] = []
-        result['method'] = 'base_rate'
-        return result
 
-    # Find the weekly row closest to this date
-    features = SHAPE_FEATURES[shape]
-    mask = _weekly_panel['week_end_date'] <= date
-    if not mask.any():
-        raise ValueError(f"No weekly data available for {date.date()}")
+def validate_oos():
+    """
+    Run OOS validation on 2025-2026 test set.
+    Returns accuracy percentage and detail DataFrame.
+    """
+    _ensure_model_loaded()
 
-    row = _weekly_panel.loc[mask].iloc[-1]
-    X = row[features].values.reshape(1, -1).astype(float)
+    df = _daily_panel.dropna(subset=TM_FEATURES + ['shape']).copy()
+    df_test = df[df['date'] >= '2025-01-01']
 
-    # Check for NaN features
-    if np.any(np.isnan(X)):
-        result['predicted_persists_4w'] = _base_rates.get((shape, 4), 0.0) / 100
-        result['predicted_persists_12w'] = _base_rates.get((shape, 12), 0.0) / 100
-        result['features_used'] = features
-        result['method'] = 'base_rate (missing features)'
-        return result
+    X_te = df_test[TM_FEATURES].values
+    y_te = df_test['shape'].values
 
-    preds = {}
-    for N in [4, 12]:
-        key = (shape, N)
-        if key in _fitted_models:
-            model_info = _fitted_models[key]
-            X_scaled = model_info['scaler'].transform(X)
-            prob = model_info['lr'].predict_proba(X_scaled)[0]
-            # probability of class 1 (persists)
-            class_idx = list(model_info['lr'].classes_).index(1)
-            preds[f'predicted_persists_{N}w'] = float(prob[class_idx])
-        else:
-            preds[f'predicted_persists_{N}w'] = _base_rates.get(key, 0.0) / 100
+    y_te_enc = _le.transform(y_te)
+    pred_enc = _model.predict(X_te)
+    pred_labels = _le.inverse_transform(pred_enc)
 
-    result.update(preds)
-    result['features_used'] = features
-    result['method'] = 'lr'
-
-    return result
+    acc = accuracy_score(y_te, pred_labels) * 100
+    return acc, pd.DataFrame({
+        'date': df_test['date'].values,
+        'actual': y_te,
+        'predicted': pred_labels,
+        'correct': pred_labels == y_te,
+    })
