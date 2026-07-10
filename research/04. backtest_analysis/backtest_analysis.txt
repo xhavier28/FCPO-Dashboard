@@ -391,3 +391,228 @@ Positive gap = model discriminates correctly. USE: gap>5pp, SOFT: gap>2pp, IGNOR
       -> 0.2: gap=+0.0pp  hi=0.0%(61)  lo=0.0%(66)  rating=IGNORE
       -> 1: gap=+14.7pp  hi=39.7%(63)  lo=25.0%(64)  rating=USE
       -> 2: gap=+27.7pp  hi=74.6%(63)  lo=46.9%(64)  rating=USE
+
+
+======================================================================
+STAGE 0 — SIGNAL VALIDITY TEST — 2026-07-10 13:22
+======================================================================
+
+--- DATA SUMMARY ---
+Date range: 2008-01-01 to 2026-06-26
+Total trading days: 4070
+Model outputs available: 2017-01-02 to 2026-06-26
+In-sample: < 2022-01-01 | Out-of-sample: >= 2022-01-01
+Shape distribution (full panel):
+  Shape 0.0: 1330 days (32.7%)
+  Shape 0.1: 588 days (14.4%)
+  Shape 0.2: 372 days (9.1%)
+  Shape 1: 1219 days (30.0%)
+  Shape 2: 561 days (13.8%)
+Instruments tested:
+  Calendar pairs: M1-M2, M2-M3, M3-M4, M4-M5, M5-M6
+  Butterflies: BF_M1M2M3, BF_M2M3M4, BF_M3M4M5, BF_M4M5M6
+
+--- STRATEGY A: MEAN REVERSION (SB, C) ---
+Signal ON = ESTABLISHED (20+ days) + |z| > threshold + PM Level 0
+Reversion = |z| at t+N < |z| at entry (partial) or |z| < 0.5 (full)
+
+  [M1-M2]
+    z=1.5: OOS strict n=22 (7 ep) rev@10d ON=93.8% OFF=50.0% z_chg=-0.973 | relaxed n=22 rev@10d=93.8%
+    z=2.0: OOS strict n=4 (2 ep) rev@10d ON=100.0% OFF=51.5% z_chg=-1.629 | relaxed n=4 rev@10d=100.0%
+    z=2.5: OOS strict n=2 (2 ep) rev@10d ON=100.0% OFF=51.6% z_chg=-2.32 | relaxed n=2 rev@10d=100.0%
+    z=3.0: OOS strict n=0 (0 ep) rev@10d ON=nan% OFF=51.8% z_chg=nan | relaxed n=0 rev@10d=nan%
+    z=2.0 @5d: partial ON=66.7% OFF=53.6%  full ON=33.3% OFF=35.8%  shape_surv=100.0%
+    z=2.0 @10d: partial ON=100.0% OFF=51.5%  full ON=50.0% OFF=38.1%  shape_surv=50.0%
+    z=2.0 @20d: partial ON=66.7% OFF=57.0%  full ON=0.0% OFF=37.3%  shape_surv=100.0%
+    PM Level 0: n=4 rev@10d=100.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [M2-M3]
+    z=1.5: OOS strict n=25 (6 ep) rev@10d ON=85.0% OFF=51.3% z_chg=-1.151 | relaxed n=25 rev@10d=85.0%
+    z=2.0: OOS strict n=10 (3 ep) rev@10d ON=100.0% OFF=51.9% z_chg=-1.81 | relaxed n=10 rev@10d=100.0%
+    z=2.5: OOS strict n=2 (2 ep) rev@10d ON=100.0% OFF=52.8% z_chg=-1.929 | relaxed n=2 rev@10d=100.0%
+    z=3.0: OOS strict n=0 (0 ep) rev@10d ON=nan% OFF=53.0% z_chg=nan | relaxed n=0 rev@10d=nan%
+    z=2.0 @5d: partial ON=100.0% OFF=48.2%  full ON=12.5% OFF=33.9%  shape_surv=70.0%
+    z=2.0 @10d: partial ON=100.0% OFF=51.9%  full ON=44.4% OFF=31.6%  shape_surv=70.0%
+    z=2.0 @20d: partial ON=100.0% OFF=51.8%  full ON=44.4% OFF=31.1%  shape_surv=70.0%
+    PM Level 0: n=10 rev@10d=100.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [M3-M4]
+    z=1.5: OOS strict n=29 (7 ep) rev@10d ON=87.5% OFF=51.6% z_chg=-1.055 | relaxed n=29 rev@10d=87.5%
+    z=2.0: OOS strict n=10 (5 ep) rev@10d ON=100.0% OFF=52.8% z_chg=-1.722 | relaxed n=10 rev@10d=100.0%
+    z=2.5: OOS strict n=2 (1 ep) rev@10d ON=100.0% OFF=53.5% z_chg=-2.014 | relaxed n=2 rev@10d=100.0%
+    z=3.0: OOS strict n=0 (0 ep) rev@10d ON=nan% OFF=53.8% z_chg=nan | relaxed n=0 rev@10d=nan%
+    z=2.0 @5d: partial ON=100.0% OFF=52.6%  full ON=22.2% OFF=30.6%  shape_surv=90.0%
+    z=2.0 @10d: partial ON=100.0% OFF=52.8%  full ON=25.0% OFF=31.0%  shape_surv=80.0%
+    z=2.0 @20d: partial ON=100.0% OFF=49.5%  full ON=14.3% OFF=36.9%  shape_surv=77.8%
+    PM Level 0: n=10 rev@10d=100.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [M4-M5]
+    z=1.5: OOS strict n=28 (6 ep) rev@10d ON=80.0% OFF=47.9% z_chg=-0.924 | relaxed n=28 rev@10d=80.0%
+    z=2.0: OOS strict n=14 (3 ep) rev@10d ON=85.7% OFF=48.8% z_chg=-1.3 | relaxed n=14 rev@10d=85.7%
+    z=2.5: OOS strict n=4 (2 ep) rev@10d ON=100.0% OFF=49.4% z_chg=-2.739 | relaxed n=4 rev@10d=100.0%
+    z=3.0: OOS strict n=1 (1 ep) rev@10d ON=nan% OFF=49.5% z_chg=nan | relaxed n=1 rev@10d=nan%
+    z=2.0 @5d: partial ON=88.9% OFF=53.7%  full ON=11.1% OFF=28.2%  shape_surv=71.4%
+    z=2.0 @10d: partial ON=85.7% OFF=48.8%  full ON=42.9% OFF=24.6%  shape_surv=71.4%
+    z=2.0 @20d: partial ON=83.3% OFF=47.5%  full ON=16.7% OFF=28.5%  shape_surv=42.9%
+    PM Level 0: n=14 rev@10d=85.7%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [M5-M6]
+    z=1.5: OOS strict n=46 (8 ep) rev@10d ON=96.7% OFF=45.4% z_chg=-0.906 | relaxed n=46 rev@10d=96.7%
+    z=2.0: OOS strict n=19 (3 ep) rev@10d ON=100.0% OFF=47.9% z_chg=-1.3 | relaxed n=19 rev@10d=100.0%
+    z=2.5: OOS strict n=10 (2 ep) rev@10d ON=100.0% OFF=48.7% z_chg=-1.312 | relaxed n=10 rev@10d=100.0%
+    z=3.0: OOS strict n=1 (1 ep) rev@10d ON=nan% OFF=49.2% z_chg=nan | relaxed n=1 rev@10d=nan%
+    z=2.0 @5d: partial ON=78.6% OFF=52.3%  full ON=14.3% OFF=33.9%  shape_surv=84.2%
+    z=2.0 @10d: partial ON=100.0% OFF=47.9%  full ON=30.0% OFF=32.2%  shape_surv=73.7%
+    z=2.0 @20d: partial ON=100.0% OFF=51.3%  full ON=20.0% OFF=35.7%  shape_surv=36.8%
+    PM Level 0: n=19 rev@10d=100.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [BF_M1M2M3]
+    z=1.5: OOS strict n=26 (8 ep) rev@10d ON=93.8% OFF=53.7% z_chg=-0.92 | relaxed n=26 rev@10d=93.8%
+    z=2.0: OOS strict n=8 (3 ep) rev@10d ON=85.7% OFF=54.7% z_chg=-0.835 | relaxed n=8 rev@10d=85.7%
+    z=2.5: OOS strict n=2 (1 ep) rev@10d ON=100.0% OFF=55.1% z_chg=-1.073 | relaxed n=2 rev@10d=100.0%
+    z=3.0: OOS strict n=1 (1 ep) rev@10d ON=100.0% OFF=55.2% z_chg=-2.028 | relaxed n=1 rev@10d=100.0%
+    z=2.0 @5d: partial ON=62.5% OFF=48.9%  full ON=50.0% OFF=32.8%  shape_surv=100.0%
+    z=2.0 @10d: partial ON=85.7% OFF=54.7%  full ON=14.3% OFF=35.3%  shape_surv=87.5%
+    z=2.0 @20d: partial ON=100.0% OFF=51.3%  full ON=42.9% OFF=32.7%  shape_surv=100.0%
+    PM Level 0: n=8 rev@10d=85.7%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [BF_M2M3M4]
+    z=1.5: OOS strict n=30 (8 ep) rev@10d ON=87.0% OFF=50.4% z_chg=-1.064 | relaxed n=30 rev@10d=87.0%
+    z=2.0: OOS strict n=6 (3 ep) rev@10d ON=100.0% OFF=51.9% z_chg=-2.21 | relaxed n=6 rev@10d=100.0%
+    z=2.5: OOS strict n=4 (2 ep) rev@10d ON=100.0% OFF=52.0% z_chg=-2.267 | relaxed n=4 rev@10d=100.0%
+    z=3.0: OOS strict n=1 (1 ep) rev@10d ON=100.0% OFF=52.4% z_chg=-2.425 | relaxed n=1 rev@10d=100.0%
+    z=2.0 @5d: partial ON=100.0% OFF=49.4%  full ON=0.0% OFF=29.6%  shape_surv=50.0%
+    z=2.0 @10d: partial ON=100.0% OFF=51.9%  full ON=40.0% OFF=30.5%  shape_surv=50.0%
+    z=2.0 @20d: partial ON=100.0% OFF=47.5%  full ON=66.7% OFF=25.3%  shape_surv=50.0%
+    PM Level 0: n=6 rev@10d=100.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [BF_M3M4M5]
+    z=1.5: OOS strict n=30 (6 ep) rev@10d ON=64.3% OFF=49.0% z_chg=-0.552 | relaxed n=30 rev@10d=64.3%
+    z=2.0: OOS strict n=13 (4 ep) rev@10d ON=50.0% OFF=49.5% z_chg=-0.311 | relaxed n=13 rev@10d=50.0%
+    z=2.5: OOS strict n=4 (2 ep) rev@10d ON=nan% OFF=49.5% z_chg=nan | relaxed n=4 rev@10d=nan%
+    z=3.0: OOS strict n=0 (0 ep) rev@10d ON=nan% OFF=49.5% z_chg=nan | relaxed n=0 rev@10d=nan%
+    z=2.0 @5d: partial ON=88.9% OFF=49.2%  full ON=22.2% OFF=34.9%  shape_surv=84.6%
+    z=2.0 @10d: partial ON=50.0% OFF=49.5%  full ON=25.0% OFF=34.3%  shape_surv=38.5%
+    z=2.0 @20d: partial ON=100.0% OFF=47.6%  full ON=45.5% OFF=31.7%  shape_surv=38.5%
+    PM Level 0: n=13 rev@10d=50.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  [BF_M4M5M6]
+    z=1.5: OOS strict n=25 (4 ep) rev@10d ON=88.2% OFF=44.4% z_chg=-0.887 | relaxed n=25 rev@10d=88.2%
+    z=2.0: OOS strict n=6 (4 ep) rev@10d ON=100.0% OFF=45.7% z_chg=-1.281 | relaxed n=6 rev@10d=100.0%
+    z=2.5: OOS strict n=0 (0 ep) rev@10d ON=nan% OFF=46.2% z_chg=nan | relaxed n=0 rev@10d=nan%
+    z=3.0: OOS strict n=0 (0 ep) rev@10d ON=nan% OFF=46.2% z_chg=nan | relaxed n=0 rev@10d=nan%
+    z=2.0 @5d: partial ON=100.0% OFF=49.0%  full ON=20.0% OFF=35.5%  shape_surv=66.7%
+    z=2.0 @10d: partial ON=100.0% OFF=45.7%  full ON=25.0% OFF=32.5%  shape_surv=66.7%
+    z=2.0 @20d: partial ON=100.0% OFF=46.5%  full ON=50.0% OFF=32.5%  shape_surv=50.0%
+    PM Level 0: n=6 rev@10d=100.0%
+    PM Level 1: n=0 rev@10d=nan%
+    PM Level 2: n=0 rev@10d=nan%
+
+  STRATEGY A — CROSS-INSTRUMENT SUMMARY (z=2.0, OOS, 10d horizon):
+  Instrument       n ON  n ep   rev ON  rev OFF   delta         Gate
+  ----------------------------------------------------------------
+  M1-M2               4     2   100.0%    51.5%  48.5pp INSUFFICIENT
+  M2-M3              10     3   100.0%    51.9%  48.1pp        PASS*
+  M3-M4              10     5   100.0%    52.8%  47.2pp        PASS*
+  M4-M5              14     3    85.7%    48.8%  36.9pp        PASS*
+  M5-M6              19     3   100.0%    47.9%  52.1pp        PASS*
+  BF_M1M2M3           8     3    85.7%    54.7%  31.0pp INSUFFICIENT
+  BF_M2M3M4           6     3   100.0%    51.9%  48.1pp INSUFFICIENT
+  BF_M3M4M5          13     4    50.0%    49.5%   0.5pp INSUFFICIENT
+  BF_M4M5M6           6     4   100.0%    45.7%  54.3pp INSUFFICIENT
+
+--- STRATEGY B: TREND FOLLOWING (MB, TB, F) ---
+Signal ON = transitional shape + EARLY/SETTLING + TM 1w cell rated USE
+Direction per DIRECTION_MAP; hit = spread moved >= 1 tick in predicted direction
+
+  [M1-M2]
+    IS: Signal ON=49 (23 ep), OFF=1016
+      @5d: ON hit=81.6% (n=49) OFF hit=nan% (n=0) target_confirm=83.7%
+      @10d: ON hit=89.8% (n=49) OFF hit=nan% (n=0) target_confirm=87.8%
+    OOS: Signal ON=50 (19 ep), OFF=406
+      @5d: ON hit=44.0% (n=50) OFF hit=100.0% (n=1) target_confirm=46.0%
+      @10d: ON hit=34.0% (n=50) OFF hit=100.0% (n=1) target_confirm=58.0%
+    TM 1w/2w agree: n=40 hit@5d=45.0%
+    TM 1w/2w disagree: n=10 hit@5d=40.0%
+
+  [M2-M3]
+    IS: Signal ON=49 (23 ep), OFF=1016
+      @5d: ON hit=51.0% (n=49) OFF hit=nan% (n=0) target_confirm=83.7%
+      @10d: ON hit=57.1% (n=49) OFF hit=nan% (n=0) target_confirm=87.8%
+    OOS: Signal ON=50 (19 ep), OFF=406
+      @5d: ON hit=48.0% (n=50) OFF hit=100.0% (n=1) target_confirm=46.0%
+      @10d: ON hit=46.0% (n=50) OFF hit=100.0% (n=1) target_confirm=58.0%
+    TM 1w/2w agree: n=40 hit@5d=55.0%
+    TM 1w/2w disagree: n=10 hit@5d=20.0%
+
+  [M3-M4]
+    IS: Signal ON=49 (23 ep), OFF=1016
+      @5d: ON hit=32.7% (n=49) OFF hit=nan% (n=0) target_confirm=83.7%
+      @10d: ON hit=38.8% (n=49) OFF hit=nan% (n=0) target_confirm=87.8%
+    OOS: Signal ON=50 (19 ep), OFF=406
+      @5d: ON hit=44.0% (n=50) OFF hit=0.0% (n=1) target_confirm=46.0%
+      @10d: ON hit=54.0% (n=50) OFF hit=0.0% (n=1) target_confirm=58.0%
+    TM 1w/2w agree: n=40 hit@5d=50.0%
+    TM 1w/2w disagree: n=10 hit@5d=20.0%
+
+  [M4-M5]
+    IS: Signal ON=49 (23 ep), OFF=1016
+      @5d: ON hit=30.6% (n=49) OFF hit=nan% (n=0) target_confirm=83.7%
+      @10d: ON hit=28.6% (n=49) OFF hit=nan% (n=0) target_confirm=87.8%
+    OOS: Signal ON=50 (19 ep), OFF=406
+      @5d: ON hit=40.0% (n=50) OFF hit=0.0% (n=1) target_confirm=46.0%
+      @10d: ON hit=56.0% (n=50) OFF hit=0.0% (n=1) target_confirm=58.0%
+    TM 1w/2w agree: n=40 hit@5d=50.0%
+    TM 1w/2w disagree: n=10 hit@5d=0.0%
+
+  [M5-M6]
+    IS: Signal ON=49 (23 ep), OFF=1016
+      @5d: ON hit=32.7% (n=49) OFF hit=nan% (n=0) target_confirm=83.7%
+      @10d: ON hit=34.7% (n=49) OFF hit=nan% (n=0) target_confirm=87.8%
+    OOS: Signal ON=50 (19 ep), OFF=406
+      @5d: ON hit=46.0% (n=50) OFF hit=0.0% (n=1) target_confirm=46.0%
+      @10d: ON hit=52.0% (n=50) OFF hit=0.0% (n=1) target_confirm=58.0%
+    TM 1w/2w agree: n=40 hit@5d=50.0%
+    TM 1w/2w disagree: n=10 hit@5d=30.0%
+
+  STRATEGY B — CROSS-PAIR SUMMARY (OOS, 5d horizon):
+  Pair             n ON  n ep   hit ON  hit OFF   delta         Gate
+  ----------------------------------------------------------------
+  M1-M2              50    19    44.0%   100.0% -56.0pp         FAIL
+  M2-M3              50    19    48.0%   100.0% -52.0pp         FAIL
+  M3-M4              50    19    44.0%     0.0%  44.0pp         PASS
+  M4-M5              50    19    40.0%     0.0%  40.0pp         PASS
+  M5-M6              50    19    46.0%     0.0%  46.0pp         PASS
+
+--- SIGNAL CORRELATION (Strategy A, z=2.0, calendar pairs, OOS) ---
+       M1-M2  M2-M3  M3-M4  M4-M5  M5-M6
+M1-M2   1.00  -0.01  -0.01  -0.01   0.11
+M2-M3  -0.01   1.00   0.50   0.25  -0.01
+M3-M4  -0.01   0.50   1.00   0.42   0.13
+M4-M5  -0.01   0.25   0.42   1.00   0.48
+M5-M6   0.11  -0.01   0.13   0.48   1.00
+Day overlap: 14 days with 2+ pairs ON simultaneously out of 38 total Signal ON days
+
+--- GATE CHECK VERDICT ---
+Strategy A: 4 PASS, 0 FAIL, 5 INSUFFICIENT
+  Passing instruments: M2-M3, M3-M4, M4-M5, M5-M6
+  -> PROCEED to Stage 1 for these instruments
+Strategy B: 3 PASS, 2 FAIL, 0 INSUFFICIENT
+  Passing pairs: M3-M4, M4-M5, M5-M6
+  -> PROCEED to Stage 1 for these pairs (Strategy A has >=1 pass)
