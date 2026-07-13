@@ -1263,3 +1263,116 @@ Instruments: M1-M2, M2-M3, M3-M4, M4-M5, M5-M6, BF_M1M2M3, BF_M2M3M4, BF_M3M4M5,
     POOLED      : n=93, reverted=64, non_rev=29
       mean=8.0d, median=7.0d, min=1, max=17
       <=5d=34.4%, <=10d=67.2%, <=15d=90.6%, non_rev_20d=31.2%
+
+
+======================================================================
+MR — PER-INSTRUMENT DURATION THRESHOLD DECISION — 2026-07-13 13:55
+======================================================================
+
+Source: existing duration sensitivity sweep (backtest_analysis.txt)
+Classification rule:
+  IMPROVES_AT_LOWER: rev@10d(dur>=10) >= rev@10d(dur>=20)
+  IMPROVES_AT_HIGHER: rev@10d(dur>=20) > rev@10d(dur>=10) by >5pp
+  FLAT: |delta| <= 5pp
+
+  Instrument       rev@10d(dur>=10)   rev@10d(dur>=20)    Delta         Classification  Recommended
+  -------------- ------------------ ------------------ -------- ---------------------- ------------
+  M1-M2                      100.0%             100.0%    +0.0pp                   FLAT     dur>=10d
+  M2-M3                      100.0%             100.0%    +0.0pp                   FLAT     dur>=10d
+  M3-M4                       95.2%             100.0%    -4.8pp                   FLAT     dur>=10d
+  M4-M5                       93.3%              85.7%    +7.6pp      IMPROVES_AT_LOWER     dur>=10d
+  M5-M6                      100.0%             100.0%    +0.0pp                   FLAT     dur>=10d
+  BF_M1M2M3                   95.7%              85.7%   +10.0pp      IMPROVES_AT_LOWER     dur>=10d
+  BF_M2M3M4                  100.0%             100.0%    +0.0pp                   FLAT     dur>=10d
+  BF_M3M4M5                   86.7%              50.0%   +36.7pp      IMPROVES_AT_LOWER     dur>=10d
+  BF_M4M5M6                  100.0%             100.0%    +0.0pp                   FLAT     dur>=10d
+
+All instruments: FLAT or IMPROVES_AT_LOWER → dur>=10d for all.
+Stage 1 backtest instruments (M2-M3, M3-M4, M4-M5, M5-M6): all dur>=10d.
+
+
+======================================================================
+STAGE 1 — P&L BACKTEST — 2026-07-13 13:55
+======================================================================
+
+--- CONFIGURATION ---
+Instruments: M2-M3, M3-M4, M4-M5, M5-M6
+Duration thresholds: all dur>=10d (per decision table above)
+Z-score entry: |z| > 2.0
+Z-score exit (take profit): |z| < 0.5
+Time stop: 20 trading days
+Position sizing: 1 lot per trade, no pyramiding
+PM filter: Level 0 (pm_confidence >= 0.7)
+Transaction cost: 100.0 MYR per round trip
+  Source: MRBackTest/app.py default (line 62)
+  Point value: 25.0 MYR/point (standard FCPO 25 tonnes/lot)
+  Cost in points: 4.0 points per round trip
+OOS period: >= 2022-01-01
+NOTE: n>=15 threshold used instead of original n>=30 due to thin OOS
+  episode counts documented in Stage 0 — results should be treated
+  as provisional
+
+--- PER-INSTRUMENT METRICS (OOS) ---
+  Instrument    n   Win%   AvgWin  AvgLoss   TotalPnL  Sharpe    MaxDD   TP%  Inv%   TS%  AvgHP  HP_W  HP_L                   Gate
+  ---------- ---- ------ -------- -------- ---------- ------- -------- ----- ----- ----- ------ ----- ----- ----------------------
+  M2-M3         7  71.4%    89.40   -27.50     392.00   0.505   -54.00 42.9% 42.9% 14.3%    6.6   5.0  10.5           INSUFFICIENT
+  M3-M4        12  83.3%    27.90    -2.00     275.00   0.773    -3.00 66.7% 33.3%  0.0%    4.7   5.4   1.0           INSUFFICIENT
+  M4-M5         8  62.5%    11.60   -16.33       9.00   0.102   -25.00 62.5% 37.5%  0.0%    6.8   6.4   7.3           INSUFFICIENT
+  M5-M6         7  57.1%     7.00   -16.67     -22.00  -0.285   -50.00 42.9% 42.9% 14.3%    9.0   7.5  11.0           INSUFFICIENT
+
+--- POOLED METRICS (all 4 instruments, OOS) ---
+  n_trades:       34
+  win_rate:       70.6%
+  avg_win:        33.83 points
+  avg_loss:       -15.8 points
+  total_pnl:      654.0 points
+  sharpe:         0.759
+  max_drawdown:   -54.0 points
+  exit_breakdown: TP=55.9%, Inv=38.2%, TS=5.9%
+  avg_hp:         6.4 days (win: 5.9, loss: 7.8)
+  gate:           PASS (provisional, n>=15)
+
+--- EXIT TYPE BREAKDOWN (OOS, per instrument) ---
+  M2-M3: n=7, take_profit=3 (42.9%), invalidated=3 (42.9%), time_stop=1 (14.3%)
+  M3-M4: n=12, take_profit=8 (66.7%), invalidated=4 (33.3%), time_stop=0 (0.0%)
+  M4-M5: n=8, take_profit=5 (62.5%), invalidated=3 (37.5%), time_stop=0 (0.0%)
+  M5-M6: n=7, take_profit=3 (42.9%), invalidated=3 (42.9%), time_stop=1 (14.3%)
+
+--- OOS TRADE LOG ---
+  M2-M3 2022-03-01->2022-03-04 SHORT entry=  686.0 exit=  316.0 z= +2.25-> -0.03 take_profit   days= 3 gross= +370.0 net= +366.0
+  M2-M3 2022-06-16->2022-06-17 LONG  entry=   65.0 exit=   68.0 z= -2.04-> +3.06 invalidated   days= 1 gross=   +3.0 net=   -1.0
+  M2-M3 2022-09-09->2022-09-23 LONG  entry=  -45.0 exit=  -25.0 z= -2.20-> -0.47 take_profit   days= 9 gross=  +20.0 net=  +16.0
+  M2-M3 2023-03-29->2023-04-28 SHORT entry=  150.0 exit=  200.0 z= +2.49->  +nan time_stop     days=20 gross=  -50.0 net=  -54.0
+  M2-M3 2023-09-06->2023-09-18 LONG  entry=  -60.0 exit=  -35.0 z= -2.10-> -0.26 take_profit   days= 8 gross=  +25.0 net=  +21.0
+  M2-M3 2023-11-14->2023-11-16 LONG  entry=  -81.0 exit=  -41.0 z= -2.65->  +nan invalidated   days= 2 gross=  +40.0 net=  +36.0
+  M2-M3 2025-08-13->2025-08-18 LONG  entry=  -49.0 exit=  -37.0 z= -2.18->  +nan invalidated   days= 3 gross=  +12.0 net=   +8.0
+  M3-M4 2022-03-01->2022-03-03 SHORT entry=  484.0 exit=  316.0 z= +2.03-> +0.47 take_profit   days= 2 gross= +168.0 net= +164.0
+  M3-M4 2022-06-16->2022-06-17 LONG  entry=   26.0 exit=   27.0 z= -2.02-> +2.15 invalidated   days= 1 gross=   +1.0 net=   -3.0
+  M3-M4 2022-08-30->2022-09-06 LONG  entry=  -43.0 exit=  -16.0 z= -2.30-> -0.41 take_profit   days= 4 gross=  +27.0 net=  +23.0
+  M3-M4 2022-09-09->2022-09-21 LONG  entry=  -48.0 exit=  -26.0 z= -2.15-> -0.37 take_profit   days= 7 gross=  +22.0 net=  +18.0
+  M3-M4 2023-03-29->2023-04-17 SHORT entry=   77.0 exit=   71.0 z= +2.30-> +0.44 take_profit   days=13 gross=   +6.0 net=   +2.0
+  M3-M4 2023-09-05->2023-09-27 LONG  entry=  -40.0 exit=  -31.0 z= -2.40-> -0.37 take_profit   days=16 gross=   +9.0 net=   +5.0
+  M3-M4 2024-08-15->2024-08-16 SHORT entry=   58.0 exit=   23.0 z= +2.55-> -0.13 take_profit   days= 1 gross=  +35.0 net=  +31.0
+  M3-M4 2024-10-02->2024-10-03 SHORT entry=   56.0 exit=   50.0 z= +2.49->  +nan invalidated   days= 1 gross=   +6.0 net=   +2.0
+  M3-M4 2025-08-12->2025-08-18 LONG  entry=  -32.0 exit=  -13.0 z= -2.29->  +nan invalidated   days= 4 gross=  +19.0 net=  +15.0
+  M3-M4 2025-12-10->2025-12-11 LONG  entry=  -21.0 exit=  -12.0 z= -2.29-> +0.33 take_profit   days= 1 gross=   +9.0 net=   +5.0
+  M3-M4 2025-12-15->2025-12-16 SHORT entry=   -5.0 exit=   -8.0 z= +2.02->  +nan invalidated   days= 1 gross=   +3.0 net=   -1.0
+  M3-M4 2026-06-10->2026-06-18 LONG  entry=  -42.0 exit=  -24.0 z= -2.08-> -0.13 take_profit   days= 5 gross=  +18.0 net=  +14.0
+  M4-M5 2022-06-16->2022-06-17 LONG  entry=    4.0 exit=  -11.0 z= -2.18-> -1.95 invalidated   days= 1 gross=  -15.0 net=  -19.0
+  M4-M5 2023-03-29->2023-04-17 SHORT entry=   45.0 exit=   27.0 z= +2.19-> -0.16 take_profit   days=13 gross=  +18.0 net=  +14.0
+  M4-M5 2023-09-06->2023-09-22 LONG  entry=  -40.0 exit=  -27.0 z= -2.23-> -0.14 take_profit   days=12 gross=  +13.0 net=   +9.0
+  M4-M5 2024-08-30->2024-09-04 SHORT entry=   22.0 exit=   13.0 z= +2.13-> +0.48 take_profit   days= 3 gross=   +9.0 net=   +5.0
+  M4-M5 2024-09-13->2024-09-17 SHORT entry=   26.0 exit=   11.0 z= +2.01-> -0.07 take_profit   days= 1 gross=  +15.0 net=  +11.0
+  M4-M5 2024-09-25->2024-10-03 SHORT entry=   31.0 exit=   52.0 z= +2.35->  +nan invalidated   days= 6 gross=  -21.0 net=  -25.0
+  M4-M5 2025-08-13->2025-08-18 LONG  entry=  -19.0 exit=    4.0 z= -2.06->  +nan invalidated   days= 3 gross=  +23.0 net=  +19.0
+  M4-M5 2026-05-21->2026-06-16 LONG  entry=  -26.0 exit=  -27.0 z= -2.04-> -0.48 take_profit   days=15 gross=   -1.0 net=   -5.0
+  M5-M6 2023-04-04->2023-04-13 SHORT entry=   38.0 exit=   22.0 z= +2.14-> +0.26 take_profit   days= 7 gross=  +16.0 net=  +12.0
+  M5-M6 2023-04-26->2023-04-28 LONG  entry=  -10.0 exit=   -2.0 z= -2.02->  +nan invalidated   days= 2 gross=   +8.0 net=   +4.0
+  M5-M6 2023-09-11->2023-09-19 LONG  entry=  -39.0 exit=  -26.0 z= -2.54-> -0.48 take_profit   days= 6 gross=  +13.0 net=   +9.0
+  M5-M6 2023-10-16->2023-11-14 SHORT entry=    5.0 exit=    4.0 z= +2.91-> +1.25 time_stop     days=20 gross=   +1.0 net=   -3.0
+  M5-M6 2024-09-19->2024-10-03 SHORT entry=   26.0 exit=   47.0 z= +2.99->  +nan invalidated   days=10 gross=  -21.0 net=  -25.0
+  M5-M6 2025-08-13->2025-08-18 SHORT entry=    4.0 exit=   22.0 z= +2.13->  +nan invalidated   days= 3 gross=  -18.0 net=  -22.0
+  M5-M6 2026-05-21->2026-06-16 LONG  entry=  -31.0 exit=  -24.0 z= -2.26-> -0.24 take_profit   days=15 gross=   +7.0 net=   +3.0
+
+--- IN-SAMPLE SUMMARY (for context only, not part of gate) ---
+  n_trades: 40, win_rate: 60.0%, total_pnl: 255.0 points, sharpe: nan
