@@ -1170,3 +1170,96 @@ There is no visible declining trend before the flip. The lead time
 distribution in Part 3 should be read with this caveat — the 48.5%
 "3+ days lead" figure captures noise crossings, not actionable early
 warning signals.
+
+
+======================================================================
+MR — DURATION SENSITIVITY & HOLDING PERIOD — 2026-07-13 08:40
+======================================================================
+
+--- PART 1: DURATION SENSITIVITY SWEEP ---
+z-threshold: 2.0, PM Level 0 filter, OOS only (>= 2022-01-01)
+Instruments: M1-M2, M2-M3, M3-M4, M4-M5, M5-M6, BF_M1M2M3, BF_M2M3M4, BF_M3M4M5, BF_M4M5M6
+
+  Instrument             dur>=5d        dur>=10d        dur>=15d        dur>=20d
+  --------------  --------------  --------------  --------------  --------------
+  M1-M2           20(10ep)/100.0%  13(8ep)/100.0%   7(4ep)/100.0%   4(3ep)/100.0%
+  M2-M3           23(12ep)/95.2%  16(9ep)/100.0%  11(6ep)/100.0%  10(5ep)/100.0%
+  M3-M4           33(17ep)/93.1%  25(14ep)/95.2%  16(10ep)/100.0%  11(7ep)/100.0%
+  M4-M5           32(18ep)/95.5%  23(13ep)/93.3%   17(9ep)/90.0%   14(7ep)/85.7%
+  M5-M6           26(14ep)/100.0%  23(11ep)/100.0%  20(8ep)/100.0%  19(7ep)/100.0%
+  BF_M1M2M3       36(24ep)/93.5%  26(18ep)/95.7%  16(11ep)/92.9%    8(5ep)/85.7%
+  BF_M2M3M4       20(10ep)/94.1%  13(9ep)/100.0%   8(5ep)/100.0%   7(4ep)/100.0%
+  BF_M3M4M5       37(23ep)/92.0%  26(18ep)/86.7%  19(11ep)/77.8%   14(8ep)/50.0%
+  BF_M4M5M6       19(13ep)/100.0%  13(12ep)/100.0%   8(7ep)/100.0%   6(6ep)/100.0%
+
+  Format: n_ON(episodes)/rev@10d
+
+--- PART 1.4: TRADEOFF SUMMARY ---
+
+  dur>= 5d: total n_ON=246, total episodes=141, avg rev@10d=95.9%
+  dur>=10d: total n_ON=178, total episodes=112, avg rev@10d=96.8%
+  dur>=15d: total n_ON=122, total episodes= 71, avg rev@10d=95.6%
+  dur>=20d: total n_ON= 93, total episodes= 52, avg rev@10d=91.3%
+
+  dur>= 5d vs 20+: +153 Signal ON days, +89 episodes, rev@10d delta=4.7pp
+  dur>=10d vs 20+: +85 Signal ON days, +60 episodes, rev@10d delta=5.5pp
+  dur>=15d vs 20+: +29 Signal ON days, +19 episodes, rev@10d delta=4.4pp
+
+--- PART 2: HOLDING PERIOD DISTRIBUTION ---
+  Exit condition: |z| < 0.5 within 20-day window
+
+  [dur>=5d]
+    M1-M2       : n=20, reverted=13, mean=9.7d, median=7.0d, min=1, max=19, <=5d=30.8%, <=10d=61.5%, <=15d=69.2%, non_rev_20d=35.0%
+    M2-M3       : n=23, reverted=12, mean=8.9d, median=7.5d, min=3, max=19, <=5d=25.0%, <=10d=75.0%, <=15d=83.3%, non_rev_20d=47.8%
+    M3-M4       : n=33, reverted=31, mean=7.6d, median=5.0d, min=1, max=20, <=5d=51.6%, <=10d=67.7%, <=15d=93.5%, non_rev_20d=6.1%
+    M4-M5       : n=32, reverted=20, mean=7.3d, median=7.5d, min=1, max=15, <=5d=35.0%, <=10d=80.0%, <=15d=100.0%, non_rev_20d=37.5%
+    M5-M6       : n=26, reverted=9, mean=8.0d, median=7.0d, min=3, max=16, <=5d=33.3%, <=10d=77.8%, <=15d=88.9%, non_rev_20d=65.4%
+    BF_M1M2M3   : n=36, reverted=36, mean=6.5d, median=5.0d, min=1, max=20, <=5d=52.8%, <=10d=83.3%, <=15d=91.7%, non_rev_20d=0.0%
+    BF_M2M3M4   : n=20, reverted=14, mean=7.9d, median=10.0d, min=1, max=12, <=5d=35.7%, <=10d=57.1%, <=15d=100.0%, non_rev_20d=30.0%
+    BF_M3M4M5   : n=37, reverted=29, mean=8.8d, median=8.0d, min=1, max=18, <=5d=31.0%, <=10d=65.5%, <=15d=82.8%, non_rev_20d=21.6%
+    BF_M4M5M6   : n=19, reverted=18, mean=5.2d, median=4.0d, min=1, max=17, <=5d=72.2%, <=10d=94.4%, <=15d=94.4%, non_rev_20d=5.3%
+    POOLED      : n=246, reverted=182, non_rev=64
+      mean=7.6d, median=7.0d, min=1, max=20
+      <=5d=43.4%, <=10d=74.2%, <=15d=90.1%, non_rev_20d=26.0%
+
+  [dur>=10d]
+    M1-M2       : n=13, reverted=11, mean=9.8d, median=7.0d, min=1, max=19, <=5d=27.3%, <=10d=63.6%, <=15d=63.6%, non_rev_20d=15.4%
+    M2-M3       : n=16, reverted=11, mean=9.3d, median=8.0d, min=3, max=19, <=5d=18.2%, <=10d=72.7%, <=15d=81.8%, non_rev_20d=31.2%
+    M3-M4       : n=25, reverted=23, mean=8.5d, median=9.0d, min=1, max=20, <=5d=43.5%, <=10d=60.9%, <=15d=91.3%, non_rev_20d=8.0%
+    M4-M5       : n=23, reverted=16, mean=8.2d, median=8.5d, min=1, max=15, <=5d=25.0%, <=10d=75.0%, <=15d=100.0%, non_rev_20d=30.4%
+    M5-M6       : n=23, reverted=7, mean=6.9d, median=6.0d, min=3, max=15, <=5d=42.9%, <=10d=85.7%, <=15d=100.0%, non_rev_20d=69.6%
+    BF_M1M2M3   : n=26, reverted=26, mean=6.0d, median=4.5d, min=1, max=18, <=5d=53.8%, <=10d=84.6%, <=15d=96.2%, non_rev_20d=0.0%
+    BF_M2M3M4   : n=13, reverted=11, mean=8.4d, median=10.0d, min=1, max=12, <=5d=27.3%, <=10d=54.5%, <=15d=100.0%, non_rev_20d=15.4%
+    BF_M3M4M5   : n=26, reverted=21, mean=10.0d, median=10.0d, min=1, max=18, <=5d=28.6%, <=10d=52.4%, <=15d=76.2%, non_rev_20d=19.2%
+    BF_M4M5M6   : n=13, reverted=12, mean=6.2d, median=4.5d, min=1, max=17, <=5d=58.3%, <=10d=91.7%, <=15d=91.7%, non_rev_20d=7.7%
+    POOLED      : n=178, reverted=138, non_rev=40
+      mean=8.1d, median=7.0d, min=1, max=20
+      <=5d=37.7%, <=10d=70.3%, <=15d=89.1%, non_rev_20d=22.5%
+
+  [dur>=15d]
+    M1-M2       : n=7, reverted=7, mean=10.4d, median=7.0d, min=1, max=19, <=5d=28.6%, <=10d=57.1%, <=15d=57.1%, non_rev_20d=0.0%
+    M2-M3       : n=11, reverted=9, mean=8.9d, median=8.0d, min=5, max=16, <=5d=11.1%, <=10d=77.8%, <=15d=88.9%, non_rev_20d=18.2%
+    M3-M4       : n=16, reverted=15, mean=7.7d, median=5.0d, min=1, max=16, <=5d=53.3%, <=10d=66.7%, <=15d=93.3%, non_rev_20d=6.2%
+    M4-M5       : n=17, reverted=10, mean=6.5d, median=6.5d, min=1, max=12, <=5d=40.0%, <=10d=90.0%, <=15d=100.0%, non_rev_20d=41.2%
+    M5-M6       : n=20, reverted=4, mean=4.2d, median=4.0d, min=3, max=6, <=5d=75.0%, <=10d=100.0%, <=15d=100.0%, non_rev_20d=80.0%
+    BF_M1M2M3   : n=16, reverted=16, mean=5.0d, median=4.0d, min=1, max=14, <=5d=62.5%, <=10d=87.5%, <=15d=100.0%, non_rev_20d=0.0%
+    BF_M2M3M4   : n=8, reverted=7, mean=9.1d, median=11.0d, min=1, max=12, <=5d=14.3%, <=10d=42.9%, <=15d=100.0%, non_rev_20d=12.5%
+    BF_M3M4M5   : n=19, reverted=15, mean=10.3d, median=11.0d, min=1, max=17, <=5d=26.7%, <=10d=46.7%, <=15d=73.3%, non_rev_20d=21.1%
+    BF_M4M5M6   : n=8, reverted=7, mean=4.6d, median=4.0d, min=1, max=10, <=5d=71.4%, <=10d=100.0%, <=15d=100.0%, non_rev_20d=12.5%
+    POOLED      : n=122, reverted=90, non_rev=32
+      mean=7.6d, median=6.5d, min=1, max=19
+      <=5d=42.2%, <=10d=72.2%, <=15d=90.0%, non_rev_20d=26.2%
+
+  [dur>=20d]
+    M1-M2       : n=4, reverted=4, mean=4.8d, median=5.5d, min=1, max=7, <=5d=50.0%, <=10d=100.0%, <=15d=100.0%, non_rev_20d=0.0%
+    M2-M3       : n=10, reverted=9, mean=8.9d, median=8.0d, min=5, max=16, <=5d=11.1%, <=10d=77.8%, <=15d=88.9%, non_rev_20d=10.0%
+    M3-M4       : n=11, reverted=10, mean=9.4d, median=9.5d, min=3, max=16, <=5d=40.0%, <=10d=50.0%, <=15d=90.0%, non_rev_20d=9.1%
+    M4-M5       : n=14, reverted=7, mean=7.0d, median=8.0d, min=1, max=12, <=5d=28.6%, <=10d=85.7%, <=15d=100.0%, non_rev_20d=50.0%
+    M5-M6       : n=19, reverted=3, mean=4.3d, median=4.0d, min=3, max=6, <=5d=66.7%, <=10d=100.0%, <=15d=100.0%, non_rev_20d=84.2%
+    BF_M1M2M3   : n=8, reverted=8, mean=5.2d, median=5.5d, min=1, max=11, <=5d=50.0%, <=10d=87.5%, <=15d=100.0%, non_rev_20d=0.0%
+    BF_M2M3M4   : n=7, reverted=7, mean=9.1d, median=11.0d, min=1, max=12, <=5d=14.3%, <=10d=42.9%, <=15d=100.0%, non_rev_20d=0.0%
+    BF_M3M4M5   : n=14, reverted=11, mean=11.8d, median=14.0d, min=3, max=17, <=5d=27.3%, <=10d=27.3%, <=15d=63.6%, non_rev_20d=21.4%
+    BF_M4M5M6   : n=6, reverted=5, mean=4.6d, median=4.0d, min=1, max=10, <=5d=60.0%, <=10d=100.0%, <=15d=100.0%, non_rev_20d=16.7%
+    POOLED      : n=93, reverted=64, non_rev=29
+      mean=8.0d, median=7.0d, min=1, max=17
+      <=5d=34.4%, <=10d=67.2%, <=15d=90.6%, non_rev_20d=31.2%
