@@ -1655,3 +1655,181 @@ Daily portfolio Sharpe (correlation-adjusted):
   BF_M2M3M4      37  73.0%   1.140      548.0    26.52   -16.80     73.0%
   BF_M3M4M5      33  75.8%   0.988      364.0    18.16   -11.25     66.7%
   BF_M4M5M6      30  86.7%   1.469      292.0    12.08    -5.50     70.0%
+
+
+======================================================================
+STAGE 1 — LOSS CLASSIFICATION & STOP-LOSS/SCALE-IN TEST — 2026-07-14 10:06
+======================================================================
+
+Config: z>1.5, PM L0, dur>=10d, 9 instruments, OOS >= 2022-01-01
+Cost: 100 MYR (4.0 pts) round-trip
+Reference baseline: naive Sharpe 1.812, adjusted 1.546
+
+
+--- PART 1: LOSS CLASSIFICATION ---
+
+Total OOS trades: 184, Losing trades: 41
+
+Bucket definitions:
+  A (Regime break):      exit_type == invalidated
+  B (Adverse extension): exit_type == time_stop AND max|z| during hold > entry|z|
+  C (Stalled):           exit_type == time_stop AND max|z| during hold <= entry|z|
+
+  Bucket                            n  % Losses  Total PnL  Avg Loss  Top Instruments
+  ------------------------------ ---- --------- ---------- ---------  ------------------------------
+  A (Regime break              )   34     82.9%   -1186.00    -34.88  M5-M6(7), BF_M2M3M4(6), M2-M3(4)
+  B (Adverse extension         )    6     14.6%     -28.00     -4.67  M5-M6(2), M2-M3(1), M3-M4(1)
+  C (Stalled                   )    1      2.4%      -3.00     -3.00  M5-M6(1)
+
+Full losing trade log:
+       Entry       Exit   Instrument   Dir    EntZ    MaxZ     ExitType Days  Net PnL Bkt
+  ---------- ---------- ------------ ----- ------- ------- ------------ ---- -------- ---
+  2022-06-16 2022-06-17        M2-M3  LONG   2.043   3.057  invalidated    1    -1.00   A
+  2023-03-29 2023-04-28        M2-M3 SHORT   2.492   2.576  invalidated   20   -54.00   A
+  2025-08-12 2025-08-18        M2-M3  LONG   1.836   2.183  invalidated    4    -3.00   A
+  2025-11-11 2025-11-12        M2-M3  LONG   1.611     nan  invalidated    1    -4.00   A
+  2025-12-05 2025-12-12        M2-M3  LONG   1.529   1.684  take_profit    5    -1.00   B
+  2022-06-15 2022-06-17        M3-M4  LONG   1.543   2.151  invalidated    2   -51.00   A
+  2023-08-28 2023-09-26        M3-M4  LONG   1.906   2.811    time_stop   20    -8.00   B
+  2024-10-01 2024-10-03        M3-M4 SHORT   1.553   2.491  invalidated    2   -10.00   A
+  2025-04-16 2025-04-18        M3-M4  LONG   1.620   1.475  invalidated    2   -18.00   A
+  2025-12-15 2025-12-16        M3-M4 SHORT   2.016     nan  invalidated    1    -1.00   A
+  2022-06-16 2022-06-17        M4-M5  LONG   2.179   1.953  invalidated    1   -19.00   A
+  2024-09-23 2024-10-03        M4-M5 SHORT   1.621   3.657  invalidated    8   -32.00   A
+  2025-04-16 2025-04-18        M4-M5  LONG   1.743   1.382  invalidated    2   -10.00   A
+  2026-05-20 2026-06-16        M4-M5  LONG   1.878   2.042  take_profit   16   -10.00   B
+  2022-03-16 2022-04-11        M5-M6  LONG   1.542   1.903  take_profit   18    -6.00   B
+  2022-06-16 2022-06-17        M5-M6  LONG   1.652   2.994  invalidated    1   -27.00   A
+  2022-10-18 2022-10-19        M5-M6 SHORT   1.553     nan  invalidated    1   -21.00   A
+  2023-04-25 2023-04-28        M5-M6  LONG   1.519   2.023  invalidated    3    -4.00   A
+  2023-05-16 2023-05-30        M5-M6  LONG   1.599   1.984  invalidated   10   -16.00   A
+  2023-09-06 2023-09-19        M5-M6  LONG   1.598   2.537  take_profit    9    -1.00   B
+  2023-10-16 2023-11-14        M5-M6 SHORT   2.907   2.769    time_stop   20    -3.00   C
+  2024-09-18 2024-10-03        M5-M6 SHORT   1.610   3.216  invalidated   11   -37.00   A
+  2025-04-16 2025-04-18        M5-M6  LONG   1.650   1.576  invalidated    2   -12.00   A
+  2025-08-11 2025-08-18        M5-M6 SHORT   1.969   2.135  invalidated    5   -25.00   A
+  2022-01-07 2022-01-10        M1-M2  LONG   1.637     nan  invalidated    1   -68.00   A
+  2023-03-29 2023-04-28        M1-M2 SHORT   2.164   2.607  invalidated   20  -227.00   A
+  2025-11-11 2025-11-12        M1-M2  LONG   2.216     nan  invalidated    1  -157.00   A
+  2022-01-04 2022-01-10    BF_M1M2M3  LONG   1.936   1.841  invalidated    4   -70.00   A
+  2023-04-17 2023-04-28    BF_M1M2M3 SHORT   2.106   3.602  invalidated    7  -126.00   A
+  2022-10-07 2022-10-19    BF_M2M3M4  LONG   1.936   1.312  invalidated    7    -5.00   A
+  2023-03-29 2023-04-28    BF_M2M3M4 SHORT   2.354   2.868  invalidated   20   -73.00   A
+  2023-11-06 2023-11-16    BF_M2M3M4  LONG   1.589   3.270  invalidated    7   -11.00   A
+  2024-05-06 2024-05-09    BF_M2M3M4 SHORT   1.524   0.972  invalidated    3    -6.00   A
+  2025-01-06 2025-01-14    BF_M2M3M4 SHORT   1.520   1.982  take_profit    6    -2.00   B
+  2025-08-11 2025-08-18    BF_M2M3M4  LONG   1.820   1.832  invalidated    5   -15.00   A
+  2025-11-11 2025-11-12    BF_M2M3M4  LONG   2.342     nan  invalidated    1    -2.00   A
+  2023-03-29 2023-04-28    BF_M3M4M5 SHORT   1.817   2.702  invalidated   20   -43.00   A
+  2023-11-01 2023-11-16    BF_M3M4M5  LONG   1.636   2.909  invalidated   10   -13.00   A
+  2025-02-06 2025-02-13    BF_M3M4M5  LONG   1.680   2.618  invalidated    4   -13.00   A
+  2025-04-16 2025-04-18    BF_M4M5M6  LONG   1.721   1.004  invalidated    2    -2.00   A
+  2025-08-11 2025-08-18    BF_M4M5M6  LONG   1.921   2.753  invalidated    5   -10.00   A
+
+
+--- PART 2: STOP-LOSS COMPARISON ---
+
+  Variant           n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD   TP%  Inv%   TS%   SL%                   Gate
+  -------------- ---- ------ ------- -------- ---------- -------- -------- -------- ----- ----- ----- ----- ----------------------
+  No stop         184  77.2%   1.812    1.546     5112.0    44.57   -28.98   -227.0 68.5% 30.4%  1.1%  0.0% PASS (provisional, n>=15)
+  SL |z|>=3.0     187  76.5%   1.838    1.525     5052.0    44.66   -30.34   -227.0 67.4% 27.8%  1.1%  3.7% PASS (provisional, n>=15)
+  SL |z|>=3.5     184  77.2%   1.879    1.555     5138.0    44.57   -28.36   -227.0 68.5% 29.3%  1.1%  1.1% PASS (provisional, n>=15)
+  SL |z|>=4.0     184  77.2%   1.812    1.546     5112.0    44.57   -28.98   -227.0 68.5% 30.4%  1.1%  0.0% PASS (provisional, n>=15)
+
+Bucket B catch-rate analysis:
+Total Bucket B trades: 6
+
+    SL Threshold  Caught  Missed  B_PnL_Base    B_PnL_SL  PnL_Diff  Helped?
+  -------------- ------- ------- ----------- ----------- --------- --------
+  SL |z|>=3.0          0       6        0.00        0.00     +0.00       NO
+  SL |z|>=3.5          0       6        0.00        0.00     +0.00       NO
+  SL |z|>=4.0          0       6        0.00        0.00     +0.00       NO
+
+  Bucket B trade-level detail:
+         Entry         Inst   EntZ   MaxZ  Base_Net    SL3.0    SL3.5    SL4.0
+    ---------- ------------ ------ ------ --------- -------- -------- --------
+    2025-12-05        M2-M3  1.529  1.684     -1.00      n/a      n/a      n/a
+    2023-08-28        M3-M4  1.906  2.811     -8.00      n/a      n/a      n/a
+    2026-05-20        M4-M5  1.878  2.042    -10.00      n/a      n/a      n/a
+    2022-03-16        M5-M6  1.542  1.903     -6.00      n/a      n/a      n/a
+    2023-09-06        M5-M6  1.598  2.537     -1.00      n/a      n/a      n/a
+    2025-01-06    BF_M2M3M4  1.520  1.982     -2.00      n/a      n/a      n/a
+
+
+--- PART 3: STOP-LOSS + SCALE-IN COMPARISON ---
+
+Best stop-loss from Part 2: |z|>=3.5
+Scale-in rule: add 2nd lot when |z|>=2.0 in same direction (max 2 lots)
+All lots exit together on first exit condition.
+
+  Variant               n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+  ------------------ ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+  No stop/no SI       184  77.2%   1.812    1.546     5112.0    44.57   -28.98   -227.0 PASS (provisional, n>=15)
+  SL|z|>=3.5 only     184  77.2%   1.879    1.555     5138.0    44.57   -28.36   -227.0 PASS (provisional, n>=15)
+  SL3.5+ScaleIn       184  78.8%   1.750    1.456     6163.0    54.34   -44.03   -449.0 PASS (provisional, n>=15)
+
+Scale-in triggered trades analysis:
+Total OOS trades: 184, Scale-in triggered: 55 (29.9%)
+
+       Entry         Inst   Dir   EntZ    SIz  1Lot_Net  2Lot_Net     Diff         Exit
+  ---------- ------------ ----- ------ ------ --------- --------- -------- ------------
+  2022-09-08        M2-M3  LONG  1.857  2.203     +4.00    +20.00   +16.00  take_profit
+  2023-03-29        M2-M3 SHORT  2.492  2.109    -54.00   -114.00   -60.00  invalidated
+  2023-08-29        M2-M3  LONG  1.833  2.100     +7.00    +28.00   +21.00  take_profit
+  2023-11-08        M2-M3  LONG  1.599  2.654    +13.00    +49.00   +36.00  invalidated
+  2025-08-12        M2-M3  LONG  1.836  2.183     -3.00     +5.00    +8.00  invalidated
+  2022-06-15        M3-M4  LONG  1.543  2.019    -51.00    -54.00    -3.00  invalidated
+  2022-09-08        M3-M4  LONG  1.749  2.150     +8.00    +26.00   +18.00  take_profit
+  2023-03-29        M3-M4 SHORT  2.301  2.549     +2.00    +19.00   +17.00  take_profit
+  2023-08-28        M3-M4  LONG  1.906  2.403     -8.00     -6.00    +2.00    time_stop
+  2024-08-14        M3-M4 SHORT  1.681  2.551    +14.00    +45.00   +31.00  take_profit
+  2024-10-01        M3-M4 SHORT  1.553  2.491    -10.00     -8.00    +2.00  invalidated
+  2025-08-12        M3-M4  LONG  2.290  2.164    +15.00    +33.00   +18.00  invalidated
+  2025-12-09        M3-M4  LONG  1.867  2.292     +2.00     +7.00    +5.00  take_profit
+  2026-05-29        M3-M4  LONG  1.562  2.081     +1.00    +15.00   +14.00  take_profit
+  2023-03-29        M4-M5 SHORT  2.189  2.224    +14.00    +32.00   +18.00  take_profit
+  2023-09-06        M4-M5  LONG  2.229  2.002     +9.00    +19.00   +10.00  take_profit
+  2024-09-10        M4-M5 SHORT  1.645  2.011     +6.00    +17.00   +11.00  take_profit
+  2024-09-23        M4-M5 SHORT  1.621  2.355    -36.00    -65.00   -29.00    stop_loss
+  2026-05-20        M4-M5  LONG  1.878  2.042    -10.00    -15.00    -5.00  take_profit
+  2023-04-04        M5-M6 SHORT  2.142  2.388    +12.00    +32.00   +20.00  take_profit
+  2023-04-25        M5-M6  LONG  1.519  2.023     -4.00     +0.00    +4.00  invalidated
+  2023-09-06        M5-M6  LONG  1.598  2.537     -1.00     +8.00    +9.00  take_profit
+  2023-10-16        M5-M6 SHORT  2.907  2.651     -3.00     -7.00    -4.00    time_stop
+  2024-09-18        M5-M6 SHORT  1.610  2.990    -37.00    -62.00   -25.00  invalidated
+  2025-08-11        M5-M6 SHORT  1.969  2.135    -25.00    -47.00   -22.00  invalidated
+  2022-08-29        M1-M2  LONG  2.216  2.523    +51.00   +140.00   +89.00  take_profit
+  2022-10-07        M1-M2  LONG  2.625  2.010   +103.00   +185.00   +82.00  take_profit
+  2023-03-29        M1-M2 SHORT  2.164  2.044   -227.00   -449.00  -222.00  invalidated
+  2022-03-03    BF_M1M2M3  LONG  2.731  2.197   +247.00   +529.00  +282.00  take_profit
+  2022-08-29    BF_M1M2M3  LONG  2.363  2.678    +47.00   +129.00   +82.00  take_profit
+  2022-09-14    BF_M1M2M3 SHORT  1.530  2.002    +45.00   +116.00   +71.00  take_profit
+  2023-04-05    BF_M1M2M3 SHORT  1.669  2.757    +15.00    +57.00   +42.00  take_profit
+  2023-04-17    BF_M1M2M3 SHORT  2.106  2.304    -96.00   -179.00   -83.00    stop_loss
+  2023-08-10    BF_M1M2M3 SHORT  2.175  2.222    +39.00   +101.00   +62.00  take_profit
+  2024-08-14    BF_M1M2M3  LONG  1.690  2.652    +69.00   +192.00  +123.00  take_profit
+  2025-01-10    BF_M1M2M3  LONG  2.180  2.850    +64.00   +189.00  +125.00  take_profit
+  2025-08-11    BF_M1M2M3 SHORT  2.594  2.892    +35.00    +90.00   +55.00  invalidated
+  2022-09-06    BF_M2M3M4  LONG  1.555  2.245     +2.00    +19.00   +17.00  take_profit
+  2023-03-29    BF_M2M3M4 SHORT  2.354  2.732    -73.00   -119.00   -46.00  invalidated
+  2023-11-06    BF_M2M3M4  LONG  1.589  2.187    -11.00    -12.00    -1.00  invalidated
+  2025-03-12    BF_M2M3M4 SHORT  2.054  2.309     +8.00    +25.00   +17.00  invalidated
+  2022-03-10    BF_M3M4M5 SHORT  2.452  2.309   +152.00   +326.00  +174.00  take_profit
+  2023-03-29    BF_M3M4M5 SHORT  1.817  2.347    -43.00    -75.00   -32.00  invalidated
+  2023-08-28    BF_M3M4M5  LONG  1.624  2.111     +4.00    +15.00   +11.00  take_profit
+  2023-10-23    BF_M3M4M5  LONG  1.996  2.209     +6.00    +15.00    +9.00  take_profit
+  2023-11-01    BF_M3M4M5  LONG  1.636  2.013    -13.00    -23.00   -10.00  invalidated
+  2024-04-16    BF_M3M4M5 SHORT  1.668  2.012     +0.00     +4.00    +4.00  take_profit
+  2025-02-06    BF_M3M4M5  LONG  1.680  2.618    -13.00    -10.00    +3.00  invalidated
+  2025-08-12    BF_M3M4M5  LONG  2.849  2.177     +1.00     +4.00    +3.00  invalidated
+  2023-03-29    BF_M4M5M6 SHORT  1.899  2.657     +2.00    +21.00   +19.00  take_profit
+  2023-09-20    BF_M4M5M6  LONG  1.510  2.075     +5.00    +15.00   +10.00  take_profit
+  2023-09-26    BF_M4M5M6  LONG  1.638  2.284     +6.00    +18.00   +12.00  take_profit
+  2023-11-08    BF_M4M5M6  LONG  1.586  2.018     +2.00     +7.00    +5.00  invalidated
+  2024-09-19    BF_M4M5M6  LONG  1.979  2.187     +6.00    +15.00    +9.00  invalidated
+  2025-08-11    BF_M4M5M6  LONG  1.921  2.753    -10.00     -9.00    +1.00  invalidated
+
+  Scale-in helped: 42/55 trades, hurt: 13/55
+  Total P&L (1-lot only): +288.00
+  Total P&L (2-lot):      +1313.00
+  Marginal P&L from SI:   +1025.00
