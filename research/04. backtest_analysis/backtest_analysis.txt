@@ -1833,3 +1833,112 @@ Total OOS trades: 184, Scale-in triggered: 55 (29.9%)
   Total P&L (1-lot only): +288.00
   Total P&L (2-lot):      +1313.00
   Marginal P&L from SI:   +1025.00
+
+
+======================================================================
+STAGE 1 — SCALE-IN SWEEP & TM REGIME-RISK EXIT OVERLAY — 2026-07-14 10:28
+======================================================================
+
+Config: z>1.5, PM L0, dur>=10d, 9 instruments, OOS >= 2022-01-01
+Cost: 100 MYR (4.0 pts) round-trip
+Reference baseline: naive Sharpe 1.812, adjusted 1.546
+
+
+--- PART 1: SCALE-IN TRIGGER SWEEP (no stop-loss) ---
+
+Scale-in rule: add 2nd lot when |z| crosses threshold in same direction.
+Max 2 lots. Both exit together on first exit condition.
+
+  Variant           n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD  SI_n  Helped  Hurt  AvgOS                   Gate
+  -------------- ---- ------ ------- -------- ---------- -------- -------- -------- ----- ------- ----- ------ ----------------------
+  No SI           184  77.2%   1.812    1.546     5112.0    44.57   -28.98   -227.0     -       -     -      - PASS (provisional, n>=15)
+  SI |z|>=1.75    184  79.3%   1.691    1.468     6471.0    57.26   -49.71   -449.0    77  60/ 77    17  0.380 PASS (provisional, n>=15)
+  SI |z|>=2.0     184  78.8%   1.627    1.441     6111.0    54.34   -45.36   -449.0    55  42/ 55    13  0.321 PASS (provisional, n>=15)
+  SI |z|>=2.25    184  78.3%   1.684    1.519     6217.0    54.06   -39.17   -366.0    36  28/ 36     8  0.315 PASS (provisional, n>=15)
+
+Worst-case scale-in contributor per threshold:
+  SI |z|>=1.75: M1-M2 (2023-03-29), marginal loss = -222.00
+  SI |z|>=2.0: M1-M2 (2023-03-29), marginal loss = -222.00
+  SI |z|>=2.25: M1-M2 (2023-03-29), marginal loss = -139.00
+
+Overshoot = actual |SIz| minus threshold (daily-bar granularity).
+Lower overshoot = trigger price closer to intended threshold.
+
+
+--- PART 2: TM REGIME-RISK EXIT OVERLAY ---
+
+Exit condition: TM 1-week persistence_prob for entry shape drops
+below threshold. Checked alongside TP/Inv/TS — first to fire wins.
+No stop-loss or scale-in combined (isolated test).
+
+  Variant         n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD   TP%  Inv%   TS%   RR%                   Gate
+  ------------ ---- ------ ------- -------- ---------- -------- -------- -------- ----- ----- ----- ----- ----------------------
+  No RR exit    184  77.2%   1.812    1.546     5112.0    44.57   -28.98   -227.0 67.9% 28.8%  3.3%  0.0% PASS (provisional, n>=15)
+  RR <70%       189  76.7%   1.817    1.554     5134.0    43.71   -27.36   -227.0 65.1% 25.9%  3.2%  5.8% PASS (provisional, n>=15)
+  RR <60%       185  77.3%   1.811    1.547     5113.0    44.24   -28.88   -227.0 67.0% 28.1%  3.2%  1.6% PASS (provisional, n>=15)
+  RR <50%       185  77.3%   1.811    1.547     5113.0    44.24   -28.88   -227.0 67.0% 28.1%  3.2%  1.6% PASS (provisional, n>=15)
+
+
+--- REGIME-RISK EARLY-WARNING ANALYSIS (Part 2.5) ---
+
+For each regime_risk exit: how many days before the shape actually
+flipped, and what was the P&L difference vs. holding to baseline exit?
+
+  RR <70%: 11 regime_risk exits
+    Genuine early exit (>0 days before flip): 11
+    Same-day as flip (0 days lead):           0
+    Shape never flipped (TP/TS would have):   0
+    Avg lead time (genuine early only):       3.5 days
+    P&L vs baseline: saved=5, hurt=6, neutral=0
+    Total P&L difference: +94.00
+
+         Entry         Inst   Dir    RR_Exit   RR_PnL    BL_Exit    BL_Reason   BL_PnL     Diff  Lead
+    ---------- ------------ ----- ---------- -------- ---------- ------------ -------- -------- -----
+    2024-09-23        M4-M5 SHORT 2024-09-30   -17.00 2024-10-03  invalidated   -32.00   +15.00     3
+    2024-09-18        M5-M6 SHORT 2024-09-30   -26.00 2024-10-03  invalidated   -37.00   +11.00     3
+    2022-01-04    BF_M1M2M3  LONG 2022-01-05   +12.00 2022-01-10  invalidated   -70.00   +82.00     3
+    2024-04-26    BF_M1M2M3  LONG 2024-05-02    +2.00 2024-05-07  take_profit   +21.00   -19.00     5
+    2021-12-28    BF_M2M3M4 SHORT 2022-01-03   +23.00 2022-01-05  take_profit   +27.00    -4.00     5
+    2024-05-06    BF_M2M3M4 SHORT 2024-05-07   +16.00 2024-05-09  invalidated    -6.00   +22.00     2
+    2024-09-13    BF_M2M3M4 SHORT 2024-09-30   +47.00 2024-10-03  invalidated   +51.00    -4.00     3
+    2021-12-30    BF_M3M4M5 SHORT 2022-01-03    +8.00 2022-01-10  invalidated   +19.00   -11.00     5
+    2024-09-26    BF_M3M4M5  LONG 2024-09-30    +0.00 2024-10-01  take_profit    +6.00    -6.00     3
+    2025-02-06    BF_M3M4M5  LONG 2025-02-07    -1.00 2025-02-13  invalidated   -13.00   +12.00     3
+    2024-09-19    BF_M4M5M6  LONG 2024-09-30    +2.00 2024-10-03  invalidated    +6.00    -4.00     3
+
+  RR <60%: 3 regime_risk exits
+    Genuine early exit (>0 days before flip): 3
+    Same-day as flip (0 days lead):           0
+    Shape never flipped (TP/TS would have):   0
+    Avg lead time (genuine early only):       4.3 days
+    P&L vs baseline: saved=1, hurt=2, neutral=0
+    Total P&L difference: +67.00
+
+         Entry         Inst   Dir    RR_Exit   RR_PnL    BL_Exit    BL_Reason   BL_PnL     Diff  Lead
+    ---------- ------------ ----- ---------- -------- ---------- ------------ -------- -------- -----
+    2022-01-04    BF_M1M2M3  LONG 2022-01-05   +12.00 2022-01-10  invalidated   -70.00   +82.00     3
+    2021-12-28    BF_M2M3M4 SHORT 2022-01-03   +23.00 2022-01-05  take_profit   +27.00    -4.00     5
+    2021-12-30    BF_M3M4M5 SHORT 2022-01-03    +8.00 2022-01-10  invalidated   +19.00   -11.00     5
+
+  RR <50%: 3 regime_risk exits
+    Genuine early exit (>0 days before flip): 3
+    Same-day as flip (0 days lead):           0
+    Shape never flipped (TP/TS would have):   0
+    Avg lead time (genuine early only):       4.3 days
+    P&L vs baseline: saved=1, hurt=2, neutral=0
+    Total P&L difference: +67.00
+
+         Entry         Inst   Dir    RR_Exit   RR_PnL    BL_Exit    BL_Reason   BL_PnL     Diff  Lead
+    ---------- ------------ ----- ---------- -------- ---------- ------------ -------- -------- -----
+    2022-01-04    BF_M1M2M3  LONG 2022-01-05   +12.00 2022-01-10  invalidated   -70.00   +82.00     3
+    2021-12-28    BF_M2M3M4 SHORT 2022-01-03   +23.00 2022-01-05  take_profit   +27.00    -4.00     5
+    2021-12-30    BF_M3M4M5 SHORT 2022-01-03    +8.00 2022-01-10  invalidated   +19.00   -11.00     5
+
+
+--- EXIT-TYPE RECLASSIFICATION (Part 2.7) ---
+
+Baseline invalidated exits: 53
+
+  RR <70%: regime_risk=11, still_invalidated=49, reclassified=4/53 (7.5%)
+  RR <60%: regime_risk=3, still_invalidated=52, reclassified=1/53 (1.9%)
+  RR <50%: regime_risk=3, still_invalidated=52, reclassified=1/53 (1.9%)
