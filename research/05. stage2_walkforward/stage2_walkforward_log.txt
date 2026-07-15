@@ -1,0 +1,213 @@
+======================================================================
+STAGE 2 — WALK-FORWARD PARAMETER STABILITY — 2026-07-15 07:06
+======================================================================
+
+Stage 1 locked config: z>1.5, dur>=3d, 9 instruments, PM L0,
+TM regime-risk exit <70%, 100 MYR (4.0 pts) round-trip cost.
+
+Windows:
+  W1: Train 2008-2018 -> Test 2019-2020
+  W2: Train 2008-2020 -> Test 2021-2022
+  W3: Train 2008-2022 -> Test 2023-2024
+  W4: Train 2008-2024 -> Test 2025-2026
+
+
+--- PART 1: PM/TM AVAILABILITY ---
+
+PM/TM outputs generated for MR walk-forward testing — NOT a
+re-validation of PM/TM's own accuracy, which remains test-only
+validated on 2025-2026.
+
+PM predictions: 2016 OK, 252 failed
+PM available range: 2018-03-22 to 2026-06-26
+TM predictions: 2016 OK, 252 failed
+TM available range: 2018-03-22 to 2026-06-26
+First valid TM date: 2018-03-22
+
+Per-window availability:
+  W1 (2019-2020): PM 492/492, TM 492/492
+  W2 (2021-2022): PM 488/488, TM 488/488
+  W3 (2023-2024): PM 491/491, TM 491/491
+  W4 (2025-2026): PM 360/360, TM 360/360
+
+NOTE: PM and TM models were trained on 2017-2024 data. Predictions
+for W1-W3 test windows (2019-2024) are technically in-sample for
+the PM/TM models themselves, though out-of-sample for the MR
+backtest z-score computation. This is acceptable because PM/TM
+are used only as filters/overlays, not as the primary signal.
+
+
+--- PART 3: PER-WINDOW PARAMETER SWEEP ---
+
+  ==================================================
+  WINDOW: W1 (2019-2020) (test 2019-01-01 to 2020-12-31)
+  ==================================================
+
+  Z-score sweep (dur>=3d fixed):
+    Variant     n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    -------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    z>1.5     185  64.9%   2.313    1.452     1197.0    16.07   -11.25   -113.0 PASS (provisional, n>=15)
+    z>1.75    140  64.3%   2.095    1.326      957.0    17.06   -11.56   -101.0 PASS (provisional, n>=15)
+    z>2.0      84  61.9%   1.616    0.609      418.0    13.67    -9.16    -89.0 PASS (provisional, n>=15)
+
+  Duration sweep (z>1.5 fixed):
+    Variant       n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    ---------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    dur>=10d    157  66.2%   2.667    1.520     1190.0    16.38    -9.68    -58.0 PASS (provisional, n>=15)
+    dur>=5d     173  66.5%   2.304    1.449     1167.0    15.89   -11.38    -88.0 PASS (provisional, n>=15)
+    dur>=3d     185  64.9%   2.313    1.452     1197.0    16.07   -11.25   -113.0 PASS (provisional, n>=15)
+
+  Per-instrument breakdown (z>1.5, dur>=3d):
+    Instrument      n   Win%  NvShrp   TotalPnL
+    ------------ ---- ------ ------- ----------
+    M2-M3          19  63.2%   0.419       51.0
+    M3-M4          15  46.7%  -0.344      -18.0
+    M4-M5          17  52.9%  -0.013       -1.0
+    M5-M6          17  35.3%  -0.793      -44.0
+    M1-M2          24  83.3%   2.355      604.0
+    BF_M1M2M3      25  72.0%   1.668      397.0
+    BF_M2M3M4      20  65.0%   0.625       66.0
+    BF_M3M4M5      28  82.1%   2.499      120.0
+    BF_M4M5M6      20  60.0%   0.758       22.0
+
+  ==================================================
+  WINDOW: W2 (2021-2022) (test 2021-01-01 to 2022-12-31)
+  ==================================================
+
+  Z-score sweep (dur>=3d fixed):
+    Variant     n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    -------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    z>1.5     138  77.5%   3.605    2.520     6075.0    63.13   -21.94   -189.0 PASS (provisional, n>=15)
+    z>1.75     95  80.0%   3.471    2.062     4320.0    61.87   -20.11   -147.0 PASS (provisional, n>=15)
+    z>2.0      70  80.0%   3.170    2.067     3764.0    70.75   -14.14    -88.0 PASS (provisional, n>=15)
+
+  Duration sweep (z>1.5 fixed):
+    Variant       n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    ---------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    dur>=10d    124  78.2%   3.274    2.573     5926.0    67.84   -24.22   -189.0 PASS (provisional, n>=15)
+    dur>=5d     131  78.6%   3.582    2.510     6042.0    65.15   -23.86   -189.0 PASS (provisional, n>=15)
+    dur>=3d     138  77.5%   3.605    2.520     6075.0    63.13   -21.94   -189.0 PASS (provisional, n>=15)
+
+  Per-instrument breakdown (z>1.5, dur>=3d):
+    Instrument      n   Win%  NvShrp   TotalPnL
+    ------------ ---- ------ ------- ----------
+    M2-M3          10  70.0%   1.175      732.0
+    M3-M4          14  71.4%   1.297      427.0
+    M4-M5          12  75.0%   1.325      362.0
+    M5-M6           9  55.6%   0.812       93.0
+    M1-M2          14  85.7%   1.909     1389.0
+    BF_M1M2M3      23  82.6%   2.106     1793.0
+    BF_M2M3M4      19  84.2%   2.014      594.0
+    BF_M3M4M5      19  73.7%   1.475      361.0
+    BF_M4M5M6      18  83.3%   2.127      324.0
+
+  ==================================================
+  WINDOW: W3 (2023-2024) (test 2023-01-01 to 2024-12-31)
+  ==================================================
+
+  Z-score sweep (dur>=3d fixed):
+    Variant     n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    -------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    z>1.5     129  74.4%   1.611    1.172     1443.0    24.72   -28.18   -362.0                   FAIL
+    z>1.75     94  76.6%   1.311    1.045     1109.0    26.62   -36.73   -330.0                   FAIL
+    z>2.0      67  70.1%   0.854    0.647      625.0    28.55   -35.85   -295.0                   FAIL
+
+  Duration sweep (z>1.5 fixed):
+    Variant       n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    ---------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    dur>=10d     85  77.6%   0.788    0.690      644.0    19.86   -35.11   -312.0                   FAIL
+    dur>=5d     113  76.1%   1.363    0.948     1093.0    21.97   -29.48   -300.0                   FAIL
+    dur>=3d     129  74.4%   1.611    1.172     1443.0    24.72   -28.18   -362.0                   FAIL
+
+  Per-instrument breakdown (z>1.5, dur>=3d):
+    Instrument      n   Win%  NvShrp   TotalPnL
+    ------------ ---- ------ ------- ----------
+    M2-M3          10  70.0%   0.509       90.0
+    M3-M4          11  63.6%   0.586       44.0
+    M4-M5          14  71.4%   0.680       54.0
+    M5-M6          13  46.2%   0.293       28.0
+    M1-M2          14  78.6%   0.642      310.0
+    BF_M1M2M3      18  94.4%   1.749      696.0
+    BF_M2M3M4      14  71.4%   0.427       68.0
+    BF_M3M4M5      15  60.0%   0.314       19.0
+    BF_M4M5M6      20  95.0%   2.648      134.0
+
+  ==================================================
+  WINDOW: W4 (2025-2026) (test 2025-01-01 to 2026-12-31)
+  ==================================================
+
+  Z-score sweep (dur>=3d fixed):
+    Variant     n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    -------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    z>1.5      76  64.5%   1.754    1.182      668.0    21.14   -13.63   -157.0 PASS (provisional, n>=15)
+    z>1.75     44  72.7%   1.699    1.203      687.0    29.03   -20.17   -157.0 PASS (provisional, n>=15)
+    z>2.0      27  74.1%   1.090    0.845      355.0    27.35   -27.43   -157.0                   FAIL
+
+  Duration sweep (z>1.5 fixed):
+    Variant       n   Win%  NvShrp  AdjShrp   TotalPnL   AvgWin  AvgLoss    MaxDD                   Gate
+    ---------- ---- ------ ------- -------- ---------- -------- -------- -------- ----------------------
+    dur>=10d     50  68.0%   1.453    1.093      527.0    23.53   -17.06   -157.0 PASS (provisional, n>=15)
+    dur>=5d      68  72.1%   1.912    1.510      857.0    23.67   -15.95   -157.0 PASS (provisional, n>=15)
+    dur>=3d      76  64.5%   1.754    1.182      668.0    21.14   -13.63   -157.0 PASS (provisional, n>=15)
+
+  Per-instrument breakdown (z>1.5, dur>=3d):
+    Instrument      n   Win%  NvShrp   TotalPnL
+    ------------ ---- ------ ------- ----------
+    M2-M3           6  33.3%  -0.141       -4.0
+    M3-M4           9  55.6%  -0.199       -6.0
+    M4-M5           8  37.5%   0.091        4.0
+    M5-M6           7  42.9%  -0.699      -33.0
+    M1-M2          10  90.0%   0.796      218.0
+    BF_M1M2M3      10 100.0%   2.003      416.0
+    BF_M2M3M4      12  66.7%   1.010       34.0
+    BF_M3M4M5      10  80.0%   1.504       52.0
+    BF_M4M5M6       4  25.0%  -0.695      -13.0
+
+
+--- PART 4: STABILITY VERDICT ---
+
+4.1 — Summary table:
+
+  Window            BestZ  BestDur  LockedAdj   BestZAdj  BestDurAdj  n(locked)
+  ---------------- ------ -------- ---------- ---------- ----------- ----------
+  W1 (2019-2020)     1.50     10d      1.452      1.452       1.520        185
+  W2 (2021-2022)     1.50     10d      2.520      2.520       2.573        138
+  W3 (2023-2024)     1.50      3d      1.172      1.172       1.172        129
+  W4 (2025-2026)     1.75      5d      1.182      1.203       1.510         76
+
+4.2 — Stability rule:
+  Locally-optimal z per window: [1.5, 1.5, 1.5, 1.75]
+  Rule: stable if all within [1.25, 1.75] (i.e. 1.5 +/- 0.25)
+  Z-score: STABLE
+
+  Locally-optimal dur per window: [10, 10, 3, 5]
+  Rule: stable if all within [1, 5] (i.e. 3d +/- 2d)
+  Duration: UNSTABLE
+
+  Overall verdict: UNSTABLE
+
+4.3 — Fixed config (z>1.5, dur>=3d) across all windows:
+  W1 (2019-2020)  : adj Sharpe = 1.452, n = 185, POSITIVE
+  W2 (2021-2022)  : adj Sharpe = 2.520, n = 138, POSITIVE
+  W3 (2023-2024)  : adj Sharpe = 1.172, n = 129, POSITIVE
+  W4 (2025-2026)  : adj Sharpe = 1.182, n = 76, POSITIVE
+  Fixed config positive in ALL windows: YES
+
+4.4 — Instrument ranking by total PnL (z>1.5, dur>=3d):
+
+  Rank    W1 (2019-2020)    W2 (2021-2022)    W3 (2023-2024)    W4 (2025-2026)
+  ----  ----------------  ----------------  ----------------  ----------------
+     1       M1-M2( +604)   BF_M1M2M3(+1793)   BF_M1M2M3( +696)   BF_M1M2M3( +416)
+     2   BF_M1M2M3( +397)       M1-M2(+1389)       M1-M2( +310)       M1-M2( +218)
+     3   BF_M3M4M5( +120)       M2-M3( +732)   BF_M4M5M6( +134)   BF_M3M4M5(  +52)
+     4   BF_M2M3M4(  +66)   BF_M2M3M4( +594)       M2-M3(  +90)   BF_M2M3M4(  +34)
+     5       M2-M3(  +51)       M3-M4( +427)   BF_M2M3M4(  +68)       M4-M5(   +4)
+     6   BF_M4M5M6(  +22)       M4-M5( +362)       M4-M5(  +54)       M2-M3(   -4)
+     7       M4-M5(   -1)   BF_M3M4M5( +361)       M3-M4(  +44)       M3-M4(   -6)
+     8       M3-M4(  -18)   BF_M4M5M6( +324)       M5-M6(  +28)   BF_M4M5M6(  -13)
+     9       M5-M6(  -44)       M5-M6(  +93)   BF_M3M4M5(  +19)       M5-M6(  -33)
+
+BF_M1M2M3 rank per window: [2, 1, 1, 1]
+M5-M6 rank per window: [9, 9, 8, 9]
+BF_M1M2M3 in top 3 every window: YES
+M5-M6 in bottom 3 every window: YES
