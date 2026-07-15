@@ -628,3 +628,85 @@ SI>=2.0 worst-case: 0.886, improves: NO
 
 Neither stop-loss nor scale-in at any tested threshold improves
 worst-case adjusted Sharpe. Current locked config unchanged.
+
+
+======================================================================
+MR — DATA-DERIVED STOP-LOSS/SCALE-IN THRESHOLD DISCOVERY — 2026-07-15 12:07
+======================================================================
+
+Base config: z>1.5, dur>=3d, 9 instruments, PM L0, TM RR<50%,
+100 MYR (4.0 pts) round-trip cost.
+Total trades across all 4 windows: 487
+
+
+--- PART 1: EMPIRICAL MAX|Z| BUCKET ANALYSIS ---
+
+Bucket table (by max|z| reached during hold):
+  Bin               n    Win%    AvgPnL     %TP    %Inv     %TS     %RR
+  ------------  -----  ------  --------  ------  ------  ------  ------
+  [1.5-2.0)       255   83.5%     24.45   76.1%   20.4%    2.4%    1.2%
+  [2.0-2.5)       134   73.1%     17.92   66.4%   32.1%    1.5%    0.0%
+  [2.5-3.0)        65   61.5%     13.38   55.4%   30.8%   13.8%    0.0%
+  [3.0-3.5)        19   63.2%     11.68   42.1%   36.8%   21.1%    0.0%
+  [3.5-4.0)         7   57.1%    -14.43   28.6%   71.4%    0.0%    0.0%
+  [4.0+)            7   57.1%      5.14   14.3%   71.4%   14.3%    0.0%
+
+Cumulative view (trades reaching max|z| >= threshold):
+   Threshold      n    Win%    AvgPnL
+  ----------  -----  ------  --------
+         1.5    487   76.2%     19.84
+         2.0    232   68.1%     14.78
+         2.5     98   61.2%     10.48
+         3.0     33   60.6%      4.76
+         3.5     14   57.1%     -4.64
+         4.0      7   57.1%      5.14
+
+No threshold drops below 50% win rate. Candidate SL: |z| >= 3.5
+(used lowest-win-rate threshold with n >= 5 for validation)
+
+False-positive / true-positive at |z| >= 3.5:
+  Trades reaching threshold: 14
+  True positives (eventually lost): 6 (42.9%)
+  False positives (eventually won): 8 (57.1%)
+
+
+--- PART 2: SCALE-IN EMPIRICAL ANALYSIS ---
+
+Among WINNERS, max|z| reached and eventual P&L:
+  Bin            n_win    AvgPnL   MedianPnL
+  ------------  ------  --------  ----------
+  [1.5-2.0)        213     31.83       17.00
+  [2.0-2.5)         98     32.46       11.50
+  [2.5-3.0)         40     37.98       15.50
+  [3.0-3.5)         12     41.25       23.50
+  [3.5-4.0)          4     46.00       26.00
+  [4.0+)             4     18.75       18.50
+
+
+--- PART 3: VALIDATION ACROSS 4 WINDOWS ---
+
+Adjusted Sharpe:
+  Window                       No-SL/No-SI            SL>=3.5 only            SI>=2.0 only         SL>=3.5+SI>=2.0
+  ----------------  ----------------------  ----------------------  ----------------------  ----------------------
+  W1 (2019-2020)                     1.633                   1.631                   1.531                   1.520
+  W2 (2021-2022)                     2.540                   2.531                   2.423                   2.404
+  W3 (2023-2024)                     1.167                   1.168                   0.886                   0.881
+  W4 (2025-2026)                     1.215                   1.215                   1.377                   1.377
+
+  Metric                       No-SL/No-SI            SL>=3.5 only            SI>=2.0 only         SL>=3.5+SI>=2.0
+  Worst-case                         1.167                   1.168                   0.886                   0.881
+  Average                            1.639                   1.636                   1.554                   1.545
+
+Total PnL:
+  Window                       No-SL/No-SI            SL>=3.5 only            SI>=2.0 only         SL>=3.5+SI>=2.0
+  ----------------  ----------------------  ----------------------  ----------------------  ----------------------
+  W1 (2019-2020)                    1395.0                  1357.0                  1871.0                  1782.0
+  W2 (2021-2022)                    6131.0                  5877.0                  8315.0                  7807.0
+  W3 (2023-2024)                    1437.0                  1432.0                  1784.0                  1767.0
+  W4 (2025-2026)                     700.0                   700.0                  1105.0                  1105.0
+
+Worst-case-first selection:
+  Baseline (No-SL/No-SI): worst=1.167, avg=1.639
+  SL>=3.5 only          : worst=1.168, avg=1.636, improves: YES
+  SI>=2.0 only          : worst=0.886, avg=1.554, improves: NO
+  SL>=3.5+SI>=2.0       : worst=0.881, avg=1.545, improves: NO
