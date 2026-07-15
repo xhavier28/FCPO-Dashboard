@@ -387,3 +387,103 @@ Bucket A (regime break) share across windows: [50.0, 86.4, 56.7, 91.3]
 Range: 50.0% to 91.3% (spread: 41.3pp)
 Bucket A is the DOMINANT loss cause (>50%) in ALL 4 windows.
 The dominance is present but the share VARIES meaningfully (41.3pp spread).
+
+
+======================================================================
+MR — TM REGIME-RISK THRESHOLD RE-TEST (60%/50%) — 2026-07-15 08:57
+======================================================================
+
+Base config: z>1.5, dur>=3d, 9 instruments, PM L0, 100 MYR RT cost.
+Tests whether stricter TM regime-risk thresholds (60%, 50%) perform
+more consistently than the original 70%, or whether the overlay
+should be dropped entirely.
+
+
+--- PART 1: FULL COMPARISON TABLE ---
+
+Adjusted Sharpe:
+  Window              No-Overlay        RR<70%        RR<60%        RR<50%
+  ----------------  ------------  ------------  ------------  ------------
+  W1 (2019-2020)           1.633         1.452         1.537         1.633
+  W2 (2021-2022)           2.538         2.520         2.540         2.540
+  W3 (2023-2024)           1.167         1.172         1.167         1.167
+  W4 (2025-2026)           1.215         1.182         1.215         1.215
+
+Total Portfolio PnL:
+  Window              No-Overlay        RR<70%        RR<60%        RR<50%
+  ----------------  ------------  ------------  ------------  ------------
+  W1 (2019-2020)          1395.0        1197.0        1310.0        1395.0
+  W2 (2021-2022)          6130.0        6075.0        6131.0        6131.0
+  W3 (2023-2024)          1437.0        1443.0        1437.0        1437.0
+  W4 (2025-2026)           700.0         668.0         700.0         700.0
+
+Win Rate:
+  Window              No-Overlay        RR<70%        RR<60%        RR<50%
+  ----------------  ------------  ------------  ------------  ------------
+  W1 (2019-2020)           76.9%         64.9%         73.7%         76.9%
+  W2 (2021-2022)           81.1%         77.5%         81.2%         81.2%
+  W3 (2023-2024)           75.4%         74.4%         75.4%         75.4%
+  W4 (2025-2026)           66.7%         64.5%         66.7%         66.7%
+
+Trade Count:
+  Window              No-Overlay        RR<70%        RR<60%        RR<50%
+  ----------------  ------------  ------------  ------------  ------------
+  W1 (2019-2020)             156           185           156           156
+  W2 (2021-2022)             132           138           133           133
+  W3 (2023-2024)             126           129           126           126
+  W4 (2025-2026)              72            76            72            72
+
+Regime-Risk Exit Detail:
+  Window            Metric    
+
+
+
+
+  RR<70%:
+    Window            n_exits   net PnL      W/L
+    ----------------  -------  --------  -------
+    W1 (2019-2020)         49    -208.0  14W/35L
+    W2 (2021-2022)         16     -74.0  7W/9L
+    W3 (2023-2024)          7      24.0  4W/3L
+    W4 (2025-2026)          5      -4.0  1W/4L
+
+  RR<60%:
+    Window            n_exits   net PnL      W/L
+    ----------------  -------  --------  -------
+    W1 (2019-2020)          9     -43.0  2W/7L
+    W2 (2021-2022)          3      43.0  3W/0L
+    W3 (2023-2024)          0       0.0  0W/0L
+    W4 (2025-2026)          0       0.0  0W/0L
+
+  RR<50%:
+    Window            n_exits   net PnL      W/L
+    ----------------  -------  --------  -------
+    W1 (2019-2020)          0       0.0  0W/0L
+    W2 (2021-2022)          3      43.0  3W/0L
+    W3 (2023-2024)          0       0.0  0W/0L
+    W4 (2025-2026)          0       0.0  0W/0L
+
+
+--- PART 2: SELECTION ---
+
+2.1 — Worst-case-first selection:
+  No-Overlay  : worst=1.167, avg=1.638
+  RR<70%      : worst=1.172, avg=1.582
+  RR<60%      : worst=1.167, avg=1.615
+  RR<50%      : worst=1.167, avg=1.639 <-- SELECTED
+  Winner: RR<50%
+
+2.2 — Majority-positive exit PnL check:
+  RR<70%  : positive in 1/4 windows, total RR exit PnL = -262.0
+  RR<60%  : positive in 1/4 windows, total RR exit PnL = 0.0
+  RR<50%  : positive in 1/4 windows, total RR exit PnL = 43.0
+
+2.3 — Criteria comparison:
+  Worst-case-first winner: RR<50%
+  Majority-positive winner: NONE (no threshold net-positive in 3+ windows)
+
+2.4 — Does any threshold achieve net-positive in 3+ windows?
+  RR<70%  : 1/4 positive — NO  [-208, -74, +24, -4]
+  RR<60%  : 1/4 positive — NO  [-43, +43, -0, -0]
+  RR<50%  : 1/4 positive — NO  [-0, +43, -0, -0]
+  Result: NO threshold achieves net-positive in 3+ of 4 windows.
