@@ -710,3 +710,139 @@ Worst-case-first selection:
   SL>=3.5 only          : worst=1.168, avg=1.636, improves: YES
   SI>=2.0 only          : worst=0.886, avg=1.554, improves: NO
   SL>=3.5+SI>=2.0       : worst=0.881, avg=1.545, improves: NO
+
+
+======================================================================
+MR — PROGRESSIVE SCALE-IN (2-LOT BASE + TRANCHES) — 2026-07-15 12:24
+======================================================================
+
+Base config: z>1.5, dur>=3d, 9 instruments, PM L0, TM RR<50%,
+100 MYR (4.0 pts) round-trip cost per lot.
+
+Sizing structure:
+  Entry:     2 lots at |z| > 1.5
+  Tranche 2: +1 lot at |z| >= 1.75 (3 total)
+  Tranche 3: +1 lot at |z| >= 2.0  (4 total)
+  Tranche 4: +1 lot at |z| >= 2.25 (5 total, max)
+  All lots exit together on first exit condition.
+
+
+--- PART 2: FULL RESULTS PER WINDOW ---
+
+W1 (2019-2020):
+  Adj Sharpe: 1.475, n=156, win=78.2%, avg_win=47.57, avg_loss=-43.65
+  Total PnL: 4319.0, Max DD: -384.0
+  Tranche distribution:
+    2 lots only: 87/156 (55.8%)
+    3 lots:      24/156 (15.4%)
+    4 lots:      16/156 (10.3%)
+    5 lots:      29/156 (18.6%)
+    Avg lots:    2.92
+
+W2 (2021-2022):
+  Adj Sharpe: 2.365, n=133, win=82.7%, avg_win=187.51, avg_loss=-77.52
+  Total PnL: 18843.0, Max DD: -795.0
+  Tranche distribution:
+    2 lots only: 82/133 (61.7%)
+    3 lots:      12/133 (9.0%)
+    4 lots:      15/133 (11.3%)
+    5 lots:      24/133 (18.0%)
+    Avg lots:    2.86
+
+W3 (2023-2024):
+  Adj Sharpe: 0.858, n=126, win=79.4%, avg_win=77.41, avg_loss=-136.54
+  Total PnL: 4191.0, Max DD: -1472.0
+  Tranche distribution:
+    2 lots only: 64/126 (50.8%)
+    3 lots:      14/126 (11.1%)
+    4 lots:      11/126 (8.7%)
+    5 lots:      37/126 (29.4%)
+    Avg lots:    3.17
+
+W4 (2025-2026):
+  Adj Sharpe: 1.440, n=72, win=68.1%, avg_win=71.69, avg_loss=-32.13
+  Total PnL: 2774.0, Max DD: -314.0
+  Tranche distribution:
+    2 lots only: 46/72 (63.9%)
+    3 lots:      10/72 (13.9%)
+    4 lots:      8/72 (11.1%)
+    5 lots:      8/72 (11.1%)
+    Avg lots:    2.69
+
+
+--- PER-TRANCHE P&L ATTRIBUTION (trades that extended beyond base) ---
+
+W1 (2019-2020):
+  Base (2 lots, t0): total net = 2790.0
+  Tranche 2 (+1 at 1.75, t1): n=69, net=703.0, wins=51, losses=18
+  Tranche 3 (+1 at 2.0,  t2): n=45, net=476.0, wins=32, losses=13
+  Tranche 4 (+1 at 2.25, t3): n=29, net=350.0, wins=22, losses=7
+
+W2 (2021-2022):
+  Base (2 lots, t0): total net = 12262.0
+  Tranche 2 (+1 at 1.75, t1): n=51, net=2543.0, wins=43, losses=8
+  Tranche 3 (+1 at 2.0,  t2): n=39, net=2184.0, wins=33, losses=6
+  Tranche 4 (+1 at 2.25, t3): n=24, net=1854.0, wins=22, losses=2
+
+W3 (2023-2024):
+  Base (2 lots, t0): total net = 2874.0
+  Tranche 2 (+1 at 1.75, t1): n=62, net=516.0, wins=48, losses=14
+  Tranche 3 (+1 at 2.0,  t2): n=48, net=347.0, wins=35, losses=13
+  Tranche 4 (+1 at 2.25, t3): n=37, net=454.0, wins=25, losses=12
+
+W4 (2025-2026):
+  Base (2 lots, t0): total net = 1400.0
+  Tranche 2 (+1 at 1.75, t1): n=26, net=630.0, wins=20, losses=6
+  Tranche 3 (+1 at 2.0,  t2): n=16, net=405.0, wins=14, losses=2
+  Tranche 4 (+1 at 2.25, t3): n=8, net=339.0, wins=7, losses=1
+
+  Later tranches (t2+t3, |z|>=2.0/2.25) combined net: 6409.0
+
+
+--- COMPARISON TABLE ---
+
+  Window            1-Lot AdjSh   Prog AdjSh    Delta   1-Lot PnL    Prog PnL
+  ----------------  -----------  -----------  -------  ----------  ----------
+  W1 (2019-2020)          1.633        1.475   -0.158      1395.0      4319.0
+  W2 (2021-2022)          2.540        2.365   -0.175      6131.0     18843.0
+  W3 (2023-2024)          1.167        0.858   -0.309      1437.0      4191.0
+  W4 (2025-2026)          1.215        1.440   +0.225       700.0      2774.0
+
+  Worst-case: Baseline=1.167, Progressive=0.858 (-0.309)
+  Average:    Baseline=1.639, Progressive=1.534 (-0.104)
+
+
+--- CAPPED VARIANT: 2-lot base + 1 tranche at |z|>=1.75 (max 3 lots) ---
+
+W1 (2019-2020):
+  Adj Sharpe: 1.527, n=156, win=77.6%, PnL=3493.0, DD=-346.0
+  2 lots: 87/156 (55.8%), 3 lots: 69/156 (44.2%), avg: 2.44
+
+W2 (2021-2022):
+  Adj Sharpe: 2.431, n=133, win=82.0%, PnL=14805.0, DD=-583.0
+  2 lots: 82/133 (61.7%), 3 lots: 51/133 (38.3%), avg: 2.38
+
+W3 (2023-2024):
+  Adj Sharpe: 1.032, n=126, win=77.8%, PnL=3390.0, DD=-1033.0
+  2 lots: 64/126 (50.8%), 3 lots: 62/126 (49.2%), avg: 2.49
+
+W4 (2025-2026):
+  Adj Sharpe: 1.370, n=72, win=66.7%, PnL=2030.0, DD=-314.0
+  2 lots: 46/72 (63.9%), 3 lots: 26/72 (36.1%), avg: 2.36
+
+
+--- FINAL 3-WAY COMPARISON ---
+
+  Window               1-Lot   Prog(5)    Cap(3)
+  ----------------  --------  --------  --------
+  W1 (2019-2020)       1.633     1.475     1.527
+  W2 (2021-2022)       2.540     2.365     2.431
+  W3 (2023-2024)       1.167     0.858     1.032
+  W4 (2025-2026)       1.215     1.440     1.370
+  Worst-case           1.167     0.858     1.032
+  Average              1.639     1.534     1.590
+
+Worst-case verdict:
+  Baseline (1-lot):        1.167
+  Progressive (5-lot max): 0.858 (-0.309)
+  Capped (3-lot max):      1.032 (-0.135)
