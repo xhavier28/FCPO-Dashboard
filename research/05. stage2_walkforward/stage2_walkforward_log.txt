@@ -211,3 +211,179 @@ BF_M1M2M3 rank per window: [2, 1, 1, 1]
 M5-M6 rank per window: [9, 9, 8, 9]
 BF_M1M2M3 in top 3 every window: YES
 M5-M6 in bottom 3 every window: YES
+
+
+======================================================================
+MR — DURATION ROBUSTNESS & M5-M6 EXCLUSION — 2026-07-15 07:27
+======================================================================
+
+Base config: z>1.5, PM L0, TM regime-risk exit <70%, 100 MYR RT cost.
+Original Stage 1/2 locked: dur>=3d, 9 instruments.
+
+
+--- PART 1: CROSS-WINDOW DURATION ROBUSTNESS ---
+
+  Duration        W1        W2        W3        W4     Avg   Worst  StdDev
+  --------  --------  --------  --------  --------  ------  ------  ------
+  dur>= 3d     1.452     2.520     1.172     1.182  1.582  1.172  0.553  <-- SELECTED
+  dur>= 5d     1.449     2.510     0.948     1.510  1.604  0.948  0.567
+  dur>=10d     1.520     2.573     0.690     1.093  1.469  0.690  0.702
+
+Selection rule: best worst-case adj Sharpe (avg as tiebreaker).
+Winner: dur>=3d
+
+Trade count per window at dur>=3d:
+  W1 (2019-2020): n=185
+  W2 (2021-2022): n=138
+  W3 (2023-2024): n=129
+  W4 (2025-2026): n=76
+
+
+--- PART 2: M5-M6 EXCLUSION TEST (dur>=3d) ---
+
+  Window             9i_Adj   8i_Adj    Delta   9i_n   8i_n    9i_PnL    8i_PnL    9i_DD    8i_DD
+  ----------------  -------  -------  -------  -----  -----  --------  --------  -------  -------
+  W1 (2019-2020)      1.452    1.515    0.063    185    168    1197.0    1241.0   -113.0    -98.0
+  W2 (2021-2022)      2.520    2.482   -0.038    138    129    6075.0    5982.0   -189.0   -189.0
+  W3 (2023-2024)      1.172    1.164   -0.008    129    116    1443.0    1415.0   -362.0   -359.0
+  W4 (2025-2026)      1.182    1.225    0.043     76     69     668.0     701.0   -157.0   -157.0
+
+  9-inst: avg adj Sharpe = 1.582, worst-case = 1.172 (W3 (2023-2024))
+  8-inst: avg adj Sharpe = 1.596, worst-case = 1.164 (W3 (2023-2024))
+  Worst-case improvement from exclusion: -0.008
+  Exclusion helps worst-case: NO
+  Exclusion helps average:    YES
+  Selected: 9-inst (keep M5-M6)
+
+
+--- PART 3: COMBINED FINAL CHECK ---
+
+Final config: z>1.5, dur>=3d, 9-inst (keep M5-M6), PM L0, TM RR <70%
+Compared against original: z>1.5, dur>=3d, 9-inst
+
+  Window             Orig_Adj   Final_Adj    Delta     n    Win%    TotalPnL     MaxDD
+  ----------------  ---------  ----------  -------  ----  ------  ----------  --------
+  W1 (2019-2020)        1.452       1.452    0.000   185   64.9%      1197.0    -113.0
+  W2 (2021-2022)        2.520       2.520    0.000   138   77.5%      6075.0    -189.0
+  W3 (2023-2024)        1.172       1.172    0.000   129   74.4%      1443.0    -362.0
+  W4 (2025-2026)        1.182       1.182    0.000    76   64.5%       668.0    -157.0
+
+  Original worst-case adj Sharpe: 1.172
+  Final worst-case adj Sharpe:    1.172
+  Improvement: +0.000
+  Final config positive in ALL windows: YES
+
+
+
+======================================================================
+MR — WIN%/PNL BACKFILL & CROSS-WINDOW LOSS-TYPE CHECK — 2026-07-15 08:42
+======================================================================
+
+Config: z>1.5, dur>=3d, 9 instruments, PM L0, TM regime-risk <70%,
+100 MYR (4.0 pts) round-trip cost.
+
+
+--- PART 1: DURATION ROBUSTNESS TABLE (backfilled with Win%/PnL) ---
+
+  Duration  W1 Win%    W1 PnL  W2 Win%    W2 PnL  W3 Win%    W3 PnL  W4 Win%    W4 PnL  Avg Win%  Total PnL
+  --------  -------  --------  -------  --------  -------  --------  -------  --------  --------  ---------
+  dur>= 3d    64.9%    1197.0    77.5%    6075.0    74.4%    1443.0    64.5%     668.0     70.3%     9383.0
+  dur>= 5d    66.5%    1167.0    78.6%    6042.0    76.1%    1093.0    72.1%     857.0     73.3%     9159.0
+  dur>=10d    66.2%    1190.0    78.2%    5926.0    77.6%     644.0    68.0%     527.0     72.5%     8287.0
+
+Trades per year at dur>=3d (locked config):
+  Window            2019  2020  2021  2022  2023  2024  2025  2026
+  W1 (2019-2020)     104    81     0     0     0     0     0     0
+  W2 (2021-2022)       0     0    69    69     0     0     0     0
+  W3 (2023-2024)       0     0     0     0    66    63     0     0
+  W4 (2025-2026)       0     0     0     0     0     0    66    10
+
+
+--- PART 2: M5-M6 EXCLUSION TABLE (backfilled with Win%) ---
+
+  Window            9i Win%  8i Win%    9i PnL    8i PnL   9i n   8i n
+  ----------------  -------  -------  --------  --------  -----  -----
+  W1 (2019-2020)      64.9%    67.9%    1197.0    1241.0    185    168
+  W2 (2021-2022)      77.5%    79.1%    6075.0    5982.0    138    129
+  W3 (2023-2024)      74.4%    77.6%    1443.0    1415.0    129    116
+  W4 (2025-2026)      64.5%    66.7%     668.0     701.0     76     69
+
+
+--- PART 3: LOSS-TYPE BREAKDOWN PER WINDOW ---
+
+Bucket definitions:
+  A (Regime break): exit_reason == invalidated
+  B (Adverse extension): exit_reason == time_stop AND max|z| > entry|z|
+  C (Stalled): exit_reason == time_stop AND max|z| <= entry|z|
+  D (Regime-risk exit): exit_reason == regime_risk (reported separately)
+  TP-loss: exit_reason == take_profit but net_pnl <= 0 (cost-induced)
+
+  W1 (2019-2020):
+  Total trades: 185, Losses (excl regime-risk): 30
+
+    Bucket                   n  % losses   Total PnL   Avg Loss  Top instruments
+    --------------------  ----  --------  ----------  ---------  -------------------------
+    A (Regime break)        15     50.0%      -249.0     -16.60  BF_M1M2M3(3), BF_M4M5M6(3), M3-M4(2)
+    B (Adverse ext)          7     23.3%       -79.0     -11.29  M2-M3(2), BF_M4M5M6(2), M3-M4(1)
+    C (Stalled)              5     16.7%       -42.0      -8.40  M3-M4(2), M5-M6(2), M4-M5(1)
+    TP-loss (cost)           3     10.0%       -33.0     -11.00  BF_M1M2M3(1), BF_M3M4M5(1), BF_M4M5M6(1)
+
+    Regime-risk exits (Bucket D): n=49, net PnL=-208.0, wins=14, losses=35
+    Trades per year: {2019: 104, 2020: 81}
+
+  W2 (2021-2022):
+  Total trades: 138, Losses (excl regime-risk): 22
+
+    Bucket                   n  % losses   Total PnL   Avg Loss  Top instruments
+    --------------------  ----  --------  ----------  ---------  -------------------------
+    A (Regime break)        19     86.4%      -473.0     -24.89  M4-M5(3), BF_M2M3M4(3), M5-M6(3)
+    B (Adverse ext)          0      0.0%         0.0       0.00  -
+    C (Stalled)              0      0.0%         0.0       0.00  -
+    TP-loss (cost)           3     13.6%       -28.0      -9.33  M5-M6(1), BF_M3M4M5(1), BF_M4M5M6(1)
+
+    Regime-risk exits (Bucket D): n=16, net PnL=-74.0, wins=7, losses=9
+    Trades per year: {2021: 69, 2022: 69}
+
+  W3 (2023-2024):
+  Total trades: 129, Losses (excl regime-risk): 30
+
+    Bucket                   n  % losses   Total PnL   Avg Loss  Top instruments
+    --------------------  ----  --------  ----------  ---------  -------------------------
+    A (Regime break)        17     56.7%      -501.0     -29.47  M5-M6(4), BF_M3M4M5(3), BF_M2M3M4(2)
+    B (Adverse ext)          6     20.0%      -356.0     -59.33  M3-M4(2), M2-M3(1), M1-M2(1)
+    C (Stalled)              1      3.3%        -3.0      -3.00  M5-M6(1)
+    TP-loss (cost)           6     20.0%       -27.0      -4.50  M2-M3(1), M4-M5(1), M5-M6(1)
+
+    Regime-risk exits (Bucket D): n=7, net PnL=24.0, wins=4, losses=3
+    Trades per year: {2023: 66, 2024: 63}
+
+  W4 (2025-2026):
+  Total trades: 76, Losses (excl regime-risk): 23
+
+    Bucket                   n  % losses   Total PnL   Avg Loss  Top instruments
+    --------------------  ----  --------  ----------  ---------  -------------------------
+    A (Regime break)        21     91.3%      -347.0     -16.52  M3-M4(4), M5-M6(4), M2-M3(3)
+    B (Adverse ext)          0      0.0%         0.0       0.00  -
+    C (Stalled)              0      0.0%         0.0       0.00  -
+    TP-loss (cost)           2      8.7%       -12.0      -6.00  M4-M5(1), BF_M2M3M4(1)
+
+    Regime-risk exits (Bucket D): n=5, net PnL=-4.0, wins=1, losses=4
+    Trades per year: {2025: 66, 2026: 10}
+
+
+--- 3.3: CROSS-WINDOW LOSS-CAUSE COMPARISON ---
+
+  Window            %BucketA  %BucketB  %BucketC   n(RR)   RR netPnL
+  ----------------  --------  --------  --------  ------  ----------
+  W1 (2019-2020)       50.0%     23.3%     16.7%      49      -208.0
+  W2 (2021-2022)       86.4%      0.0%      0.0%      16       -74.0
+  W3 (2023-2024)       56.7%     20.0%      3.3%       7        24.0
+  W4 (2025-2026)       91.3%      0.0%      0.0%       5        -4.0
+
+
+--- 3.4: BUCKET A DOMINANCE CHECK ---
+
+Bucket A (regime break) share across windows: [50.0, 86.4, 56.7, 91.3]
+Range: 50.0% to 91.3% (spread: 41.3pp)
+Bucket A is the DOMINANT loss cause (>50%) in ALL 4 windows.
+The dominance is present but the share VARIES meaningfully (41.3pp spread).
