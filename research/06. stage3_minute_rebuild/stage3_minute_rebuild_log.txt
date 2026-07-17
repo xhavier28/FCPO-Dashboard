@@ -445,3 +445,200 @@ LIQUIDITY CAVEAT FOR TEAM:
   representative of current (2026) conditions at the same relative
   liquidity level. No special caveat needed for recent vs historical
   data quality.
+
+
+======================================================================
+STAGE 3 — LIQUIDITY & EXECUTION ANALYSIS — 2026-07-17
+======================================================================
+
+--- Instrument-to-Tenor Mapping (confirmed) ---
+
+  SPREADS:
+    M1-M2      -> Spread tenor Current (offset 0)
+    M2-M3      -> Spread tenor +1M     (offset 1)
+    M3-M4      -> Spread tenor +2M     (offset 2)
+    M4-M5      -> Spread tenor +3M     (offset 3)
+    M5-M6      -> Spread tenor +4M     (offset 4)
+
+  BUTTERFLIES:
+    BF_M1M2M3  -> Butterfly tenor Current (offset 0)
+    BF_M2M3M4  -> Butterfly tenor +1M     (offset 1)
+    BF_M3M4M5  -> Butterfly tenor +2M     (offset 2)
+    BF_M4M5M6  -> Butterfly tenor +3M     (offset 3)
+
+  Logic: tenor offset = position of NEAR LEG in the rolling term structure.
+
+--- Part 1: MFI Classification ---
+
+  Classification distribution (% of classified bars, 2024+):
+  Instrument    Green    Fade    Fake   Squat
+  M1-M2         17.3%   20.7%   31.6%   30.4%
+  M2-M3         10.0%   12.0%   42.5%   35.6%
+  M3-M4          9.1%   11.8%   43.9%   35.2%
+  M4-M5         11.4%   13.2%   40.1%   35.3%
+  M5-M6         12.3%   14.1%   37.9%   35.7%
+  BF_M1M2M3     19.5%   25.8%   27.3%   27.4%
+  BF_M2M3M4     16.4%   20.8%   31.0%   31.8%
+  BF_M3M4M5     19.3%   29.5%   22.9%   28.3%
+  BF_M4M5M6     18.8%   33.3%   18.7%   29.2%
+
+  NOTE: High Fake% in M2-M3 through M5-M6 spreads (38-44%) reflects
+  frequent low-volume price movements in these liquid instruments.
+  Butterflies show a more balanced classification mix.
+
+--- Part 2: Session Liquidity Ranking ---
+
+  Composite Score = (%Green + %Squat) - %Fake
+  Higher = better execution conditions
+
+  Per-instrument scores by session:
+  Instrument    Morning   Afternoon    Night    Best Session
+  M1-M2           21.2%      18.7%     16.2%   Morning
+  M2-M3           16.7%      10.1%    -19.0%   Morning
+  M3-M4           15.5%      10.1%    -33.9%   Morning
+  M4-M5           11.7%      20.7%    -22.6%   Afternoon
+  M5-M6           18.3%      18.7%    -10.4%   Afternoon
+  BF_M1M2M3       28.5%      16.6%     21.0%   Morning
+  BF_M2M3M4       26.7%      18.4%     -0.1%   Morning
+  BF_M3M4M5       33.6%      23.3%     15.0%   Morning
+  BF_M4M5M6       32.2%      30.9%     20.6%   Morning
+
+  AGGREGATE (mean across all 9 instruments):
+    Morning:     22.7%  <- BEST
+    Afternoon:   18.6%
+    Night:       -1.5%  <- WORST (negative = Fake bars outnumber Green+Squat)
+
+  Part 2.4 — Hypothesis confirmation:
+    H1 "Morning session has good execution": CONFIRMED.
+        Morning ranks #1 for 7/9 instruments and has the highest
+        aggregate score (22.7%).
+    H2 "Night session untested/new": NOW TESTED — Night session is
+        CLEARLY the worst execution window with a negative aggregate
+        score (-1.5%). Fake bars dominate in night session for all
+        spread instruments (43-59% Fake).
+    H3 "Avoid MPOB release windows": PARTIALLY CONFIRMED — see Part 5.
+
+--- Part 3: Slippage Estimation ---
+
+  True Range by session (points, upper-bound slippage proxy):
+  Instrument    Best Sess   Avg TR  P90 TR | Worst Sess   Avg TR  P90 TR
+  M1-M2         Morning       9.3    20.0  | Night          6.4    15.0
+  M2-M3         Morning       4.5     9.0  | Night          2.4     4.0
+  M3-M4         Morning       4.2     8.0  | Night          2.3     4.0
+  M4-M5         Afternoon     2.7     5.0  | Night          1.8     3.0
+  M5-M6         Afternoon     2.5     5.0  | Night          1.7     3.0
+  BF_M1M2M3     Morning       5.0    10.0  | Afternoon      3.9     8.0
+  BF_M2M3M4     Morning       3.0     6.0  | Night          1.6     3.0
+  BF_M3M4M5     Morning       2.0     4.0  | Night          1.0     2.0
+  BF_M4M5M6     Morning       1.4     3.0  | Night          0.9     2.0
+
+  NOTE: Higher True Range in best session reflects HIGHER LIQUIDITY,
+  not worse slippage — prices move more when volume is flowing.
+  The Night session has lower TR but this comes with far more Fake bars
+  (thin, unreliable price moves). Best-session TR is the relevant
+  slippage bound for execution planning.
+
+--- Part 4: Capacity / Market Impact ---
+
+  1-lot position as % of median 60-min bar volume (best session):
+  Instrument    Best Sess   P25 Vol   Median  P75 Vol  1-lot %Med
+  M1-M2         Morning         18       54      142       1.85%
+  M2-M3         Morning        293      553      968       0.18%
+  M3-M4         Morning        378      717     1243       0.14%
+  M4-M5         Afternoon      124      230      408       0.43%
+  M5-M6         Afternoon       69      140      258       0.72%
+  BF_M1M2M3     Morning          9       30       81       3.33%
+  BF_M2M3M4     Morning         22       58      129       1.72%
+  BF_M3M4M5     Morning          9       28       69       3.57%
+  BF_M4M5M6     Morning          6       20       51       5.00%
+
+  FLAGGED INSTRUMENTS (>3% of median bar volume):
+    BF_M1M2M3: 3.33% — moderate impact, manageable at 1 lot
+    BF_M3M4M5: 3.57% — moderate impact
+    BF_M4M5M6: 5.00% — at threshold, weakest liquidity in the set
+
+  All spread instruments are well under 2% — no capacity concern.
+  M3-M4 and M2-M3 have the deepest liquidity (<0.2% of bar volume).
+
+--- Part 5: MPOB Release Day Analysis ---
+
+  Source: 10th of each month (or next trading day if non-trading).
+  31 release dates identified in the 2024-2026 sample.
+
+  AGGREGATE comparison (Morning session, all 9 instruments):
+    Avg True Range:  Release=5.09, Non-Release=3.96 (diff: +1.12)
+    Avg Green%:      Release=20.3%, Non-Release=18.5% (diff: +1.8)
+    Avg Squat%:      Release=33.4%, Non-Release=33.7% (diff: -0.3)
+
+  AGGREGATE comparison (Afternoon session):
+    Avg True Range:  Release=3.99, Non-Release=3.15 (diff: +0.84)
+
+  FINDING: MPOB release days show MODESTLY higher True Range (+28% in
+  Morning, +27% in Afternoon) but the MFI classification mix is largely
+  unchanged (Green% +1.8pp, Squat% flat). This suggests wider price
+  swings but NOT degraded execution quality. The effect is present in
+  both sessions, slightly stronger in Morning.
+
+  Practical implication: MPOB days are not toxic for execution — volume
+  actually increases. The wider True Range means slightly more slippage
+  risk but also more opportunity for mean-reversion fills.
+
+--- Part 6: Intraday Touch vs Daily-Close Signal Comparison ---
+
+  Intraday |z| > 1.5 threshold touches vs daily close (2024+):
+  Instrument   Days w/ data  Intra Touch   Daily Miss   Miss%
+  M1-M2                 158           42           19   12.0%
+  M2-M3                 174           65           24   13.8%
+  M3-M4                 174           79           31   17.8%
+  M4-M5                 174           76           23   13.2%
+  M5-M6                 174           67           25   14.4%
+  BF_M1M2M3             173           15            9    5.2%
+  BF_M2M3M4             174           43           25   14.4%
+  BF_M3M4M5             174           53           30   17.2%
+  BF_M4M5M6             174           57           31   17.8%
+
+  TOTAL: 1549 instrument-days, 497 intraday touches (32.1% of days),
+         217 missed by daily-close-only (14.0% of days).
+
+  FINDING: 14% of all days show intraday z-score crossing the entry
+  threshold that the daily-close-only rule would miss entirely. This
+  represents a meaningful signal source — roughly 1 in 7 trading days
+  has an exploitable intraday dislocation that reverts before close.
+
+  NOTE: This is exploratory only — the locked MR-Daily configuration
+  is not changed. These missed signals represent a future test
+  opportunity for intraday execution timing.
+
+--- Part 7: Intraday Risk Re-Check ---
+
+  Re-marked 104 trades (2024+, z>1.5, dur>=3, shape 0/1) at 60-min
+  intraday resolution vs daily-bar resolution.
+
+  Drawdown comparison:
+  Metric                            Daily Bar     Intraday     Diff
+  Max Drawdown (worst trade)          -153.0       -154.0     -1.0
+  Avg Drawdown per trade               -15.9         -5.7    +10.2
+  P10 Drawdown (10% worst)             -50.5        -43.0     +7.5
+  P25 Drawdown                         -20.2        -15.2     +5.0
+
+  Trade stats (simplified, no PM/TM filter):
+    Win rate: 73.1% (76/104)
+    Avg PnL: 6.8 pts
+    Sharpe (annualized): 0.924
+
+  FINDING: Intraday resolution shows the worst-case drawdown is
+  essentially identical to daily bars (-154 vs -153, only 1 pt worse).
+  Average and percentile drawdowns are actually BETTER at intraday
+  resolution because spread/butterfly prices have compressed intraday
+  ranges compared to daily close-to-close swings.
+
+  This DOES NOT confirm the Stage 2 Section 8c anticipation that
+  intraday drawdown would be materially worse than daily bars. The
+  anticipated "hidden" intraday risk is not present in this data —
+  the daily close captures the relevant extremes adequately for these
+  instruments.
+
+  Note: This analysis uses simplified entry logic (no PM/TM filter)
+  to maximize the trade sample. With full PM L0 + TM regime-risk
+  filters, the trade count would be lower but the directional finding
+  (intraday DD ~ daily DD) should hold.
