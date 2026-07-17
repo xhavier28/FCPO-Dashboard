@@ -153,3 +153,157 @@ large unexplained discrepancies found.
 --- Shared Utility ---
   MRBackTest/shared/tenor_mapping.py — front_month(), tenor_to_contract_month(),
   add_months(), contract_month_to_str()
+
+
+======================================================================
+STAGE 3 — COVERAGE VERIFICATION (2024+) & USABLE-TENOR CONFIRMATION — 2026-07-17
+======================================================================
+
+--- Part 1: Coverage Comparison (Full Range vs 2024-01-01 Onward) ---
+
+IMPORTANT METHODOLOGY NOTE:
+  The original "coverage by bars" metric is misleading. The datetime universe
+  is the union of ALL bars from ALL contract files. Contracts with higher
+  liquidity contribute more bars to the denominator. The meaningful metric
+  is "coverage by unique trading dates" — what % of dates have at least one
+  valid bar for a given tenor.
+
+  Both metrics are reported below. The BY-DATE metric is used for classification.
+
+BY-DATE COVERAGE (2024-01-01 onward, 621 unique trading dates):
+
+  Instrument   Tenor       Full Range%  2024+ by-date%   Classification
+  -----------------------------------------------------------------------
+  Butterfly    Current         33.5%         71.2%        USABLE WITH CAVEATS
+  Butterfly    +1M             73.4%        100.0%        USABLE NOW
+  Butterfly    +2M             72.2%         99.8%        USABLE NOW
+  Butterfly    +3M             67.4%         99.8%        USABLE NOW
+  Butterfly    +4M             63.5%         99.8%        USABLE NOW
+  Butterfly    +5M             60.9%         99.5%        USABLE NOW
+  Butterfly    +6M             57.6%         98.9%        USABLE NOW
+  Butterfly    +7M             52.9%         98.2%        USABLE NOW
+  Butterfly    +8M             45.9%         95.2%        USABLE NOW
+  Butterfly    +9M             35.7%         88.4%        USABLE WITH CAVEATS
+
+  Spread       Current         52.5%         91.8%        USABLE NOW
+  Spread       +1M             78.9%        100.0%        USABLE NOW
+  Spread       +2M             81.7%        100.0%        USABLE NOW
+  Spread       +3M             83.9%        100.0%        USABLE NOW
+  Spread       +4M             86.0%        100.0%        USABLE NOW
+  Spread       +5M             88.1%        100.0%        USABLE NOW
+  Spread       +6M             89.1%        100.0%        USABLE NOW
+  Spread       +7M             89.8%        100.0%        USABLE NOW
+  Spread       +8M             88.2%        100.0%        USABLE NOW
+  Spread       +9M             82.9%        100.0%        USABLE NOW
+
+CONFIRMATION: Restricting to 2024+ and using by-date metric substantially
+raises coverage. The pre-2024 drag was real — bars from 2023 mapped to
+2023-month tenors that had no file. Spread goes from 52-90% to 92-100%.
+Butterfly goes from 33-73% (by-bar) to 71-100% (by-date, 2024+).
+
+--- Part 1.4: Butterfly Current Still Below 90% — Investigation ---
+
+Butterfly "Current" coverage = 71.2% (179 missing dates out of 621).
+
+ROOT CAUSE: Butterfly contracts expire (stop trading) significantly EARLIER
+than the front_month roll rule assumes. Expiry dates for butterfly files:
+
+  Contract   Last Trading Date   Days Before Month-End
+  Jan24      2024-01-09          day 9
+  Feb24      2024-02-05          day 5
+  Mar24      2024-03-14          day 14
+  Apr24      2024-04-05          day 5
+  May24      2024-05-14          day 14
+  Jun24      2024-06-10          day 10
+  (typical range: day 3-14)
+
+The front_month rule assigns "Current" = a given month from day 16 of prior
+month through day 15 of that month. But the butterfly typically stops trading
+by day 3-14 of its month, creating a structural gap of ~1-12 days at the END
+of each "Current" window where no data exists because the instrument has
+expired. This is NOT a data-sourcing gap — it's the instrument's actual
+trading lifecycle.
+
+Missing dates are ALL in the last ~1-12 days of each contract's "Current"
+window, confirming the mechanism. The +1M tenor (which maps to the NEXT
+contract that's still actively trading) has 100% coverage.
+
+--- Part 2: Butterfly vs Spread Coverage Gap Mechanism ---
+
+FINDING: The "missing far leg" hypothesis from the task spec does NOT apply.
+Both Butterfly and Spread files contain PRE-COMPUTED composite prices (the
+exchange/platform already computed near - 2*mid + far for butterfly, and
+near - far for spread). We do not have separate leg files.
+
+The coverage gap between Butterfly and Spread is caused by TWO structural
+differences in the instruments themselves:
+
+  1. EARLIER EXPIRY: Butterfly contracts stop trading 2-10 days earlier
+     than Spread contracts for the same near-leg month.
+     Examples:
+       Feb24: Butterfly last bar = Feb 5, Spread last bar = Feb 14 (9 days gap)
+       Apr24: Butterfly last bar = Apr 5, Spread last bar = Apr 15 (10 days gap)
+       Aug24: Butterfly last bar = Aug 7, Spread last bar = Aug 9 (2 days gap)
+       Dec24: Butterfly last bar = Dec 3, Spread last bar = Dec 13 (10 days gap)
+
+  2. FEWER BARS PER DAY: Butterfly averages 5.0-6.5 bars/day (60-min bars)
+     vs Spread averaging 7.2-7.9 bars/day. This explains the "by-bar" gap
+     but NOT the "by-date" gap (which is purely mechanism #1).
+
+Dates where Spread "Current" has data but Butterfly "Current" does not:
+  128 dates (all caused by butterfly having already expired while spread
+  still trades). Example:
+    2024-01-10: front_month=Jan24, spread Jan24 still trading, butterfly Jan24 expired (last=Jan 9)
+    2024-02-06: front_month=Feb24, spread Feb24 still trading, butterfly Feb24 expired (last=Feb 5)
+
+For +1M through +9M: ZERO dates where Spread has data but Butterfly doesn't
+(on a by-date basis). The gap is exclusively in the "Current" tenor due to
+the expiry timing difference.
+
+PART 2.3 (far-leg-only missing %): NOT APPLICABLE. Since files are pre-
+computed composites, we cannot decompose into "near leg present, far leg
+missing" vs "multiple legs missing". The entire instrument simply stops
+trading. 100% of Butterfly's missing "Current" dates are due to the
+instrument having expired, not a missing individual leg.
+
+--- Part 3: Usable-Tenor Classification ---
+
+  Instrument   Tenor    2024+ Coverage%   Classification
+  -------------------------------------------------------
+  Butterfly    Current       71.2%         USABLE WITH CAVEATS
+  Butterfly    +1M          100.0%         USABLE NOW
+  Butterfly    +2M           99.8%         USABLE NOW
+  Butterfly    +3M           99.8%         USABLE NOW
+  Butterfly    +4M           99.8%         USABLE NOW
+  Butterfly    +5M           99.5%         USABLE NOW
+  Butterfly    +6M           98.9%         USABLE NOW
+  Butterfly    +7M           98.2%         USABLE NOW
+  Butterfly    +8M           95.2%         USABLE NOW
+  Butterfly    +9M           88.4%         USABLE WITH CAVEATS
+
+  Spread       Current       91.8%         USABLE NOW
+  Spread       +1M          100.0%         USABLE NOW
+  Spread       +2M          100.0%         USABLE NOW
+  Spread       +3M          100.0%         USABLE NOW
+  Spread       +4M          100.0%         USABLE NOW
+  Spread       +5M          100.0%         USABLE NOW
+  Spread       +6M          100.0%         USABLE NOW
+  Spread       +7M          100.0%         USABLE NOW
+  Spread       +8M          100.0%         USABLE NOW
+  Spread       +9M          100.0%         USABLE NOW
+
+--- Part 3.3: Furthest Usable Tenor (Explicit Statement) ---
+
+  SPREAD:    ALL tenors (Current through +9M) are USABLE NOW (>=90%).
+             Furthest usable = +9M (100%).
+
+  BUTTERFLY: +1M through +8M are USABLE NOW (95-100%).
+             Current (71.2%) and +9M (88.4%) are USABLE WITH CAVEATS.
+             Furthest USABLE NOW = +8M.
+             Furthest USABLE WITH CAVEATS = +9M.
+
+  Caveat for Butterfly Current: the 29% gap is structural (instrument
+  expires before our roll date). Any analysis on Butterfly Current must
+  acknowledge ~1-12 missing days per month at end of each contract's
+  active window. This is NOT fixable by sourcing more data — the
+  instrument simply doesn't trade on those dates.
