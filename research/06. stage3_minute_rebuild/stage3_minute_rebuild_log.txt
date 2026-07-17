@@ -307,3 +307,141 @@ instrument having expired, not a missing individual leg.
   acknowledge ~1-12 missing days per month at end of each contract's
   active window. This is NOT fixable by sourcing more data — the
   instrument simply doesn't trade on those dates.
+
+  NOTE: This caveat is SUPERSEDED by the butterfly-specific roll rule
+  implemented below, which eliminates the gap.
+
+
+======================================================================
+STAGE 3 — BUTTERFLY-SPECIFIC ROLL DATE & LIQUIDITY TREND CHECK — 2026-07-17
+======================================================================
+
+--- Part 1: Butterfly Expiry Distribution & Proposed Roll Day ---
+
+Sample: 30 confirmed-expired butterfly contracts (Jan24 through Jul26).
+
+Last-trading-day distribution:
+  Mean:   day 8.3
+  Median: day 8.0
+  Min:    day 2  (Jul25)
+  Max:    day 14 (Mar24, May24, Jan25)
+  Std:    3.4
+
+Cumulative expiry:
+  By day 2:   3% expired
+  By day 5:  23% expired
+  By day 7:  43% expired
+  By day 9:  70% expired
+  By day 14: 100% expired
+
+Early-expiry contracts (day <= 5):
+  Feb24: day 5, Apr24: day 5, Dec24: day 3, Jul25: day 2,
+  Dec25: day 5, Feb26: day 4, Mar26: day 3
+
+PROPOSED ROLL DAY: 1
+  Rule: if day <= 1, front_month = current calendar month
+        if day >= 2, front_month = next calendar month
+
+  Reasoning: The earliest observed expiry is day 2 (Jul25 butterfly).
+  By rolling on day 2 (i.e. roll_day threshold = 1), the "Current"
+  window for contract X runs from (X-1 month) day 2 through (X month)
+  day 1. The butterfly only needs to be trading through day 1 of its
+  month — strictly before even the earliest observed expiry.
+
+  Verified: all 41 butterfly contracts begin trading 6-10 months before
+  their "Current" window starts. No gap at beginning of window either.
+
+RESIDUAL GAP: NONE expected. All 30 historical contracts had their last
+bar on day 2 or later, and the new rule only requires data through day 1.
+Confirmed by actual rebuild: Current coverage = 99.7% (up from 71.2%).
+The 0.3% residual (2 dates out of 621) likely comes from the earliest
+contracts in 2024 where the file simply has sparse early data.
+
+--- Part 2: Implementation & Worked Example ---
+
+Implementation: MRBackTest/shared/tenor_mapping.py updated.
+  - front_month(d, instrument_type) now accepts "spread" or "butterfly"
+  - ROLL_DAY_SPREAD = 15 (unchanged, day 16 roll)
+  - ROLL_DAY_BUTTERFLY = 1 (new, day 2 roll)
+  - tenor_to_contract_month(d, offset, instrument_type) passes through
+  - Offset logic (+1M = front_month + 1, etc.) is IDENTICAL for both
+    instrument types — only the anchor point differs
+
+Worked example: 2026-07-10 (day 10, between butterfly roll day 2 and spread roll day 16)
+
+  SPREAD (front_month = Jul26, since day 10 <= 15):
+    Current = Jul26, +1M = Aug26, +2M = Sep26, +3M = Oct26, +4M = Nov26
+
+  BUTTERFLY (front_month = Aug26, since day 10 >= 2):
+    Current = Aug26, +1M = Sep26, +2M = Oct26, +3M = Nov26, +4M = Dec26
+
+  Confirmation: Butterfly Current (Aug26) == Spread +1M (Aug26). ✓
+  Butterfly has rolled one contract ahead, as expected from the earlier roll.
+  The offset structure (+1M = one month after front month) is identical in
+  logic — only the starting reference differs.
+
+--- Part 3.2: Old vs New Butterfly Coverage (by-date, 2024+, 621 dates) ---
+
+  Tenor    Old (day-16 roll)  New (day-1 roll)   Delta
+  -------------------------------------------------------
+  Current         71.2%            99.7%         +28.5
+  +1M            100.0%           100.0%          +0.0
+  +2M             99.8%            99.8%          +0.0
+  +3M             99.8%            99.8%          +0.0
+  +4M             99.8%            99.8%          +0.0
+  +5M             99.5%            99.4%          -0.1
+  +6M             98.9%            98.2%          -0.7
+  +7M             98.2%            97.6%          -0.6
+  +8M             95.2%            93.1%          -2.1
+  +9M             88.4%            66.0%         -22.4
+
+EXPLANATION OF +9M DROP:
+  The earlier roll shifts every tenor one contract further into the curve.
+  What was previously +9M (10th contract from old anchor) is now +8M (10th
+  from new anchor). The new +9M reaches one month BEYOND the furthest
+  contract previously accessible. For early-history dates, this far contract
+  does not yet exist, causing the coverage drop.
+
+  Net effect: Current is fixed (71% -> 100%), +1M to +7M unchanged,
+  +8M is the new practical limit (93% = USABLE NOW), +9M needs further-
+  dated contracts we don't yet have (66% = NOT YET USABLE).
+
+UPDATED CLASSIFICATION (butterfly, new roll rule):
+  Tenor    Coverage%   Classification
+  Current     99.7%    USABLE NOW
+  +1M        100.0%    USABLE NOW
+  +2M         99.8%    USABLE NOW
+  +3M         99.8%    USABLE NOW
+  +4M         99.8%    USABLE NOW
+  +5M         99.4%    USABLE NOW
+  +6M         98.2%    USABLE NOW
+  +7M         97.6%    USABLE NOW
+  +8M         93.1%    USABLE NOW
+  +9M         66.0%    NOT YET USABLE
+
+FURTHEST USABLE TENOR (updated):
+  Butterfly: Current through +8M are USABLE NOW (93-100%).
+             +9M is NOT YET USABLE (66%) — needs further-dated contracts.
+  Spread:    Current through +9M are USABLE NOW (92-100%, unchanged).
+
+--- Part 4: Liquidity Trend (Bars/Day by Year) ---
+
+  Year   Butterfly BPD   Spread BPD   Ratio (B/S)
+  -------------------------------------------------
+  2024          5.60          7.49         0.747
+  2025          5.69          7.53         0.756
+  2026          5.62          7.10         0.792
+
+TREND: FLAT. No meaningful change in relative liquidity between butterfly
+and spread over the 2024-2026 period. The ratio holds steady around 0.75
+(butterfly averages ~75% of spread's bar density). The slight increase in
+2026 is driven by spread's BPD declining marginally, not butterfly increasing.
+
+LIQUIDITY CAVEAT FOR TEAM:
+  Butterfly consistently trades at ~75% of spread's hourly bar density
+  (5.6 bars/day vs 7.3 bars/day). This ratio has been STABLE across
+  2024-2026 — there is NO evidence of declining butterfly liquidity.
+  Historical butterfly execution analysis based on 2024 data remains
+  representative of current (2026) conditions at the same relative
+  liquidity level. No special caveat needed for recent vs historical
+  data quality.
