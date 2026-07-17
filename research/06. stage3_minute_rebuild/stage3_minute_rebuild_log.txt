@@ -1051,3 +1051,301 @@ PART 2 — M6-M9 EXTENSION TEST
   - TO RESOLVE: Adding M7-M9 to the daily term structure pipeline
     would enable independent shape classification and a proper test.
     Until then, M6-M9 should not be added to the trading universe.
+
+======================================================================
+STAGE 3 — Z-SCORE MINIMUM-WINDOW AUDIT & INTRADAY PARAMETER RE-TEST — 2026-07-17
+======================================================================
+
+================================================================
+PART 0 — Z-SCORE MINIMUM-WINDOW AUDIT
+================================================================
+
+--- 0.1: Code Location ---
+
+Z-score computation: stage2_walkforward.py lines 107-122
+  compute_regime_zscore(df, instrument_col):
+    - Episodes with <10 total days are SKIPPED entirely (line 112)
+    - Within valid episodes, first 9 days produce NaN (line 115: if i < 9: continue)
+    - First valid z-score is day 10 of the episode (0-indexed i=9)
+    - Rolling window: min(days_in_episode, 60) days
+
+Entry logic: stage2_walkforward.py lines 302-314
+    - Checks `pd.isna(z)` first — NaN z blocks entry (line 303)
+    - Then checks dur_ok = days_in_shape >= dur_thresh (=3)
+    - Then checks abs(z) > z_entry (=1.5)
+    - Then checks pm_level == 0
+
+--- 0.2: Independence of the Two Checks ---
+
+FINDING: The 10-day z-score minimum and the duration threshold are
+implemented as SEPARATE mechanisms, but they interact in an
+UNEXPECTED way.
+
+The z-score function returns NaN for days 1-9 of episodes that
+EVENTUALLY reach 10+ days. However:
+
+  - `days_in_shape` in the enriched log is computed FORWARD-LOOKING
+    (from the enriched_shape_log which knows the full episode), while
+    the z-score is computed in a RUNNING fashion (it doesn't know
+    future episode length at the time of computation)
+  - More critically: `episode_id` in the stage2 code is constructed
+    by concatenating pre_2017 episodes with enriched episodes:
+      enriched['episode_id'] = (enriched['shape'] != enriched['shape'].shift(1)).cumsum() + ep_id
+    This means episode boundaries in the enriched data are DIFFERENT
+    from those in the full_log because the enriched data starts from
+    a different base.
+
+  The `days_in_shape` column comes from the enriched log and tracks
+  days within the enriched log's episode definition. The z-score
+  uses `episode_id` which may have different boundaries at the
+  junction between pre_2017 and enriched data.
+
+--- 0.3: Verification — Trades Entering Before Day 10 ---
+
+  Trades with entry_days_in_shape < 10: 140 out of 555 (25.2%)
+
+  THIS IS A REAL FINDING: 140 trades entered when the shape had been
+  active for fewer than 10 days as measured by days_in_shape. This
+  means a valid (non-NaN) z-score existed on those days despite the
+  shape being only 3-9 days old.
+
+  How is this possible? The z-score's `episode_id` and the entry
+  logic's `days_in_shape` can disagree about episode boundaries.
+  If the z-score sees a LONGER episode (because the episode_id
+  didn't reset when days_in_shape did), the z-score accumulates
+  enough data to pass the 10-day minimum while days_in_shape shows
+  a shorter duration. This is NOT a bug in either component
+  individually — it's a MISMATCH between how episode boundaries
+  are defined in the two systems.
+
+--- 0.4: Rolling Window Data Length at Entry ---
+
+  Distribution across all 555 locked-config trades:
+
+  Days in shape at entry    Trades      %
+  ----------------------------------------
+  3-5 days                      76   13.7%
+  6-9 days                      64   11.5%
+  10-19 days                   132   23.8%
+  20-39 days                   127   22.9%
+  40-60 days                    49    8.8%
+  60+ days                     107   19.3%
+
+  Statistics:
+    min = 3, median = 20, mean = 36.8, max = 174
+
+  25.2% of trades entered with fewer than 10 days in the current
+  shape episode. However, the z-score for these trades was computed
+  from a rolling window that DID have >=10 data points — just from
+  a PRIOR shape that the z-score's episode_id hadn't separated from
+  the current one.
+
+--- 0.5: Assessment ---
+
+  FINDING: The original "minimum 10-day window" design rule is
+  PARTIALLY enforced — the z-score function does require 10 data
+  points before emitting a value, but the episode boundaries used
+  by the z-score function do not perfectly align with the shape
+  episode boundaries used by the entry logic.
+
+  This means:
+  - The z-score is NEVER computed from fewer than 10 data points
+    (this is mechanically enforced by the code)
+  - BUT those 10 data points may SPAN a shape transition that the
+    entry logic considers a new episode
+  - Trades entering at days_in_shape=3 have a z-score computed from
+    the last 10+ days, which includes 7+ days from the PRIOR shape
+  - This is a cross-contamination of z-score windows across shape
+    boundaries, not a missing-minimum issue
+
+--- 0.6: Impact of Strict 10-Day Enforcement ---
+
+  If we blocked ALL entries where days_in_shape < 10:
+    Trades blocked: 140 (25.2% of 555)
+    PnL of blocked trades: +2,364 pts
+
+  These 140 trades are NET PROFITABLE (+2,364 pts = +16.9 pts/trade
+  average). Blocking them would REDUCE total portfolio PnL by 24.4%.
+
+  This does NOT mean the cross-contamination is beneficial by design
+  — it means the z-scores computed from mixed-shape windows happened
+  to produce profitable signals in practice. Whether this is robust
+  or a historical artifact cannot be determined from this data alone.
+
+  RECOMMENDATION: This finding warrants a SEPARATE follow-up test
+  (not done in this task) to determine:
+  1. Whether the cross-shape z-score contamination is intentional or
+     accidental
+  2. Whether enforcing strict same-shape z-score windows (resetting
+     the rolling window at every shape transition) changes the
+     overall system performance materially
+  3. Whether the 140 cross-contaminated trades have different
+     characteristics (win rate, holding period, instruments) than
+     the 415 clean trades
+
+================================================================
+PART 1 — INTRADAY STOP-LOSS RE-TEST
+================================================================
+
+Tested SL thresholds: |z| >= 2.25, 2.5, 2.75, 3.5
+Method: For each 2024+ locked-config trade (n=132), check if
+intraday z-score ever touches the SL threshold during holding period.
+If yes, simulate exit at first touch price.
+
+  Threshold  Triggers  Help  Hurt  Avg PnL Diff  Total Impact
+  -----------------------------------------------------------
+  |z|>=2.25    34/132     8    26     -12.1 pts     -410 pts
+  |z|>=2.50    20/132     6    14      -6.7 pts     -133 pts
+  |z|>=2.75    14/132     3    11     -15.9 pts     -222 pts
+  |z|>=3.50     3/132     0     3     -24.7 pts      -74 pts
+
+At every threshold:
+  - More trades hurt than helped (ratio 3:1 at best)
+  - Total PnL impact is negative
+  - Even the most generous threshold (2.25) costs 410 pts
+
+CONCLUSION: Intraday resolution makes the stop-loss case WORSE,
+not better. The daily-bar finding ("stop-loss doesn't work for this
+signal") is CONFIRMED at intraday resolution. Higher-frequency
+monitoring produces more false triggers on temporary z-score spikes
+that reverse before daily close. Stop-loss remains net-destructive
+for this mean-reversion system.
+
+================================================================
+PART 2 — INTRADAY SCALE-IN RE-TEST
+================================================================
+
+Tested thresholds: |z| >= 1.75, 2.0, 2.25
+Method: For each trade, check if intraday z reaches the scale-in
+threshold (in the trade's direction). If yes, add lot 2 at that
+price. Compare 2-lot scale-in outcome vs 2-lot flat entry.
+
+  Threshold  Triggers  Lot2 WR  Lot2 Avg  SI vs Flat Diff  Total
+  ---------------------------------------------------------------
+  |z|>=1.75    63/132   61.9%   +5.9 pts    +2.1 pts/trade  +134
+  |z|>=2.00    51/132   56.9%   +5.6 pts    +5.5 pts/trade  +279
+  |z|>=2.25    34/132   58.8%   +8.1 pts   +11.5 pts/trade  +392
+
+All thresholds show POSITIVE results:
+  - Lot 2 is profitable at all levels (5.6-8.1 pts avg)
+  - Scale-in beats flat 2-lot entry at all levels
+  - Best risk-adjusted result: |z|>=2.25 with +11.5 pts/trade
+    advantage over flat entry, but only triggers on 34/132 trades
+
+Intraday precision (entering lot 2 closer to the threshold, with
+less overshoot than daily-bar detection) provides a BETTER entry
+price for the second lot. This is consistent with the daily-bar
+finding that scale-in was net-positive, and the intraday version
+modestly improves upon it.
+
+CONCLUSION: Intraday scale-in CONFIRMS the daily-bar finding and
+improves the entry precision. Scale-in at |z|>=2.0 appears the
+best balance of trigger frequency (51/132 = 39%) and per-trade
+improvement (+5.5 pts vs flat). This is exploratory — no change
+to locked config authorized.
+
+================================================================
+PART 3 — ENTRY THRESHOLD RE-CONFIRMATION (missed signals)
+================================================================
+
+Method: For each day in the 2024+ range where ALL entry conditions
+are met (resting shape, dur>=3, PM L0) but daily |z| < 1.5, check
+if any INTRADAY bar's z-score crossed ±1.5. If yes, simulate a
+trade entering at the intraday touch price with standard exit logic.
+
+  Missed-signal trades found: 181
+  Win rate: 75.7% (137W / 44L)
+  Avg PnL: +11.88 pts
+  Total PnL: +2,150 pts
+  Exit reasons: take_profit=118, invalidated=63
+
+  By instrument:
+    M1-M2:      n=21, WR=95%, avg=+49.4  (dominated by large M1-M2 moves)
+    M2-M3:      n=12, WR=67%, avg=+7.6
+    M3-M4:      n=17, WR=53%, avg=+2.9
+    M4-M5:      n=19, WR=63%, avg=+2.4
+    M5-M6:      n=14, WR=79%, avg=+3.1
+    BF_M1M2M3:  n=16, WR=81%, avg=+24.8
+    BF_M2M3M4:  n=24, WR=75%, avg=+4.6
+    BF_M3M4M5:  n=34, WR=76%, avg=+9.1
+    BF_M4M5M6:  n=24, WR=83%, avg=+2.8
+
+  Combined portfolio comparison:
+    Existing only: n=132, WR=69.7%, avg=11.58 pts
+    Combined:      n=313, WR=73.2%, avg=11.75 pts
+
+VERDICT: ADDITIVE. Missed-signal trades are net positive with a
+HIGHER win rate than existing trades. The 181 additional trades
+would add +2,150 pts with 75.7% WR.
+
+CAVEAT: This is a large number of additional trades (181 vs 132
+existing = +137%). The M1-M2 result (+49.4 avg, 95% WR) is
+suspiciously strong and may not persist out-of-sample. Excluding
+M1-M2, the remaining 160 missed trades average +7.2 pts — still
+positive but more modest.
+
+This is EXPLORATORY ONLY — no change to locked config authorized.
+
+================================================================
+PART 4 — INTRADAY RISK MAGNITUDE CHECK
+================================================================
+
+Method: For each 2024+ trade, compare the maximum adverse excursion
+measured at daily close-to-close resolution vs 60-min intraday
+resolution. The "gap" = intraday MAE - daily MAE (negative = intraday
+shows worse risk than daily bars suggested).
+
+  Overall (132 trades):
+    Mean gap: +8.3 pts (intraday BETTER on average, due to butterflies)
+    Median gap: +1.0 pts
+    Worst gap: -30.0 pts
+    Trades where intraday is worse: 50 (37.9%)
+    Trades where intraday matches: 12 (9.1%)
+    Trades where intraday is better: 70 (53.0%)
+
+  Per-instrument:
+  Instrument    N  Mean Gap  Worst Gap  % Worse
+  -----------------------------------------------
+  M1-M2        16   +13.1     -30.0     37.5%    <-- extreme outliers
+  M2-M3        10    -0.7      -7.0     50.0%
+  M3-M4        16    -1.8      -6.0     62.5%
+  M4-M5        15    -0.7     -11.0     46.7%
+  M5-M6        12    -1.6      -7.0     58.3%
+  BF_M1M2M3    17   +43.6     -17.0     11.8%    <-- strongly better
+  BF_M2M3M4    18    +8.3      -9.0     27.8%
+  BF_M3M4M5    15    +2.1     -19.0     26.7%
+  BF_M4M5M6    13    +2.6     -12.0     30.8%
+
+  Trades with intraday MAE >10 pts worse than daily (10 of 132):
+  M1-M2  2024-07-03   Daily=-1   Intra=-31   Gap=-30   PnL=+13
+  M1-M2  2025-03-03   Daily=-66  Intra=-94   Gap=-28   PnL=+29
+  M1-M2  2024-08-16   Daily=-3   Intra=-26   Gap=-23   PnL=+55
+  BF_M3M4M5 2025-03-11 Daily=0   Intra=-19   Gap=-19   PnL=+18
+  BF_M1M2M3 2024-04-26 Daily=-5  Intra=-22   Gap=-17   PnL=+21
+  BF_M3M4M5 2025-03-04 Daily=0   Intra=-17   Gap=-17   PnL=+12
+  M1-M2  2025-12-02   Daily=0    Intra=-16   Gap=-16   PnL=+18
+  BF_M4M5M6 2024-12-04 Daily=0   Intra=-12   Gap=-12   PnL=-3
+  M4-M5  2024-12-04   Daily=-14  Intra=-25   Gap=-11   PnL=-18
+  M1-M2  2024-10-01   Daily=0    Intra=-11   Gap=-11   PnL=+41
+
+  KEY OBSERVATION: 8 of these 10 trades ended PROFITABLE. The
+  intraday drawdown was temporary and the trade recovered — which
+  is exactly what a mean-reversion system should do.
+
+CONCLUSION: Daily-bar risk estimates hold up well for this system.
+  - 53% of trades show BETTER intraday MAE than daily bars suggested
+  - Mean gap is POSITIVE (+8.3 pts), driven by butterflies whose
+    intraday prices compress rather than expand
+  - M1-M2 is the MOST AFFECTED instrument (worst gap = -30 pts)
+    due to its thin liquidity profile
+  - CORE_4 spreads (M2-M3 through M5-M6) show small mean gaps
+    (-0.7 to -1.8 pts) — negligible intraday risk beyond daily
+  - Butterflies show consistently positive mean gaps (+2.1 to +43.6)
+    meaning daily bars OVERSTATE their intraday risk
+  - The 10 worst-gap trades overwhelmingly recovered profitably (8/10)
+    — temporary intraday volatility, not permanent risk
+
+  MOST-AFFECTED INSTRUMENT: M1-M2 (worst gap -30 pts, but positive
+  mean gap of +13.1 due to large favorable moves offsetting). The
+  intraday volatility in M1-M2 is real but bidirectional — it creates
+  opportunity as often as risk.
