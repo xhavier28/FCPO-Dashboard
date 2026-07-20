@@ -1,0 +1,106 @@
+======================================================================
+FCPO CALENDAR SPREAD — BACKTEST DASHBOARD BUILD LOG
+======================================================================
+
+Generated: 2026-07-20
+
+
+--- A.5 VALIDATION: OLD COST (100 MYR flat) ---
+
+Config: z>1.5, exit_z=0.5, dur>=3d, lots=1, time_stop=20d,
+        no stop-loss, no scale-in, PM L0, TM RR<50%,
+        9 instruments, cost=100 MYR flat (4.0 pts/lot).
+
+  W1 (2019-2020): n=156, PnL=+1,395.0, adj Sharpe=1.633 — PASS
+  W2 (2021-2022): n=133, PnL=+6,131.0, adj Sharpe=2.540 — PASS
+  W3 (2023-2024): n=126, PnL=+1,437.0, adj Sharpe=1.167 — PASS
+  W4 (2025-2026): n= 72, PnL=  +700.0, adj Sharpe=1.215 — PASS
+
+  All 4 windows match published RR<50% numbers EXACTLY.
+
+
+--- A.6 VALIDATION: NEW COST (spread=22, butterfly=44 MYR) ---
+
+Config: Same as A.5 but with differentiated costs:
+  - Spread:    22 MYR/lot RT → 0.88 pts/lot
+  - Butterfly: 44 MYR/lot RT → 1.76 pts/lot
+
+  W1 (2019-2020): n=156, PnL=+1,811.3, adj Sharpe=2.113
+  W2 (2021-2022): n=133, PnL=+6,478.2, adj Sharpe=2.665
+  W3 (2023-2024): n=126, PnL=+1,772.0, adj Sharpe=1.408
+  W4 (2025-2026): n= 72, PnL=  +893.8, adj Sharpe=1.529
+
+  Trade counts unchanged (cost only affects PnL, not entry/exit).
+  PnL improvement: W1 +416, W2 +347, W3 +335, W4 +194.
+  Worst-case adj Sharpe improved from 1.167 to 1.408.
+
+
+--- BUTTERFLY POINT VALUE CONFIRMATION ---
+
+POINT_VALUE = 25.0 MYR/point for BOTH spreads and butterflies.
+This is consistent across:
+  - stage2_walkforward.py (line 33)
+  - stage2_tm_threshold_retest.py (line 28)
+  - stage2_progressive_scalein.py
+  - MRBackTest/engine/backtest_engine.py
+
+Butterfly cost is 2x spread cost (44 vs 22 MYR) because butterflies
+have 4 legs vs 2 legs, but the point value per tick is the same.
+
+
+--- DESIGN DECISIONS ---
+
+1. TM threshold = 0.50
+   At threshold=0.50, TM regime-risk exit rarely fires (0-3 exits
+   per window). This was selected as the best worst-case config.
+
+2. Cost model
+   Cost is deducted ONCE per full position close, per lot.
+   cost_points = cost_myr / POINT_VALUE
+   For scale-in: total_cost = total_lots * cost_per_lot
+
+3. MtM Sharpe (adj Sharpe)
+   For OLD cost validation: uses 100 MYR flat for all instruments
+   (matching original code exactly for reproducibility).
+   For NEW cost: uses differentiated costs per instrument type.
+
+4. Panel caching
+   The data panel (4070 rows, 2008-2026) is built once and cached
+   in-memory. PM/TM predictions (~2016 each) are also cached.
+
+5. Dashboard pre-caching
+   Locked-config results are saved to locked_config_cache.pkl
+   to avoid ~2-minute PM/TM computation on every page load.
+
+6. Scale-in implementation
+   - 0-3 independently toggleable tiers
+   - Scale-in checks fire BEFORE exit checks each day
+   - Direction-aware: SHORT entries scale at z >= tier_level,
+     LONG entries scale at z <= -tier_level
+   - All lots exit together; cost = total_lots * cost_per_lot
+
+7. Loss bucket classification
+   A = invalidated (regime break)
+   B/C = time_stop (B=adverse extension, C=stalled — combined
+         because max|z| tracking not yet in engine)
+   D = regime_risk
+   TP-loss = take_profit with net_pnl <= 0 (cost-induced)
+   SL = stop_loss
+
+
+--- FILE MANIFEST ---
+
+Created:
+  MRBackTest/engine/backtest_engine.py          — Parameterized engine
+  MRBackTest/FCPO Backtest Dashboard/app.py     — Streamlit dashboard
+  MRBackTest/FCPO Backtest Dashboard/.streamlit/config.toml — Dark theme
+  MRBackTest/FCPO Backtest Dashboard/locked_config_cache.pkl — Pre-cached results
+  MRBackTest/FCPO Backtest Dashboard/dashboard_build_log.txt — This file
+
+Read-only references:
+  research/05. stage2_walkforward/stage2_walkforward.py
+  research/05. stage2_walkforward/stage2_tm_threshold_retest.py
+  research/05. stage2_walkforward/stage2_progressive_scalein.py
+  models/pm_engine.py
+  models/tm_engine.py
+  models/feature_prep.py
