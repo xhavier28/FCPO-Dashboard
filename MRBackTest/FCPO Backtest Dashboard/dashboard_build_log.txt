@@ -3,6 +3,7 @@ FCPO CALENDAR SPREAD — BACKTEST DASHBOARD BUILD LOG
 ======================================================================
 
 Generated: 2026-07-20
+Updated:   2026-07-20 (v2 — all 6 spec gaps fixed)
 
 
 --- A.5 VALIDATION: OLD COST (100 MYR flat) ---
@@ -17,6 +18,7 @@ Config: z>1.5, exit_z=0.5, dur>=3d, lots=1, time_stop=20d,
   W4 (2025-2026): n= 72, PnL=  +700.0, adj Sharpe=1.215 — PASS
 
   All 4 windows match published RR<50% numbers EXACTLY.
+  Validated AGAIN after v2 engine changes — still exact match.
 
 
 --- A.6 VALIDATION: NEW COST (spread=22, butterfly=44 MYR) ---
@@ -31,28 +33,70 @@ Config: Same as A.5 but with differentiated costs:
   W4 (2025-2026): n= 72, PnL=  +893.8, adj Sharpe=1.529
 
   Trade counts unchanged (cost only affects PnL, not entry/exit).
-  PnL improvement: W1 +416, W2 +347, W3 +335, W4 +194.
   Worst-case adj Sharpe improved from 1.167 to 1.408.
 
 
 --- BUTTERFLY POINT VALUE CONFIRMATION ---
 
 POINT_VALUE = 25.0 MYR/point for BOTH spreads and butterflies.
-This is consistent across:
-  - stage2_walkforward.py (line 33)
-  - stage2_tm_threshold_retest.py (line 28)
-  - stage2_progressive_scalein.py
-  - MRBackTest/engine/backtest_engine.py
+Source: stage2_walkforward.py line 33, stage2_tm_threshold_retest.py
+line 28, stage2_progressive_scalein.py — all use POINT_VALUE=25.0
+with no separate butterfly point value defined anywhere.
 
 Butterfly cost is 2x spread cost (44 vs 22 MYR) because butterflies
 have 4 legs vs 2 legs, but the point value per tick is the same.
+
+
+--- NAIVE + ADJUSTED SHARPE ---
+
+Both Sharpe ratios now computed and displayed:
+  Naive Sharpe: attributes each trade's net PnL to its exit date
+  Adjusted Sharpe: daily mark-to-market portfolio PnL reconstruction
+
+Published numbers at old cost:
+  W1: naive=3.160, adj=1.633
+  W2: naive=3.599, adj=2.540
+  W3: naive=1.610, adj=1.167
+  W4: naive=1.761, adj=1.215
+
+
+--- LOSS BUCKET B/C SEPARATION ---
+
+Now properly separated using max|z| tracked during each trade:
+  A = invalidated (regime break)
+  B = time_stop AND max|z| > |entry_z| (adverse extension)
+  C = time_stop AND max|z| <= |entry_z| (stalled)
+  D = regime_risk
+  TP-loss = take_profit with net_pnl <= 0 (cost-induced)
+  SL = stop_loss
+
+Verified at old cost:
+  W1: A=20, B=7, C=5, TP-loss=4
+  W2: A=22, TP-loss=3
+  W3: A=18, B=6, C=1, TP-loss=6
+  W4: A=21, TP-loss=3
+
+
+--- 60-MIN INTRADAY SUPPORT ---
+
+Data source: Pre-computed wide CSVs from Stage 3 rebuild:
+  spread_tenor_close_wide.csv    (5033 bars, 2024-01-02 to 2026-07-16)
+  butterfly_tenor_close_wide.csv (5412 bars, 2024-01-02 to 2026-07-16)
+
+Tenor → instrument mapping (direct, no differencing):
+  Spread: Current=M1-M2, +1M=M2-M3, +2M=M3-M4, +3M=M4-M5, +4M=M5-M6
+  Butterfly: Current=BF_M1M2M3, +1M=BF_M2M3M4, +2M=BF_M3M4M5, +3M=BF_M4M5M6
+
+Z-score approach: daily mean/std baseline, intraday bar price for
+threshold crossings (entry, TP, SL, scale-in). Daily-level gates
+(shape, PM, TM, duration) checked once per day before scanning bars.
 
 
 --- DESIGN DECISIONS ---
 
 1. TM threshold = 0.50
    At threshold=0.50, TM regime-risk exit rarely fires (0-3 exits
-   per window). This was selected as the best worst-case config.
+   per window). Selected as best worst-case config.
 
 2. Cost model
    Cost is deducted ONCE per full position close, per lot.
@@ -65,27 +109,30 @@ have 4 legs vs 2 legs, but the point value per tick is the same.
    For NEW cost: uses differentiated costs per instrument type.
 
 4. Panel caching
-   The data panel (4070 rows, 2008-2026) is built once and cached
-   in-memory. PM/TM predictions (~2016 each) are also cached.
+   Data panel (4070 rows, 2008-2026) built once, cached in-memory.
+   PM/TM predictions (~2016 each) also cached.
 
 5. Dashboard pre-caching
-   Locked-config results are saved to locked_config_cache.pkl
-   to avoid ~2-minute PM/TM computation on every page load.
+   Locked-config daily results saved to locked_config_cache.pkl.
+   Intraday results computed on demand (fast: no PM/TM recomputation
+   needed, uses cached panel).
 
-6. Scale-in implementation
-   - 0-3 independently toggleable tiers
-   - Scale-in checks fire BEFORE exit checks each day
-   - Direction-aware: SHORT entries scale at z >= tier_level,
-     LONG entries scale at z <= -tier_level
-   - All lots exit together; cost = total_lots * cost_per_lot
+6. Scale-in UI
+   3 independent tier rows, each with its own enable checkbox,
+   z-level input, and lot-size input. Enabling tier 1 and 3 but
+   not 2 is supported (per-tier independence).
 
-7. Loss bucket classification
-   A = invalidated (regime break)
-   B/C = time_stop (B=adverse extension, C=stalled — combined
-         because max|z| tracking not yet in engine)
-   D = regime_risk
-   TP-loss = take_profit with net_pnl <= 0 (cost-induced)
-   SL = stop_loss
+7. Two-tab layout
+   Tab 1: "Daily (4 Walk-Forward Windows)" — all 4 windows side
+          by side, worst-case Sharpe highlighted.
+   Tab 2: "60-Min Intraday (2024-2026)" — single continuous range.
+   Parameters are SHARED across both tabs.
+
+8. Intraday exit priority
+   Daily-level exits (shape change, time stop, TM regime-risk) are
+   checked FIRST at the start of each day using daily settlement.
+   If no daily exit, intraday bars are scanned for TP, SL, and
+   scale-in triggers within that day.
 
 
 --- FILE MANIFEST ---
@@ -94,13 +141,15 @@ Created:
   MRBackTest/engine/backtest_engine.py          — Parameterized engine
   MRBackTest/FCPO Backtest Dashboard/app.py     — Streamlit dashboard
   MRBackTest/FCPO Backtest Dashboard/.streamlit/config.toml — Dark theme
-  MRBackTest/FCPO Backtest Dashboard/locked_config_cache.pkl — Pre-cached results
+  MRBackTest/FCPO Backtest Dashboard/locked_config_cache.pkl — Pre-cached
   MRBackTest/FCPO Backtest Dashboard/dashboard_build_log.txt — This file
 
 Read-only references:
   research/05. stage2_walkforward/stage2_walkforward.py
   research/05. stage2_walkforward/stage2_tm_threshold_retest.py
   research/05. stage2_walkforward/stage2_progressive_scalein.py
+  research/06. stage3_minute_rebuild/spread_tenor_close_wide.csv
+  research/06. stage3_minute_rebuild/butterfly_tenor_close_wide.csv
   models/pm_engine.py
   models/tm_engine.py
   models/feature_prep.py

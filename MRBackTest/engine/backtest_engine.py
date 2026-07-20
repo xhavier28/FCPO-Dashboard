@@ -4,6 +4,8 @@ FCPO Calendar Spread — Parameterized Backtest Engine
 Consolidates Stage 2 walk-forward backtest logic into a single
 parameterized function for use by the dashboard and CLI validation.
 
+Supports both daily and 60-min intraday resolution.
+
 Usage:
     python MRBackTest/engine/backtest_engine.py --validate
 """
@@ -47,6 +49,16 @@ BUTTERFLY_INSTRUMENTS = list(BUTTERFLY_CONFIG.keys())
 ALL_9 = ['M2-M3', 'M3-M4', 'M4-M5', 'M5-M6', 'M1-M2',
          'BF_M1M2M3', 'BF_M2M3M4', 'BF_M3M4M5', 'BF_M4M5M6']
 
+# Tenor → instrument mapping for 60-min wide CSVs
+SPREAD_TENOR_MAP = {
+    'Current': 'M1-M2', '+1M': 'M2-M3', '+2M': 'M3-M4',
+    '+3M': 'M4-M5', '+4M': 'M5-M6',
+}
+BUTTERFLY_TENOR_MAP = {
+    'Current': 'BF_M1M2M3', '+1M': 'BF_M2M3M4',
+    '+2M': 'BF_M3M4M5', '+3M': 'BF_M4M5M6',
+}
+
 WINDOWS = [
     {'name': 'W1', 'label': 'W1 (2019-2020)', 'test_start': '2019-01-01', 'test_end': '2020-12-31'},
     {'name': 'W2', 'label': 'W2 (2021-2022)', 'test_start': '2021-01-01', 'test_end': '2022-12-31'},
@@ -54,7 +66,9 @@ WINDOWS = [
     {'name': 'W4', 'label': 'W4 (2025-2026)', 'test_start': '2025-01-01', 'test_end': '2026-12-31'},
 ]
 
-# Shape codes for resting regimes
+INTRADAY_START = '2024-01-01'
+INTRADAY_END = '2026-12-31'  # loads up to most recent available
+
 RESTING_SHAPES = ('0.0', '1')
 
 # Default locked config
@@ -64,16 +78,17 @@ DEFAULT_CONFIG = {
     'duration_threshold': 3,
     'first_entry_lots': 1,
     'time_stop_days': 20,
-    'stop_loss_z': None,           # None = disabled
-    'scale_in_tiers': [],          # List of {'z_level': float, 'lots': int}
+    'stop_loss_z': None,
+    'scale_in_tiers': [],          # List of {'z_level': float, 'lots': int, 'enabled': bool}
     'instruments': ALL_9,
     'pm_filter_level': 0,
     'tm_regime_risk_threshold': 0.50,
-    'cost_spread_myr': 100.0,      # Old: 100 flat; New: 22
-    'cost_butterfly_myr': 100.0,   # Old: 100 flat; New: 44
+    'cost_spread_myr': 100.0,
+    'cost_butterfly_myr': 100.0,
+    'data_resolution': 'daily',    # 'daily' or '60min'
+    'date_range': 'all',           # 'all', 'W1', 'W2', 'W3', 'W4', or 'intraday'
 }
 
-# Published locked-config numbers (RR<50%, old cost=100 MYR flat)
 PUBLISHED_NUMBERS = {
     'W1': {'n': 156, 'pnl': 1395.0, 'adj_sharpe': 1.633},
     'W2': {'n': 133, 'pnl': 6131.0, 'adj_sharpe': 2.540},
@@ -87,10 +102,12 @@ PUBLISHED_NUMBERS = {
 # ══════════════════════════════════════════════════════════════
 
 _panel_cache = {}
+_intraday_cache = {}
 
 
 def build_panel():
-    """Build the full daily panel with spreads, butterflies, z-scores, PM, TM."""
+    """Build the full daily panel with spreads, butterflies, z-scores, PM, TM.
+    Also stores per-instrument daily mean/std for intraday z-score computation."""
     if 'df' in _panel_cache:
         return _panel_cache['df'], _panel_cache['tm_cache']
 
@@ -100,7 +117,6 @@ def build_panel():
     enriched = load_enriched_shape_log()
     enriched = enriched.sort_values('date').reset_index(drop=True)
 
-    # Pre-2017 needs days_in_shape and episode_id computed
     pre_2017 = full_log[full_log['date'] < '2017-01-01'].copy()
     pre_2017 = pre_2017.sort_values('date').reset_index(drop=True)
 
@@ -128,17 +144,19 @@ def build_panel():
     df = df.drop_duplicates(subset='date', keep='last').reset_index(drop=True)
     print(f'Panel: {len(df)} rows, {df["date"].min().date()} to {df["date"].max().date()}')
 
-    # Compute spreads and butterflies
     for name, cfg in ALL_INSTRUMENT_CONFIG.items():
         df[name] = df[cfg['near']] - df[cfg['far']]
     for name, cfg in BUTTERFLY_CONFIG.items():
         m1, m2, m3 = cfg['legs']
         df[name] = df[m1] - 2 * df[m2] + df[m3]
 
-    # Regime-relative z-scores
+    # Regime-relative z-scores — also store mean/std for intraday use
     print('Computing z-scores...')
     for inst in ALL_9:
-        df[f'{inst}_z'] = _compute_regime_zscore(df, inst)
+        z_vals, mean_vals, std_vals = _compute_regime_zscore_with_params(df, inst)
+        df[f'{inst}_z'] = z_vals
+        df[f'{inst}_mean'] = mean_vals
+        df[f'{inst}_std'] = std_vals
 
     # PM predictions
     print('Running PM predictions...')
@@ -194,9 +212,12 @@ def build_panel():
     return df, tm_cache
 
 
-def _compute_regime_zscore(df, instrument_col):
-    """Per-episode rolling 60-day window z-score, min 10 observations."""
+def _compute_regime_zscore_with_params(df, instrument_col):
+    """Per-episode rolling 60-day window z-score, min 10 observations.
+    Returns (z_series, mean_series, std_series) for intraday z-score use."""
     zscores = pd.Series(np.nan, index=df.index)
+    means = pd.Series(np.nan, index=df.index)
+    stds = pd.Series(np.nan, index=df.index)
     for ep_id in df['episode_id'].unique():
         mask = df['episode_id'] == ep_id
         ep_vals = df.loc[mask, instrument_col]
@@ -208,9 +229,52 @@ def _compute_regime_zscore(df, instrument_col):
             window_start = max(0, i - 59)
             window = ep_vals.iloc[window_start:i+1]
             mean, std = window.mean(), window.std()
+            means[idx] = mean
+            stds[idx] = std
             if std > 0 and not np.isnan(val):
                 zscores[idx] = (val - mean) / std
-    return zscores
+    return zscores, means, stds
+
+
+def load_intraday_data():
+    """Load 60-min tenor-mapped wide CSVs for spreads and butterflies.
+    Returns a DataFrame with datetime index and instrument-named columns."""
+    if 'intraday' in _intraday_cache:
+        return _intraday_cache['intraday']
+
+    base = Path(r'C:/ClaudeCode/research/06. stage3_minute_rebuild')
+    spread_path = base / 'spread_tenor_close_wide.csv'
+    bf_path = base / 'butterfly_tenor_close_wide.csv'
+
+    print('Loading 60-min intraday data...')
+    spread_df = pd.read_csv(spread_path, parse_dates=['datetime'])
+    bf_df = pd.read_csv(bf_path, parse_dates=['datetime'])
+
+    # Filter to reliable range (2024+)
+    spread_df = spread_df[spread_df['datetime'] >= INTRADAY_START].copy()
+    bf_df = bf_df[bf_df['datetime'] >= INTRADAY_START].copy()
+
+    # Rename tenor columns to instrument names
+    spread_renamed = spread_df[['datetime']].copy()
+    for tenor, inst in SPREAD_TENOR_MAP.items():
+        if tenor in spread_df.columns:
+            spread_renamed[inst] = spread_df[tenor]
+
+    bf_renamed = bf_df[['datetime']].copy()
+    for tenor, inst in BUTTERFLY_TENOR_MAP.items():
+        if tenor in bf_df.columns:
+            bf_renamed[inst] = bf_df[tenor]
+
+    # Merge on datetime
+    intraday = pd.merge(spread_renamed, bf_renamed, on='datetime', how='outer')
+    intraday = intraday.sort_values('datetime').reset_index(drop=True)
+    intraday['date'] = intraday['datetime'].dt.normalize()
+
+    print(f'  Intraday: {len(intraday)} bars, '
+          f'{intraday["datetime"].min()} to {intraday["datetime"].max()}')
+
+    _intraday_cache['intraday'] = intraday
+    return intraday
 
 
 # ══════════════════════════════════════════════════════════════
@@ -226,28 +290,25 @@ def get_cost_points(instrument, config):
 
 
 # ══════════════════════════════════════════════════════════════
-# BACKTEST ENGINE
+# BACKTEST ENGINE — DAILY
 # ══════════════════════════════════════════════════════════════
 
 def run_backtest(config, df=None, tm_cache=None):
-    """
-    Run the full backtest across all 4 walk-forward windows.
-
-    Returns dict: {window_name: pd.DataFrame of trades}
-    """
+    """Run the daily backtest across all 4 walk-forward windows.
+    Returns dict: {window_name: pd.DataFrame of trades}"""
     if df is None or tm_cache is None:
         df, tm_cache = build_panel()
 
     results = {}
     for w in WINDOWS:
-        trades = _run_window(df, tm_cache, config,
-                             w['test_start'], w['test_end'])
+        trades = _run_window_daily(df, tm_cache, config,
+                                   w['test_start'], w['test_end'])
         results[w['name']] = trades
     return results
 
 
-def _run_window(df, tm_cache, config, test_start, test_end):
-    """Run backtest for a single test window."""
+def _run_window_daily(df, tm_cache, config, test_start, test_end):
+    """Run daily backtest for a single test window."""
     ts = pd.Timestamp(test_start)
     te = pd.Timestamp(test_end)
     instruments = config['instruments']
@@ -259,7 +320,7 @@ def _run_window(df, tm_cache, config, test_start, test_end):
     time_stop = config['time_stop_days']
     stop_loss_z = config.get('stop_loss_z')
     first_lots = config['first_entry_lots']
-    scale_tiers = config.get('scale_in_tiers', [])
+    scale_tiers = [t for t in config.get('scale_in_tiers', []) if t.get('enabled', True)]
 
     all_trades = []
 
@@ -271,7 +332,7 @@ def _run_window(df, tm_cache, config, test_start, test_end):
         entry_date = entry_spread = entry_z_val = entry_shape = entry_direction = None
         days_held = 0
         total_lots = 0
-        # Scale-in tracking: list of (z_level, lots, entry_spread_at_tier)
+        max_abs_z = 0.0
         tier_entries = []
         tier_fired = set()
 
@@ -284,13 +345,17 @@ def _run_window(df, tm_cache, config, test_start, test_end):
             if position_open:
                 days_held += 1
 
+                # Track max|z| for B/C bucket classification
+                if not pd.isna(z):
+                    max_abs_z = max(max_abs_z, abs(z))
+
                 # Scale-in checks (before exit checks)
                 for ti, tier in enumerate(scale_tiers):
                     if ti not in tier_fired and not pd.isna(z):
                         should_fire = False
-                        if entry_direction == -1:  # SHORT: z > 0, fire when z >= tier level
+                        if entry_direction == -1:
                             should_fire = z >= tier['z_level']
-                        else:  # LONG: z < 0, fire when z <= -tier level
+                        else:
                             should_fire = z <= -tier['z_level']
                         if should_fire:
                             tier_fired.add(ti)
@@ -320,7 +385,7 @@ def _run_window(df, tm_cache, config, test_start, test_end):
                 if shape != entry_shape:
                     exit_reason = 'invalidated'
 
-                # Stop loss (if enabled)
+                # Stop loss
                 if stop_loss_z is not None and not pd.isna(z):
                     if entry_direction == -1 and z >= stop_loss_z:
                         exit_reason = 'stop_loss'
@@ -332,9 +397,7 @@ def _run_window(df, tm_cache, config, test_start, test_end):
                     exit_reason = 'time_stop'
 
                 if exit_reason:
-                    # PnL for base position
                     base_gross = (spread - entry_spread) * entry_direction * first_lots
-                    # PnL for scale-in tiers
                     tier_gross = sum(
                         (spread - te['entry_spread']) * entry_direction * te['lots']
                         for te in tier_entries
@@ -360,12 +423,14 @@ def _run_window(df, tm_cache, config, test_start, test_end):
                             'n_tiers_fired': len(tier_entries),
                             'shape': entry_shape,
                             'shape_survived': exit_reason != 'invalidated',
+                            'max_abs_z': round(max_abs_z, 3),
                         }
                         all_trades.append(trade)
 
                     position_open = False
                     tier_entries = []
                     tier_fired = set()
+                    max_abs_z = 0.0
                     continue
 
             if not position_open:
@@ -384,6 +449,291 @@ def _run_window(df, tm_cache, config, test_start, test_end):
                     total_lots = first_lots
                     tier_entries = []
                     tier_fired = set()
+                    max_abs_z = abs(z)
+
+    return pd.DataFrame(all_trades)
+
+
+# ══════════════════════════════════════════════════════════════
+# BACKTEST ENGINE — 60-MIN INTRADAY
+# ══════════════════════════════════════════════════════════════
+
+def run_backtest_intraday(config, df=None, tm_cache=None, intraday_df=None):
+    """Run backtest using 60-min bars for entry/exit timing.
+    Daily panel provides shape, PM, TM, z-score mean/std.
+    Intraday bars provide precise price for threshold crossings.
+
+    Returns dict with single key 'intraday': pd.DataFrame of trades."""
+    if df is None or tm_cache is None:
+        df, tm_cache = build_panel()
+    if intraday_df is None:
+        intraday_df = load_intraday_data()
+
+    trades = _run_window_intraday(df, tm_cache, config, intraday_df,
+                                   INTRADAY_START, INTRADAY_END)
+    return {'intraday': trades}
+
+
+def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end):
+    """Run 60-min intraday backtest.
+    Z-score baseline is DAILY (mean/std from daily settlements).
+    60-min bar prices are checked against daily thresholds for precise timing."""
+    ts = pd.Timestamp(test_start)
+    te = pd.Timestamp(test_end)
+    instruments = config['instruments']
+    entry_z = config['entry_z']
+    exit_z = config['exit_z']
+    dur_thresh = config['duration_threshold']
+    pm_filter = config['pm_filter_level']
+    tm_thresh = config['tm_regime_risk_threshold']
+    time_stop = config['time_stop_days']
+    stop_loss_z = config.get('stop_loss_z')
+    first_lots = config['first_entry_lots']
+    scale_tiers = [t for t in config.get('scale_in_tiers', []) if t.get('enabled', True)]
+
+    # Build daily lookup: date -> {shape, days_in_shape, pm_level, per-inst mean/std}
+    daily_mask = (df['date'] >= ts) & (df['date'] <= te)
+    daily_rows = df[daily_mask].set_index('date')
+
+    # Filter intraday to test range
+    intra = intraday_df[(intraday_df['date'] >= ts) & (intraday_df['date'] <= te)].copy()
+    if len(intra) == 0:
+        return pd.DataFrame()
+
+    # Group intraday bars by date
+    intra_by_date = dict(list(intra.groupby('date')))
+
+    all_trades = []
+
+    for inst in instruments:
+        cost_per_lot = get_cost_points(inst, config)
+        mean_col = f'{inst}_mean'
+        std_col = f'{inst}_std'
+
+        position_open = False
+        entry_date = entry_spread = entry_z_val = entry_shape = entry_direction = None
+        entry_datetime = None
+        days_held = 0
+        total_lots = 0
+        max_abs_z = 0.0
+        tier_entries = []
+        tier_fired = set()
+
+        # Iterate day by day
+        for date_ts in daily_rows.index:
+            if date_ts not in daily_rows.index:
+                continue
+            day = daily_rows.loc[date_ts]
+            # Handle duplicate dates (take last)
+            if isinstance(day, pd.DataFrame):
+                day = day.iloc[-1]
+
+            shape = day['shape']
+            pm_level = day.get('pm_level', np.nan)
+            daily_mean = day.get(mean_col, np.nan)
+            daily_std = day.get(std_col, np.nan)
+
+            if position_open:
+                days_held += 1
+
+                # Daily-level exits first: shape change, time stop, TM regime-risk
+                exit_reason = None
+
+                if tm_thresh is not None and shape == entry_shape:
+                    tm_data = tm_cache.get(pd.Timestamp(date_ts))
+                    if tm_data is not None:
+                        pp = tm_data['all_probs'].get(str(entry_shape), np.nan)
+                        if not np.isnan(pp) and pp < tm_thresh:
+                            exit_reason = 'regime_risk'
+
+                if shape != entry_shape:
+                    exit_reason = 'invalidated'
+
+                if days_held >= time_stop:
+                    exit_reason = 'time_stop'
+
+                # If daily exit triggered, use daily settlement price
+                if exit_reason:
+                    daily_spread = day[inst] if inst in day.index else np.nan
+                    if pd.isna(daily_spread):
+                        # Try last intraday bar of the day
+                        day_bars = intra_by_date.get(date_ts)
+                        if day_bars is not None and inst in day_bars.columns:
+                            valid = day_bars[inst].dropna()
+                            daily_spread = valid.iloc[-1] if len(valid) > 0 else np.nan
+
+                    if not pd.isna(daily_spread):
+                        base_gross = (daily_spread - entry_spread) * entry_direction * first_lots
+                        tier_gross = sum(
+                            (daily_spread - te_entry['entry_spread']) * entry_direction * te_entry['lots']
+                            for te_entry in tier_entries
+                        )
+                        gross_pnl = base_gross + tier_gross
+                        total_cost = total_lots * cost_per_lot
+                        net_pnl = gross_pnl - total_cost
+
+                        all_trades.append({
+                            'instrument': inst,
+                            'entry_date': entry_date, 'exit_date': date_ts,
+                            'entry_datetime': entry_datetime,
+                            'entry_spread': round(entry_spread, 2),
+                            'exit_spread': round(daily_spread, 2),
+                            'entry_z': round(entry_z_val, 3),
+                            'exit_z': np.nan,
+                            'direction': 'LONG' if entry_direction == 1 else 'SHORT',
+                            'days_held': days_held,
+                            'exit_reason': exit_reason,
+                            'gross_pnl': round(gross_pnl, 2),
+                            'net_pnl': round(net_pnl, 2),
+                            'total_lots': total_lots,
+                            'n_tiers_fired': len(tier_entries),
+                            'shape': entry_shape,
+                            'shape_survived': exit_reason != 'invalidated',
+                            'max_abs_z': round(max_abs_z, 3),
+                        })
+
+                    position_open = False
+                    tier_entries = []
+                    tier_fired = set()
+                    max_abs_z = 0.0
+                    continue
+
+                # Intraday exits: scan 60-min bars for TP, SL, scale-in
+                day_bars = intra_by_date.get(date_ts)
+                if day_bars is not None and inst in day_bars.columns and not pd.isna(daily_std) and daily_std > 0:
+                    for _, bar in day_bars.iterrows():
+                        bar_price = bar[inst]
+                        if pd.isna(bar_price):
+                            continue
+                        bar_z = (bar_price - daily_mean) / daily_std
+
+                        max_abs_z = max(max_abs_z, abs(bar_z))
+
+                        # Scale-in checks
+                        for ti, tier in enumerate(scale_tiers):
+                            if ti not in tier_fired:
+                                should_fire = False
+                                if entry_direction == -1:
+                                    should_fire = bar_z >= tier['z_level']
+                                else:
+                                    should_fire = bar_z <= -tier['z_level']
+                                if should_fire:
+                                    tier_fired.add(ti)
+                                    tier_entries.append({
+                                        'tier': ti + 1, 'z_level': tier['z_level'],
+                                        'lots': tier['lots'], 'entry_spread': bar_price,
+                                    })
+                                    total_lots += tier['lots']
+
+                        # Take profit (intraday)
+                        if abs(bar_z) < exit_z:
+                            base_gross = (bar_price - entry_spread) * entry_direction * first_lots
+                            tier_gross = sum(
+                                (bar_price - te_entry['entry_spread']) * entry_direction * te_entry['lots']
+                                for te_entry in tier_entries
+                            )
+                            gross_pnl = base_gross + tier_gross
+                            total_cost = total_lots * cost_per_lot
+                            net_pnl = gross_pnl - total_cost
+
+                            all_trades.append({
+                                'instrument': inst,
+                                'entry_date': entry_date, 'exit_date': date_ts,
+                                'entry_datetime': entry_datetime,
+                                'entry_spread': round(entry_spread, 2),
+                                'exit_spread': round(bar_price, 2),
+                                'entry_z': round(entry_z_val, 3),
+                                'exit_z': round(bar_z, 3),
+                                'direction': 'LONG' if entry_direction == 1 else 'SHORT',
+                                'days_held': days_held,
+                                'exit_reason': 'take_profit',
+                                'gross_pnl': round(gross_pnl, 2),
+                                'net_pnl': round(net_pnl, 2),
+                                'total_lots': total_lots,
+                                'n_tiers_fired': len(tier_entries),
+                                'shape': entry_shape,
+                                'shape_survived': True,
+                                'max_abs_z': round(max_abs_z, 3),
+                            })
+                            position_open = False
+                            tier_entries = []
+                            tier_fired = set()
+                            max_abs_z = 0.0
+                            break
+
+                        # Stop loss (intraday)
+                        if stop_loss_z is not None:
+                            sl_triggered = False
+                            if entry_direction == -1 and bar_z >= stop_loss_z:
+                                sl_triggered = True
+                            elif entry_direction == 1 and bar_z <= -stop_loss_z:
+                                sl_triggered = True
+                            if sl_triggered:
+                                base_gross = (bar_price - entry_spread) * entry_direction * first_lots
+                                tier_gross = sum(
+                                    (bar_price - te_entry['entry_spread']) * entry_direction * te_entry['lots']
+                                    for te_entry in tier_entries
+                                )
+                                gross_pnl = base_gross + tier_gross
+                                total_cost = total_lots * cost_per_lot
+                                net_pnl = gross_pnl - total_cost
+
+                                all_trades.append({
+                                    'instrument': inst,
+                                    'entry_date': entry_date, 'exit_date': date_ts,
+                                    'entry_datetime': entry_datetime,
+                                    'entry_spread': round(entry_spread, 2),
+                                    'exit_spread': round(bar_price, 2),
+                                    'entry_z': round(entry_z_val, 3),
+                                    'exit_z': round(bar_z, 3),
+                                    'direction': 'LONG' if entry_direction == 1 else 'SHORT',
+                                    'days_held': days_held,
+                                    'exit_reason': 'stop_loss',
+                                    'gross_pnl': round(gross_pnl, 2),
+                                    'net_pnl': round(net_pnl, 2),
+                                    'total_lots': total_lots,
+                                    'n_tiers_fired': len(tier_entries),
+                                    'shape': entry_shape,
+                                    'shape_survived': True,
+                                    'max_abs_z': round(max_abs_z, 3),
+                                })
+                                position_open = False
+                                tier_entries = []
+                                tier_fired = set()
+                                max_abs_z = 0.0
+                                break
+
+            # Entry check (daily-level gate, intraday price for execution)
+            if not position_open:
+                if pd.isna(pm_level) or pd.isna(daily_mean) or pd.isna(daily_std) or daily_std <= 0:
+                    continue
+                is_resting = shape in RESTING_SHAPES
+                dur_ok = day['days_in_shape'] >= dur_thresh if 'days_in_shape' in day.index else False
+                pm_ok = pm_level <= pm_filter
+
+                if is_resting and dur_ok and pm_ok:
+                    # Scan intraday bars for z-threshold crossing
+                    day_bars = intra_by_date.get(date_ts)
+                    if day_bars is not None and inst in day_bars.columns:
+                        for _, bar in day_bars.iterrows():
+                            bar_price = bar[inst]
+                            if pd.isna(bar_price):
+                                continue
+                            bar_z = (bar_price - daily_mean) / daily_std
+                            if abs(bar_z) > entry_z:
+                                position_open = True
+                                entry_date = date_ts
+                                entry_datetime = bar['datetime']
+                                entry_spread = bar_price
+                                entry_z_val = bar_z
+                                entry_shape = shape
+                                entry_direction = -1 if bar_z > 0 else 1
+                                days_held = 0
+                                total_lots = first_lots
+                                tier_entries = []
+                                tier_fired = set()
+                                max_abs_z = abs(bar_z)
+                                break
 
     return pd.DataFrame(all_trades)
 
@@ -392,13 +742,15 @@ def _run_window(df, tm_cache, config, test_start, test_end):
 # METRICS
 # ══════════════════════════════════════════════════════════════
 
-def compute_metrics(trades, df_ref=None, test_start=None, test_end=None):
-    """Compute summary metrics for a set of trades."""
+def compute_metrics(trades, df_ref=None, test_start=None, test_end=None, config=None):
+    """Compute summary metrics for a set of trades.
+    Returns both naive and adjusted Sharpe."""
     n = len(trades)
     if n == 0:
         return {
             'n_trades': 0, 'win_rate': 0, 'avg_win': 0, 'avg_loss': 0,
-            'total_pnl': 0, 'adj_sharpe': np.nan, 'max_dd': 0,
+            'total_pnl': 0, 'naive_sharpe': np.nan, 'adj_sharpe': np.nan,
+            'max_dd': 0,
             'pct_take_profit': 0, 'pct_invalidated': 0,
             'pct_time_stop': 0, 'pct_regime_risk': 0, 'pct_stop_loss': 0,
             'avg_hp': 0, 'shape_survival': 0,
@@ -423,7 +775,12 @@ def compute_metrics(trades, df_ref=None, test_start=None, test_end=None):
 
     shape_survival = round(trades['shape_survived'].mean() * 100, 1) if 'shape_survived' in trades.columns else np.nan
 
-    # Adjusted Sharpe (MtM daily PnL)
+    # Naive Sharpe (exit-day PnL attribution)
+    naive_sharpe = np.nan
+    if df_ref is not None and test_start is not None:
+        naive_sharpe = _compute_naive_sharpe(trades, test_start, test_end, df_ref)
+
+    # Adjusted Sharpe (MtM daily PnL) — for validation uses 100 MYR flat
     adj_sharpe = np.nan
     if df_ref is not None and test_start is not None:
         adj_sharpe = _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref)
@@ -431,7 +788,7 @@ def compute_metrics(trades, df_ref=None, test_start=None, test_end=None):
     return {
         'n_trades': n, 'win_rate': win_rate,
         'avg_win': avg_win, 'avg_loss': avg_loss, 'total_pnl': total_pnl,
-        'adj_sharpe': adj_sharpe, 'max_dd': max_dd,
+        'naive_sharpe': naive_sharpe, 'adj_sharpe': adj_sharpe, 'max_dd': max_dd,
         'pct_take_profit': tp_pct, 'pct_invalidated': inv_pct,
         'pct_time_stop': ts_pct, 'pct_regime_risk': rr_pct,
         'pct_stop_loss': sl_pct,
@@ -439,8 +796,26 @@ def compute_metrics(trades, df_ref=None, test_start=None, test_end=None):
     }
 
 
+def _compute_naive_sharpe(trades, test_start, test_end, df_ref):
+    """Naive Sharpe: attribute each trade's net PnL to its exit date."""
+    if len(trades) == 0:
+        return np.nan
+    ts_dt, te_dt = pd.Timestamp(test_start), pd.Timestamp(test_end)
+    window_dates = df_ref[(df_ref['date'] >= ts_dt) & (df_ref['date'] <= te_dt)]['date'].sort_values().values
+    daily_pnl = pd.Series(0.0, index=window_dates)
+    for _, t in trades.iterrows():
+        exit_dt = t['exit_date']
+        if exit_dt in daily_pnl.index:
+            daily_pnl[exit_dt] += t['net_pnl']
+    daily_std = daily_pnl.std()
+    if daily_std > 0:
+        return round(daily_pnl.mean() / daily_std * np.sqrt(252), 3)
+    return np.nan
+
+
 def _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref):
-    """Daily portfolio Sharpe using mark-to-market within a test window."""
+    """Daily portfolio Sharpe using mark-to-market within a test window.
+    Uses 100 MYR flat cost for backward compatibility with published validation."""
     if len(trades) == 0:
         return np.nan
     ts_dt = pd.Timestamp(test_start)
@@ -453,7 +828,6 @@ def _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref):
         exit_dt = t['exit_date']
         direction = 1 if t['direction'] == 'LONG' else -1
         inst = t['instrument']
-        total_lots = t.get('total_lots', 1)
 
         trade_days = df_ref[(df_ref['date'] > entry_dt) & (df_ref['date'] <= exit_dt)].copy()
         if len(trade_days) == 0:
@@ -465,13 +839,11 @@ def _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref):
             current_spread = day_row[inst]
             if pd.isna(current_spread):
                 continue
-            # MtM uses 1 lot for base (matching original logic for validation)
             day_mtm = (current_spread - prev_spread) * direction
             if dt in daily_pnl.index:
                 daily_pnl[dt] += day_mtm
             prev_spread = current_spread
 
-        # Cost deducted once at exit
         cost_per_lot = get_cost_points(inst, {'cost_spread_myr': 100.0, 'cost_butterfly_myr': 100.0})
         if exit_dt in daily_pnl.index:
             daily_pnl[exit_dt] -= cost_per_lot
@@ -524,7 +896,8 @@ def compute_daily_portfolio_sharpe_configurable(trades, test_start, test_end, df
 
 
 def classify_loss_bucket(trade):
-    """Classify a losing trade into loss buckets A/B/C/D/TP-loss."""
+    """Classify a losing trade into loss buckets A/B/C/D/TP-loss/SL.
+    Uses max_abs_z to separate B (adverse extension) from C (stalled)."""
     if trade['net_pnl'] > 0:
         return None
     reason = trade['exit_reason']
@@ -537,8 +910,14 @@ def classify_loss_bucket(trade):
     if reason == 'stop_loss':
         return 'SL'
     if reason == 'time_stop':
-        # B vs C requires max|z| during trade — simplified to 'B/C'
-        return 'B/C'
+        entry_abs_z = abs(trade['entry_z'])
+        max_z = trade.get('max_abs_z', np.nan)
+        if pd.isna(max_z):
+            return 'B/C'
+        if max_z > entry_abs_z:
+            return 'B'  # Adverse extension: z moved further against
+        else:
+            return 'C'  # Stalled: z never exceeded entry level
     return 'unknown'
 
 
@@ -610,7 +989,6 @@ def run_new_cost(df=None, tm_cache=None):
     for w in WINDOWS:
         trades = results[w['name']]
         metrics = compute_metrics(trades, df, w['test_start'], w['test_end'])
-        # Use configurable Sharpe for new cost
         adj_sharpe_new = compute_daily_portfolio_sharpe_configurable(
             trades, w['test_start'], w['test_end'], df, config)
 
@@ -628,7 +1006,6 @@ def run_new_cost(df=None, tm_cache=None):
 
 def cache_results(results, filepath):
     """Save results to disk for dashboard pre-loading."""
-    # Serialize trades as DataFrames, metrics as dicts
     cache_data = {}
     for wname, data in results.items():
         cache_data[wname] = {
@@ -662,14 +1039,12 @@ if __name__ == '__main__':
 
     if args.validate:
         passed, val_results, df, tm_cache = validate_old_cost()
-
         if args.new_cost:
             new_results = run_new_cost(df, tm_cache)
             if args.cache:
                 cache_results(new_results, args.cache)
         elif args.cache:
             cache_results(val_results, args.cache)
-
     elif args.new_cost:
         df, tm_cache = build_panel()
         new_results = run_new_cost(df, tm_cache)
