@@ -135,6 +135,86 @@ threshold crossings (entry, TP, SL, scale-in). Daily-level gates
    scale-in triggers within that day.
 
 
+--- URGENT: CONTRACT PINNING VERIFICATION ---
+Date: 2026-07-20
+
+FINDING: Behavior (b) confirmed — ROLLING LABELS, NOT PINNED CONTRACTS.
+
+The engine reads df[inst] (e.g., df['M1-M2']) on every day of an open
+trade. Because M1, M2, ... M6 in the daily shape log are rolling tenor
+labels (relative to front_month(date)), the actual underlying contract
+pair CHANGES at each roll date (day 16 of the month). This means an
+open position silently switches to a different contract pair mid-trade.
+
+Root cause:
+  backtest_engine.py line 341:
+    date, shape, z, spread = row['date'], row['shape'], row[z_col], row[inst]
+  This reads the rolling label value on EACH day, not the contract
+  that was live at entry.
+
+This is NOT a new engine bug — the ORIGINAL source code
+(stage2_walkforward.py lines 239-316) uses the exact same data
+construction (df[name] = df[cfg['near']] - df[cfg['far']] where
+M1-M6 are rolling labels). The engine faithfully reproduces the
+original behavior, which is why validation passes exactly.
+
+QUANTIFICATION:
+
+  Total trades (all 4 windows, old cost): 487
+  Trades crossing a roll date:            176 (36.1%)
+  Trades NOT crossing a roll date:        311 (63.9%)
+
+  By window:
+    W1 (2019-2020): 156 total, 55 affected (35.3%)
+    W2 (2021-2022): 133 total, 44 affected (33.1%)
+    W3 (2023-2024): 126 total, 55 affected (43.7%)
+    W4 (2025-2026):  72 total, 22 affected (30.6%)
+
+  PnL breakdown:
+    Total PnL (old cost):   +9,663.0 pts
+    Affected trades PnL:    +4,653.0 pts (48.2% of |total|)
+    Unaffected trades PnL:  +5,010.0 pts
+
+  Win rate comparison:
+    Affected:   76.1% (134/176), avg PnL = +26.44 pts/trade
+    Unaffected: 76.2% (237/311), avg PnL = +16.11 pts/trade
+
+  Roll-date jump statistics (176 roll crossings):
+    Mean |jump|:   38.4 pts
+    Median |jump|: 17.0 pts
+    Max |jump|:    322.0 pts
+    Jumps > 20 pts: 77 (43.8%)
+    Jumps > 50 pts: 40 (22.7%)
+
+  By instrument type:
+    Spreads:     mean |jump| = 36.6 pts, max = 322.0 pts
+    Butterflies: mean |jump| = 40.6 pts, max = 274.0 pts
+
+INTERPRETATION:
+
+  The jumps are large (mean 38.4 pts, max 322 pts) and represent
+  discontinuities where the engine's "price" for an open position
+  suddenly shifts to a different contract pair. These jumps are NOT
+  real market movements — they are artifacts of the rolling label
+  switching to the next contract month.
+
+  Notably, affected trades show HIGHER avg PnL (+26.44 vs +16.11)
+  which suggests some roll-date jumps coincidentally align with the
+  trade direction, inflating reported returns. However, this could
+  also go the other way — the distortion is unpredictable and
+  depends on the contango/backwardation structure at each roll.
+
+  Since the bug exists in the original stage2_walkforward.py code,
+  ALL published Stage 2 numbers (including the validated W1-W4
+  figures above) contain this distortion. The validation PASSES
+  because both codebases have the same bug.
+
+STATUS: Report only. No fix applied.
+  The scope of the fix (and whether it needs to be re-applied
+  retroactively to Stage 1/2's published numbers) is a decision
+  to make together once the actual impact is understood.
+
+
 --- FILE MANIFEST ---
 
 Created:
@@ -153,3 +233,52 @@ Read-only references:
   models/pm_engine.py
   models/tm_engine.py
   models/feature_prep.py
+
+
+--- Contract Pinning Fix (2026-07-20) ---
+Fixed contract-pinning bug: open positions now use fixed contract months
+resolved at entry, not rolling tenor labels. See stage2_walkforward_log.txt
+"CORRECTED RE-VALIDATION" section for full before/after comparison.
+Worst-case adj Sharpe: -0.153 (corrected)
+
+
+======================================================================
+M1-M2 EXPIRY BUFFER FIX — 2026-07-21
+======================================================================
+
+Problem: M1-M2 near-leg contract stops trading ~day 12-15 of delivery
+month. Shared spread roll rule (day 16) kept referencing the expired
+contract through day 15, causing NaN → fallback to rolling-label pricing.
+488 of 512 total fallback events across the full dataset were M1-M2.
+
+Fix applied to BOTH daily and minute (intraday 60-min) engine paths in
+MRBackTest/engine/backtest_engine.py:
+  - New function: m1m2_expiry_exit_due()
+  - Rule: force-close any open M1-M2 position on or after day 8 of the
+    near-leg delivery month (= 7 calendar days before nominal 15th LTD
+    per Bursa Malaysia FCPO contract specs)
+  - Exit reason: 'expiry_buffer'
+  - Also blocks new M1-M2 entries during the buffer zone
+  - Isolated to M1-M2 only; no other instruments affected
+  - Sits alongside existing exits (TP, invalidated, time stop, TM,
+    stop loss); whichever triggers first fires; expiry_buffer is checked
+    LAST so other exits take priority if they fire same day
+
+Constants added:
+  M1M2_EXPIRY_BUFFER_DAYS = 7
+  M1M2_FORCE_CLOSE_DAY = 8  (15 - 7)
+
+Validation (daily engine, all 4 windows):
+  Fallback events before fix: 123 (9 entry + 114 hold)
+  Fallback events after fix:  6 (3 entry + 3 hold) — all in 2019,
+    genuine CSV gaps not related to roll-date mismatch
+  Reduction: 95.1%
+
+Validation (minute/intraday engine, 2024-2026):
+  Fallback events after fix: 0
+  M1-M2 trades with fix: 12 (5 expiry_buffer, 4 take_profit, 3 invalidated)
+
+Shared code: fix lives in backtest_engine.py, used by both _run_window_daily
+and _run_window_intraday. The minute pipeline (stage3_minute_rebuild.ipynb)
+imports roll logic from MRBackTest/shared/tenor_mapping.py — same shared
+code, fix applied at engine level not at data-build level.

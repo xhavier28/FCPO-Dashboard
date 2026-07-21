@@ -17,11 +17,13 @@ import pandas as pd
 import numpy as np
 import argparse
 import pickle
+import os
 from pathlib import Path
 
 from models.pm_engine import predict as pm_predict
 from models.tm_engine import predict as tm_predict
 from models.feature_prep import load_daily_shape_log, load_enriched_shape_log
+from MRBackTest.shared.tenor_mapping import front_month, tenor_to_contract_month, add_months
 
 # ══════════════════════════════════════════════════════════════
 # CONSTANTS
@@ -71,6 +73,134 @@ INTRADAY_END = '2026-12-31'  # loads up to most recent available
 
 RESTING_SHAPES = ('0.0', '1')
 
+# ── M1-M2 expiry buffer ──
+# FCPO last trading day = 15th of delivery month (or preceding market day).
+# M1-M2's near leg is the front-month contract. Force-close any open M1-M2
+# position on or after the 8th of the near-leg delivery month (= 7 calendar
+# days before the nominal 15th LTD). This eliminates the NaN gap caused by
+# the contract ceasing to trade before the shared day-16 roll rule kicks in.
+M1M2_EXPIRY_BUFFER_DAYS = 7  # calendar days before 15th LTD
+M1M2_FORCE_CLOSE_DAY = 15 - M1M2_EXPIRY_BUFFER_DAYS  # = 8th of delivery month
+
+
+def m1m2_expiry_exit_due(inst, resolved_contracts, date):
+    """Check if an M1-M2 position must be force-closed due to near-leg expiry.
+    Returns True if date.day >= 8 and date is in the near-leg's delivery month.
+    Only applies to M1-M2 instrument."""
+    if inst != 'M1-M2' or resolved_contracts is None:
+        return False
+    near_ym = resolved_contracts[0]  # (year, month) of near leg
+    near_year, near_month = near_ym
+    if hasattr(date, 'year'):
+        return date.year == near_year and date.month == near_month and date.day >= M1M2_FORCE_CLOSE_DAY
+    return False
+
+
+# ── Contract pinning infrastructure ──
+TERM_DIR = r'C:/ClaudeCode/Raw Data/Term Structure'
+MONTH_ABBRS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+               "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+INSTRUMENT_TENOR_OFFSETS = {
+    'M1-M2': {'type': 'spread', 'near_offset': 0, 'far_offset': 1},
+    'M2-M3': {'type': 'spread', 'near_offset': 1, 'far_offset': 2},
+    'M3-M4': {'type': 'spread', 'near_offset': 2, 'far_offset': 3},
+    'M4-M5': {'type': 'spread', 'near_offset': 3, 'far_offset': 4},
+    'M5-M6': {'type': 'spread', 'near_offset': 4, 'far_offset': 5},
+    'BF_M1M2M3': {'type': 'butterfly', 'offsets': [0, 1, 2]},
+    'BF_M2M3M4': {'type': 'butterfly', 'offsets': [1, 2, 3]},
+    'BF_M3M4M5': {'type': 'butterfly', 'offsets': [2, 3, 4]},
+    'BF_M4M5M6': {'type': 'butterfly', 'offsets': [3, 4, 5]},
+}
+
+
+def load_contract_prices():
+    """Load all per-contract daily close prices.
+    Returns dict: {(year, month): pd.Series indexed by pd.Timestamp date}"""
+    contracts = {}
+    if not os.path.exists(TERM_DIR):
+        return contracts
+    for year_dir in sorted(os.listdir(TERM_DIR)):
+        if not year_dir.isdigit():
+            continue
+        year = int(year_dir)
+        for m, abbr in enumerate(MONTH_ABBRS, 1):
+            path = os.path.join(TERM_DIR, year_dir, f"FCPO {abbr}{str(year)[2:]}_Daily.csv")
+            if not os.path.exists(path):
+                continue
+            df_c = pd.read_csv(path)
+            df_c["date"] = pd.to_datetime(df_c["Timestamp (UTC)"], format='mixed').dt.normalize()
+            series = df_c.set_index("date")["Close"]
+            contracts[(year, m)] = series[~series.index.duplicated(keep="last")]
+    return contracts
+
+
+def resolve_contracts(inst, date):
+    """At entry, resolve instrument to specific contract months.
+    Returns tuple of (year, month) tuples for each leg."""
+    cfg = INSTRUMENT_TENOR_OFFSETS[inst]
+    inst_type = cfg['type']
+    if inst_type == 'spread':
+        near = tenor_to_contract_month(date, cfg['near_offset'], inst_type)
+        far = tenor_to_contract_month(date, cfg['far_offset'], inst_type)
+        return (near, far)
+    else:  # butterfly
+        return tuple(tenor_to_contract_month(date, o, inst_type)
+                     for o in cfg['offsets'])
+
+
+def get_contract_spread(contracts, resolved, date):
+    """Look up spread/butterfly price from pinned contracts on a given date."""
+    if len(resolved) == 2:  # spread
+        near_ym, far_ym = resolved
+        near_s = contracts.get(near_ym, pd.Series(dtype=float))
+        far_s = contracts.get(far_ym, pd.Series(dtype=float))
+        near_p = near_s.get(date, np.nan) if len(near_s) > 0 else np.nan
+        far_p = far_s.get(date, np.nan) if len(far_s) > 0 else np.nan
+        if pd.isna(near_p) or pd.isna(far_p):
+            return np.nan
+        return near_p - far_p
+    else:  # butterfly (3 legs)
+        prices = []
+        for ym in resolved:
+            s = contracts.get(ym, pd.Series(dtype=float))
+            p = s.get(date, np.nan) if len(s) > 0 else np.nan
+            if pd.isna(p):
+                return np.nan
+            prices.append(p)
+        return prices[0] - 2 * prices[1] + prices[2]
+
+
+def build_pinned_episode_history(contracts, resolved, df, episode_id, up_to_date):
+    """Build price history for pinned contracts within current episode up to a date.
+    Returns list of floats (prices). Used to seed z-score window at entry."""
+    ep_mask = df['episode_id'] == episode_id
+    ep_dates = df.loc[ep_mask, 'date']
+    ep_dates = ep_dates[ep_dates <= up_to_date]
+    prices = []
+    for d in ep_dates:
+        p = get_contract_spread(contracts, resolved, d)
+        if not pd.isna(p):
+            prices.append(p)
+    return prices
+
+
+def compute_pinned_zscore(episode_prices, current_price):
+    """Compute z-score for pinned contract pair using episode history.
+    episode_prices: list of prices (floats) in chronological order.
+    Uses 60-day rolling window, min 10 obs."""
+    if pd.isna(current_price):
+        return np.nan
+    if len(episode_prices) < 10:
+        return np.nan
+    window = episode_prices[-60:]
+    mean = np.mean(window)
+    std = np.std(window, ddof=1)
+    if std <= 0:
+        return np.nan
+    return (current_price - mean) / std
+
+
 # Default locked config
 DEFAULT_CONFIG = {
     'entry_z': 1.5,
@@ -107,7 +237,8 @@ _intraday_cache = {}
 
 def build_panel():
     """Build the full daily panel with spreads, butterflies, z-scores, PM, TM.
-    Also stores per-instrument daily mean/std for intraday z-score computation."""
+    Also stores per-instrument daily mean/std for intraday z-score computation.
+    Also loads per-contract prices for contract pinning."""
     if 'df' in _panel_cache:
         return _panel_cache['df'], _panel_cache['tm_cache']
 
@@ -207,8 +338,14 @@ def build_panel():
             pass
     print(f'  Cached {len(tm_cache)} TM predictions')
 
+    # Load per-contract prices for contract pinning
+    print('Loading per-contract prices for pinning...')
+    contract_prices = load_contract_prices()
+    print(f'  Loaded {len(contract_prices)} contract series')
+
     _panel_cache['df'] = df
     _panel_cache['tm_cache'] = tm_cache
+    _panel_cache['contracts'] = contract_prices
     return df, tm_cache
 
 
@@ -299,16 +436,22 @@ def run_backtest(config, df=None, tm_cache=None):
     if df is None or tm_cache is None:
         df, tm_cache = build_panel()
 
+    contracts = _panel_cache.get('contracts', {})
     results = {}
     for w in WINDOWS:
         trades = _run_window_daily(df, tm_cache, config,
-                                   w['test_start'], w['test_end'])
+                                   w['test_start'], w['test_end'],
+                                   contracts=contracts)
         results[w['name']] = trades
     return results
 
 
-def _run_window_daily(df, tm_cache, config, test_start, test_end):
-    """Run daily backtest for a single test window."""
+def _run_window_daily(df, tm_cache, config, test_start, test_end, contracts=None):
+    """Run daily backtest for a single test window.
+    Uses contract pinning: at entry, resolve rolling tenor to specific contracts.
+    All exit checks (TP, SL, scale-in) use pinned contract prices and z-scores."""
+    if contracts is None:
+        contracts = _panel_cache.get('contracts', {})
     ts = pd.Timestamp(test_start)
     te = pd.Timestamp(test_end)
     instruments = config['instruments']
@@ -335,6 +478,9 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
         max_abs_z = 0.0
         tier_entries = []
         tier_fired = set()
+        # Contract pinning state
+        resolved_contracts = None
+        episode_price_history = []
 
         for idx in df.index:
             row = df.loc[idx]
@@ -345,25 +491,34 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
             if position_open:
                 days_held += 1
 
-                # Track max|z| for B/C bucket classification
-                if not pd.isna(z):
-                    max_abs_z = max(max_abs_z, abs(z))
+                # Get pinned contract price for today
+                pinned_spread = get_contract_spread(contracts, resolved_contracts, date)
+                if pd.isna(pinned_spread):
+                    pinned_spread = spread  # fallback to rolling if contract data missing
 
-                # Scale-in checks (before exit checks)
+                # Append to episode history and compute pinned z-score
+                episode_price_history.append(pinned_spread)
+                pinned_z = compute_pinned_zscore(episode_price_history, pinned_spread)
+
+                # Track max|z| for B/C bucket classification (use pinned z)
+                if not pd.isna(pinned_z):
+                    max_abs_z = max(max_abs_z, abs(pinned_z))
+
+                # Scale-in checks (before exit checks) — use pinned z and price
                 for ti, tier in enumerate(scale_tiers):
-                    if ti not in tier_fired and not pd.isna(z):
+                    if ti not in tier_fired and not pd.isna(pinned_z):
                         should_fire = False
                         if entry_direction == -1:
-                            should_fire = z >= tier['z_level']
+                            should_fire = pinned_z >= tier['z_level']
                         else:
-                            should_fire = z <= -tier['z_level']
+                            should_fire = pinned_z <= -tier['z_level']
                         if should_fire:
                             tier_fired.add(ti)
                             tier_entries.append({
                                 'tier': ti + 1,
                                 'z_level': tier['z_level'],
                                 'lots': tier['lots'],
-                                'entry_spread': spread,
+                                'entry_spread': pinned_spread,
                             })
                             total_lots += tier['lots']
 
@@ -377,30 +532,35 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
                         if not np.isnan(pp) and pp < tm_thresh:
                             exit_reason = 'regime_risk'
 
-                # Take profit
-                if not pd.isna(z) and abs(z) < exit_z:
+                # Take profit — use pinned z-score
+                if not pd.isna(pinned_z) and abs(pinned_z) < exit_z:
                     exit_reason = 'take_profit'
 
                 # Shape invalidation
                 if shape != entry_shape:
                     exit_reason = 'invalidated'
 
-                # Stop loss
-                if stop_loss_z is not None and not pd.isna(z):
-                    if entry_direction == -1 and z >= stop_loss_z:
+                # Stop loss — use pinned z-score
+                if stop_loss_z is not None and not pd.isna(pinned_z):
+                    if entry_direction == -1 and pinned_z >= stop_loss_z:
                         exit_reason = 'stop_loss'
-                    elif entry_direction == 1 and z <= -stop_loss_z:
+                    elif entry_direction == 1 and pinned_z <= -stop_loss_z:
                         exit_reason = 'stop_loss'
 
                 # Time stop
                 if days_held >= time_stop:
                     exit_reason = 'time_stop'
 
+                # M1-M2 expiry buffer: force-close before near-leg stops trading
+                if exit_reason is None and m1m2_expiry_exit_due(inst, resolved_contracts, date):
+                    exit_reason = 'expiry_buffer'
+
                 if exit_reason:
-                    base_gross = (spread - entry_spread) * entry_direction * first_lots
+                    # P&L uses pinned contract prices
+                    base_gross = (pinned_spread - entry_spread) * entry_direction * first_lots
                     tier_gross = sum(
-                        (spread - te['entry_spread']) * entry_direction * te['lots']
-                        for te in tier_entries
+                        (pinned_spread - te_tier['entry_spread']) * entry_direction * te_tier['lots']
+                        for te_tier in tier_entries
                     )
                     gross_pnl = base_gross + tier_gross
                     total_cost = total_lots * cost_per_lot
@@ -411,9 +571,9 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
                             'instrument': inst,
                             'entry_date': entry_date, 'exit_date': date,
                             'entry_spread': round(entry_spread, 2),
-                            'exit_spread': round(spread, 2),
+                            'exit_spread': round(pinned_spread, 2),
                             'entry_z': round(entry_z_val, 3),
-                            'exit_z': round(z, 3) if not pd.isna(z) else np.nan,
+                            'exit_z': round(pinned_z, 3) if not pd.isna(pinned_z) else np.nan,
                             'direction': 'LONG' if entry_direction == 1 else 'SHORT',
                             'days_held': days_held,
                             'exit_reason': exit_reason,
@@ -424,6 +584,7 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
                             'shape': entry_shape,
                             'shape_survived': exit_reason != 'invalidated',
                             'max_abs_z': round(max_abs_z, 3),
+                            'pinned_contracts': str(resolved_contracts),
                         }
                         all_trades.append(trade)
 
@@ -431,9 +592,12 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
                     tier_entries = []
                     tier_fired = set()
                     max_abs_z = 0.0
+                    resolved_contracts = None
+                    episode_price_history = []
                     continue
 
             if not position_open:
+                # Entry decision uses ROLLING label z-score (current tenor structure)
                 if pd.isna(z) or pd.isna(row['pm_level']):
                     continue
                 is_resting = shape in RESTING_SHAPES
@@ -441,8 +605,26 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end):
                 z_extreme = abs(z) > entry_z
                 pm_ok = row['pm_level'] <= pm_filter
                 if is_resting and dur_ok and z_extreme and pm_ok:
+                    # Resolve rolling tenor to specific contracts at entry
+                    resolved_contracts = resolve_contracts(inst, date)
+
+                    # Block M1-M2 entry if already in the expiry buffer zone
+                    if m1m2_expiry_exit_due(inst, resolved_contracts, date):
+                        resolved_contracts = None
+                        continue
+
+                    pinned_entry = get_contract_spread(contracts, resolved_contracts, date)
+                    if pd.isna(pinned_entry):
+                        pinned_entry = spread  # fallback
+
+                    # Seed episode price history from pinned contracts
+                    episode_price_history = build_pinned_episode_history(
+                        contracts, resolved_contracts, df, row['episode_id'], date)
+
                     position_open = True
-                    entry_date, entry_spread, entry_z_val = date, spread, z
+                    entry_date = date
+                    entry_spread = pinned_entry
+                    entry_z_val = z  # entry z from rolling label (entry decision)
                     entry_shape = shape
                     entry_direction = -1 if z > 0 else 1
                     days_held = 0
@@ -462,6 +644,8 @@ def run_backtest_intraday(config, df=None, tm_cache=None, intraday_df=None):
     """Run backtest using 60-min bars for entry/exit timing.
     Daily panel provides shape, PM, TM, z-score mean/std.
     Intraday bars provide precise price for threshold crossings.
+    NOTE: Intraday bars use tenor-labeled prices (per-contract 60-min data
+    doesn't exist). Daily settlement P&L uses pinned contracts.
 
     Returns dict with single key 'intraday': pd.DataFrame of trades."""
     if df is None or tm_cache is None:
@@ -469,15 +653,22 @@ def run_backtest_intraday(config, df=None, tm_cache=None, intraday_df=None):
     if intraday_df is None:
         intraday_df = load_intraday_data()
 
+    contracts = _panel_cache.get('contracts', {})
     trades = _run_window_intraday(df, tm_cache, config, intraday_df,
-                                   INTRADAY_START, INTRADAY_END)
+                                   INTRADAY_START, INTRADAY_END,
+                                   contracts=contracts)
     return {'intraday': trades}
 
 
-def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end):
+def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end,
+                          contracts=None):
     """Run 60-min intraday backtest.
     Z-score baseline is DAILY (mean/std from daily settlements).
-    60-min bar prices are checked against daily thresholds for precise timing."""
+    60-min bar prices are checked against daily thresholds for precise timing.
+    NOTE: Intraday bars cannot be pinned (per-contract 60-min data doesn't exist).
+    Daily-level exits use pinned contract prices where available."""
+    if contracts is None:
+        contracts = _panel_cache.get('contracts', {})
     ts = pd.Timestamp(test_start)
     te = pd.Timestamp(test_end)
     instruments = config['instruments']
@@ -518,6 +709,8 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
         max_abs_z = 0.0
         tier_entries = []
         tier_fired = set()
+        # Contract pinning state for intraday
+        resolved_contracts = None
 
         # Iterate day by day
         for date_ts in daily_rows.index:
@@ -552,9 +745,17 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                 if days_held >= time_stop:
                     exit_reason = 'time_stop'
 
-                # If daily exit triggered, use daily settlement price
+                # M1-M2 expiry buffer: force-close before near-leg stops trading
+                if exit_reason is None and m1m2_expiry_exit_due(inst, resolved_contracts, date_ts):
+                    exit_reason = 'expiry_buffer'
+
+                # If daily exit triggered, use pinned contract price for P&L
                 if exit_reason:
-                    daily_spread = day[inst] if inst in day.index else np.nan
+                    # Try pinned contract price first
+                    daily_spread = get_contract_spread(contracts, resolved_contracts, date_ts) if resolved_contracts else np.nan
+                    if pd.isna(daily_spread):
+                        # Fallback to tenor-labeled daily price
+                        daily_spread = day[inst] if inst in day.index else np.nan
                     if pd.isna(daily_spread):
                         # Try last intraday bar of the day
                         day_bars = intra_by_date.get(date_ts)
@@ -596,6 +797,7 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                     tier_entries = []
                     tier_fired = set()
                     max_abs_z = 0.0
+                    resolved_contracts = None
                     continue
 
                 # Intraday exits: scan 60-min bars for TP, SL, scale-in
@@ -659,6 +861,7 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                             tier_entries = []
                             tier_fired = set()
                             max_abs_z = 0.0
+                            resolved_contracts = None
                             break
 
                         # Stop loss (intraday)
@@ -701,6 +904,7 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                                 tier_entries = []
                                 tier_fired = set()
                                 max_abs_z = 0.0
+                                resolved_contracts = None
                                 break
 
             # Entry check (daily-level gate, intraday price for execution)
@@ -721,10 +925,16 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                                 continue
                             bar_z = (bar_price - daily_mean) / daily_std
                             if abs(bar_z) > entry_z:
+                                # Resolve contracts at entry for pinning
+                                resolved_contracts = resolve_contracts(inst, date_ts)
+                                # Block M1-M2 entry if already in expiry buffer zone
+                                if m1m2_expiry_exit_due(inst, resolved_contracts, date_ts):
+                                    resolved_contracts = None
+                                    continue
                                 position_open = True
                                 entry_date = date_ts
                                 entry_datetime = bar['datetime']
-                                entry_spread = bar_price
+                                entry_spread = bar_price  # intraday bar price (tenor-labeled, known limitation)
                                 entry_z_val = bar_z
                                 entry_shape = shape
                                 entry_direction = -1 if bar_z > 0 else 1
@@ -815,19 +1025,29 @@ def _compute_naive_sharpe(trades, test_start, test_end, df_ref):
 
 def _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref):
     """Daily portfolio Sharpe using mark-to-market within a test window.
-    Uses 100 MYR flat cost for backward compatibility with published validation."""
+    Uses 100 MYR flat cost for backward compatibility with published validation.
+    Uses pinned contract prices for MtM when available."""
     if len(trades) == 0:
         return np.nan
     ts_dt = pd.Timestamp(test_start)
     te_dt = pd.Timestamp(test_end)
     window_dates = df_ref[(df_ref['date'] >= ts_dt) & (df_ref['date'] <= te_dt)]['date'].sort_values().values
     daily_pnl = pd.Series(0.0, index=window_dates)
+    contracts = _panel_cache.get('contracts', {})
 
     for _, t in trades.iterrows():
         entry_dt = t['entry_date']
         exit_dt = t['exit_date']
         direction = 1 if t['direction'] == 'LONG' else -1
         inst = t['instrument']
+
+        # Parse pinned contracts if available
+        pinned = None
+        if 'pinned_contracts' in t.index and pd.notna(t.get('pinned_contracts')):
+            try:
+                pinned = eval(t['pinned_contracts'])
+            except Exception:
+                pass
 
         trade_days = df_ref[(df_ref['date'] > entry_dt) & (df_ref['date'] <= exit_dt)].copy()
         if len(trade_days) == 0:
@@ -836,7 +1056,13 @@ def _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref):
         prev_spread = t['entry_spread']
         for _, day_row in trade_days.iterrows():
             dt = day_row['date']
-            current_spread = day_row[inst]
+            # Use pinned contract price for MtM
+            if pinned and contracts:
+                current_spread = get_contract_spread(contracts, pinned, dt)
+                if pd.isna(current_spread):
+                    current_spread = day_row[inst]  # fallback
+            else:
+                current_spread = day_row[inst]
             if pd.isna(current_spread):
                 continue
             day_mtm = (current_spread - prev_spread) * direction
@@ -855,13 +1081,15 @@ def _compute_daily_portfolio_sharpe(trades, test_start, test_end, df_ref):
 
 
 def compute_daily_portfolio_sharpe_configurable(trades, test_start, test_end, df_ref, config):
-    """Daily portfolio Sharpe using configurable cost model."""
+    """Daily portfolio Sharpe using configurable cost model.
+    Uses pinned contract prices for MtM when available."""
     if len(trades) == 0:
         return np.nan
     ts_dt = pd.Timestamp(test_start)
     te_dt = pd.Timestamp(test_end)
     window_dates = df_ref[(df_ref['date'] >= ts_dt) & (df_ref['date'] <= te_dt)]['date'].sort_values().values
     daily_pnl = pd.Series(0.0, index=window_dates)
+    contracts = _panel_cache.get('contracts', {})
 
     for _, t in trades.iterrows():
         entry_dt = t['entry_date']
@@ -870,6 +1098,14 @@ def compute_daily_portfolio_sharpe_configurable(trades, test_start, test_end, df
         inst = t['instrument']
         total_lots = t.get('total_lots', 1)
 
+        # Parse pinned contracts if available
+        pinned = None
+        if 'pinned_contracts' in t.index and pd.notna(t.get('pinned_contracts')):
+            try:
+                pinned = eval(t['pinned_contracts'])
+            except Exception:
+                pass
+
         trade_days = df_ref[(df_ref['date'] > entry_dt) & (df_ref['date'] <= exit_dt)].copy()
         if len(trade_days) == 0:
             continue
@@ -877,7 +1113,12 @@ def compute_daily_portfolio_sharpe_configurable(trades, test_start, test_end, df
         prev_spread = t['entry_spread']
         for _, day_row in trade_days.iterrows():
             dt = day_row['date']
-            current_spread = day_row[inst]
+            if pinned and contracts:
+                current_spread = get_contract_spread(contracts, pinned, dt)
+                if pd.isna(current_spread):
+                    current_spread = day_row[inst]
+            else:
+                current_spread = day_row[inst]
             if pd.isna(current_spread):
                 continue
             day_mtm = (current_spread - prev_spread) * direction

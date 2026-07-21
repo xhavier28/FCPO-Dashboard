@@ -1425,3 +1425,75 @@ time_stop                     1          5
   Adj Sharpe: Intraday BETTER (0.675 vs 0.569)
     → Intraday timing improves risk-adjusted returns
   PnL: Intraday +516.0 vs Daily +357.0 (delta +159.0 pts)
+
+
+======================================================================
+M1-M2 EXPIRY BUFFER FIX — MINUTE DATA RESULTS — 2026-07-21
+======================================================================
+SUPERSEDES prior all-9 minute adj Sharpe of 0.675 (contaminated by
+M1-M2 roll-date mismatch). Prior entry preserved above for history.
+
+Fix: M1-M2 force-closed on day >= 8 of near-leg delivery month
+(7 calendar days before nominal 15th LTD). Applied to intraday
+engine path in backtest_engine.py. See dashboard_build_log.txt
+for full fix description.
+
+Pipeline: minute data shares roll logic with daily engine
+(both import from MRBackTest/shared/tenor_mapping.py). Fix applied
+at engine level (backtest_engine.py), not data-build level.
+
+--- Part 3: Fallback Validation (Minute Data, 2024-2026) ---
+  Fallback events after fix: 0
+  M1-M2 trades: 12 (5 expiry_buffer, 4 take_profit, 3 invalidated)
+  All expiry_buffer exits on day 8-10 of delivery month, before
+  NaN gap. No residual fallback to rolling-label pricing.
+
+--- Part 4: M1-M2 Only Result Check (MINUTE DATA, 2024-2026) ---
+  Config: z>1.5, exit<0.5, dur>=3d, 1 lot, PM L0, TM RR<50%, 100 MYR
+  M1-M2 only:
+    Trades:       12
+    Win rate:     75.0%
+    Total PnL:    +208.0 pts
+    Adj Sharpe:   0.686
+    Naive Sharpe: 0.936
+    Max DD:       -36.0 pts
+    Avg Hold:     2.6 days
+
+  All-9 with fix (context):
+    Trades:       113
+    Win rate:     52.2%
+    Total PnL:    +408.0 pts
+    Adj Sharpe:   0.693 (was 0.675 contaminated, delta +0.018)
+    Max DD:       -160.0 pts
+
+  Per-instrument (all-9, with fix):
+    M2-M3          10  40.0%     +9.0    +0.9
+    M3-M4          19  47.4%    -13.0    -0.7
+    M4-M5          18  50.0%     -2.0    -0.1
+    M5-M6          17  47.1%    -20.0    -1.2
+    M1-M2          12  75.0%   +208.0   +17.3
+    BF_M1M2M3      10  80.0%   +261.0   +26.1
+    BF_M2M3M4      11  54.5%     +9.0    +0.8
+    BF_M3M4M5       9  22.2%    -33.0    -3.7
+    BF_M4M5M6       7  57.1%    -11.0    -1.6
+
+--- Part 5: Entry/Exit Z-Score Sensitivity (MINUTE DATA, M1-M2 Only) ---
+  Full 2024-2026 period, single row per combo, no window split.
+
+  entry_z  exit_z     n  win%       PnL  adjSh   maxDD  avgHP  note
+     1.25    0.25    14  71.4%   +245.0  0.756   -36.0    3.8
+     1.25    0.50    17  76.5%   +251.0  0.674   -36.0    2.9
+     1.25    0.75    20  75.0%   +286.0  0.825   -36.0    2.1  BEST (n>=10)
+     1.50    0.25    12  75.0%   +225.0  0.737   -36.0    3.2
+     1.50    0.50    12  75.0%   +208.0  0.686   -36.0    2.6  LOCKED BASELINE
+     1.50    0.75    13  76.9%   +187.0  0.651   -36.0    2.1
+     1.75    0.25     9  66.7%   +148.0  0.585   -36.0    2.8  LOW-N
+     1.75    0.50     9  66.7%   +132.0  0.474   -36.0    2.4  LOW-N
+     1.75    0.75     9  66.7%   +123.0  0.474   -36.0    2.4  LOW-N
+     2.00    0.25     5  80.0%    +56.0  0.280    +0.0    3.8  LOW-N
+     2.00    0.50     5  80.0%    +46.0  0.138    +0.0    3.2  LOW-N
+     2.00    0.75     5  80.0%    +46.0  0.138    +0.0    3.2  LOW-N
+
+  Best candidate (n>=10): entry_z=1.25, exit_z=0.75
+    adj Sharpe = 0.825, n = 20, PnL = +286.0
+    Delta vs locked baseline: +0.139
