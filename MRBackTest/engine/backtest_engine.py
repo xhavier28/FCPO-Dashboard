@@ -73,27 +73,41 @@ INTRADAY_END = '2026-12-31'  # loads up to most recent available
 
 RESTING_SHAPES = ('0.0', '1')
 
-# ── M1-M2 expiry buffer ──
+# ── Expiry buffer (all instruments) ──
 # FCPO last trading day = 15th of delivery month (or preceding market day).
-# M1-M2's near leg is the front-month contract. Force-close any open M1-M2
-# position on or after the 8th of the near-leg delivery month (= 7 calendar
-# days before the nominal 15th LTD). This eliminates the NaN gap caused by
-# the contract ceasing to trade before the shared day-16 roll rule kicks in.
-M1M2_EXPIRY_BUFFER_DAYS = 7  # calendar days before 15th LTD
-M1M2_FORCE_CLOSE_DAY = 15 - M1M2_EXPIRY_BUFFER_DAYS  # = 8th of delivery month
+# Generic rule: force-close any open position when the current date falls
+# within EXPIRY_BUFFER_DAYS calendar days of ANY leg's LTD. This is checked
+# per resolved contract leg — if any leg (near, far, or middle for butterflies)
+# is in its delivery month and date.day >= FORCE_CLOSE_DAY, the position exits.
+#
+# In practice, only M1-M2 (near_offset=0, spread roll day 16) triggers this
+# regularly, because all other instruments have near legs at least 1 month
+# from LTD at entry. The generic check provides a safety net for all 9.
+#
+# SUPERSEDES the prior M1-M2-only m1m2_expiry_exit_due() (2026-07-21).
+EXPIRY_BUFFER_DAYS = 7  # calendar days before 15th LTD
+EXPIRY_FORCE_CLOSE_DAY = 15 - EXPIRY_BUFFER_DAYS  # = 8th of delivery month
 
 
-def m1m2_expiry_exit_due(inst, resolved_contracts, date):
-    """Check if an M1-M2 position must be force-closed due to near-leg expiry.
-    Returns True if date.day >= 8 and date is in the near-leg's delivery month.
-    Only applies to M1-M2 instrument."""
-    if inst != 'M1-M2' or resolved_contracts is None:
+def expiry_exit_due(inst, resolved_contracts, date):
+    """Check if ANY leg of a position is within the expiry buffer zone.
+    Returns True if date is in any leg's delivery month and date.day >= 8.
+    Works for all instruments (spreads: 2 legs, butterflies: 3 legs)."""
+    if resolved_contracts is None:
         return False
-    near_ym = resolved_contracts[0]  # (year, month) of near leg
-    near_year, near_month = near_ym
-    if hasattr(date, 'year'):
-        return date.year == near_year and date.month == near_month and date.day >= M1M2_FORCE_CLOSE_DAY
+    if not hasattr(date, 'year'):
+        return False
+    for ym in resolved_contracts:
+        leg_year, leg_month = ym
+        if date.year == leg_year and date.month == leg_month and date.day >= EXPIRY_FORCE_CLOSE_DAY:
+            return True
     return False
+
+
+# Backward compatibility alias
+def m1m2_expiry_exit_due(inst, resolved_contracts, date):
+    """Deprecated: use expiry_exit_due() instead. Kept for existing scripts."""
+    return expiry_exit_due(inst, resolved_contracts, date)
 
 
 # ── Contract pinning infrastructure ──
@@ -552,7 +566,7 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end, contracts=None
                     exit_reason = 'time_stop'
 
                 # M1-M2 expiry buffer: force-close before near-leg stops trading
-                if exit_reason is None and m1m2_expiry_exit_due(inst, resolved_contracts, date):
+                if exit_reason is None and expiry_exit_due(inst, resolved_contracts, date):
                     exit_reason = 'expiry_buffer'
 
                 if exit_reason:
@@ -608,8 +622,8 @@ def _run_window_daily(df, tm_cache, config, test_start, test_end, contracts=None
                     # Resolve rolling tenor to specific contracts at entry
                     resolved_contracts = resolve_contracts(inst, date)
 
-                    # Block M1-M2 entry if already in the expiry buffer zone
-                    if m1m2_expiry_exit_due(inst, resolved_contracts, date):
+                    # Block entry if already in the expiry buffer zone (any leg)
+                    if expiry_exit_due(inst, resolved_contracts, date):
                         resolved_contracts = None
                         continue
 
@@ -746,7 +760,7 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                     exit_reason = 'time_stop'
 
                 # M1-M2 expiry buffer: force-close before near-leg stops trading
-                if exit_reason is None and m1m2_expiry_exit_due(inst, resolved_contracts, date_ts):
+                if exit_reason is None and expiry_exit_due(inst, resolved_contracts, date_ts):
                     exit_reason = 'expiry_buffer'
 
                 # If daily exit triggered, use pinned contract price for P&L
@@ -928,7 +942,7 @@ def _run_window_intraday(df, tm_cache, config, intraday_df, test_start, test_end
                                 # Resolve contracts at entry for pinning
                                 resolved_contracts = resolve_contracts(inst, date_ts)
                                 # Block M1-M2 entry if already in expiry buffer zone
-                                if m1m2_expiry_exit_due(inst, resolved_contracts, date_ts):
+                                if expiry_exit_due(inst, resolved_contracts, date_ts):
                                     resolved_contracts = None
                                     continue
                                 position_open = True

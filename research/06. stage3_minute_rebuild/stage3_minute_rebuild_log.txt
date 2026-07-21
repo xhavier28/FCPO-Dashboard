@@ -1497,3 +1497,55 @@ at engine level (backtest_engine.py), not data-build level.
   Best candidate (n>=10): entry_z=1.25, exit_z=0.75
     adj Sharpe = 0.825, n = 20, PnL = +286.0
     Delta vs locked baseline: +0.139
+
+
+======================================================================
+FULL-PANEL ENTRY/EXIT SENSITIVITY SWEEP — MINUTE DATA — 2026-07-21
+======================================================================
+ALL 9 INSTRUMENTS, 2024-2026, minute-data execution timing.
+Generic expiry_exit_due() applied (tenor-ladder integration).
+SUPERSEDES-IN-SCOPE the M1-M2-only sensitivity entry above (that
+entry was correct for what it tested; this extends to the full panel).
+
+--- Portfolio-Level Results ---
+  entry_z  exit_z     n  win%     PnL  adjSh   maxDD  avgHP  note
+     1.25    0.25   139  53.2%  +382.0  0.434  -197.0    5.2  WORSE
+     1.25    0.50   157  53.5%  +338.0  0.270  -207.0    4.2  WORSE
+     1.25    0.75   177  50.8%  +285.0  0.090  -283.0    3.2  WORSE
+     1.50    0.25   108  55.6%  +493.0  0.948  -159.0    5.4  BETTER
+     1.50    0.50   113  52.2%  +408.0  0.693  -160.0    4.6  BASELINE
+     1.50    0.75   119  51.3%  +358.0  0.519  -194.0    3.7  WORSE
+     1.75    0.25    80  57.5%  +407.0  0.974   -96.0    5.2  BETTER
+     1.75    0.50    82  56.1%  +361.0  0.832  -101.0    4.7  BETTER
+     1.75    0.75    86  51.2%  +322.0  0.659  -136.0    3.8
+     2.00    0.25    57  61.4%  +235.0  0.447  -109.0    4.9  WORSE
+     2.00    0.50    58  58.6%  +212.0  0.366  -107.0    4.5  WORSE
+     2.00    0.75    58  55.2%  +167.0  0.222  -124.0    4.1  WORSE
+     2.25    0.25    35  60.0%  +228.0  0.895   -68.0    4.3  BETTER
+     2.25    0.50    35  60.0%  +210.0  0.781   -70.0    4.2  BETTER
+     2.25    0.75    35  60.0%  +193.0  0.725   -70.0    4.0
+     2.50    0.25    21  52.4%  +121.0  0.778   -38.0    4.7  LOW-N
+     2.50    0.50    21  52.4%  +118.0  0.667   -38.0    4.6  LOW-N
+     2.50    0.75    21  52.4%  +105.0  0.584   -38.0    4.4  LOW-N
+
+Best portfolio candidate (n>=30): entry_z=1.75, exit_z=0.25
+  adj Sharpe = 0.974, n = 80, PnL = +407.0, maxDD = -96.0
+  Delta vs locked baseline (1.5/0.5): +0.281
+
+M1-M2-only finding check (entry 1.25/exit 0.75):
+  Portfolio adj Sharpe at 1.25/0.75: 0.090
+  Portfolio adj Sharpe at 1.50/0.50: 0.693
+  M1-M2 finding DOES NOT HOLD at portfolio level (-0.603)
+  Reason: lowering entry threshold to 1.25 floods non-M1-M2 instruments
+  with marginal trades (157 -> 113 at 1.5), degrading win% and Sharpe
+  on the core spreads (M3-M4, M4-M5, M5-M6 all negative at 1.25).
+
+Key findings:
+  1. Tighter exit (0.25) consistently beats wider exits at every entry level.
+  2. Entry 1.75/exit 0.25 is the best viable combination (n=80, Sharpe 0.974).
+  3. Entry 1.50/exit 0.25 also strong (n=108, Sharpe 0.948).
+  4. Entry >= 2.0 collapses trade count; 2.25+ flagged as LOW-N.
+  5. The M1-M2-specific finding (1.25/0.75 best) is INSTRUMENT-SPECIFIC
+     and does not generalize — lowering entry to 1.25 adds many losing
+     trades in non-M1-M2 instruments.
+  6. BF_M1M2M3 is the single largest PnL contributor at every threshold.

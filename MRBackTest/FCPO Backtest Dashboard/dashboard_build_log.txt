@@ -282,3 +282,38 @@ Shared code: fix lives in backtest_engine.py, used by both _run_window_daily
 and _run_window_intraday. The minute pipeline (stage3_minute_rebuild.ipynb)
 imports roll logic from MRBackTest/shared/tenor_mapping.py — same shared
 code, fix applied at engine level not at data-build level.
+
+
+======================================================================
+TENOR-LADDER INTEGRATION (GENERIC EXPIRY EXIT) — 2026-07-21
+======================================================================
+SUPERSEDES the M1-M2-only m1m2_expiry_exit_due() above (preserved for
+history). Old function kept as backward-compatibility alias.
+
+Change: replaced M1-M2-specific expiry exit with generic expiry_exit_due()
+that checks ALL legs of ANY instrument against the expiry buffer zone.
+  - Function: expiry_exit_due(inst, resolved_contracts, date)
+  - Rule: for each leg (year, month) in resolved_contracts, if
+    date.year == year and date.month == month and date.day >= 8, exit.
+  - Constants: EXPIRY_BUFFER_DAYS=7, EXPIRY_FORCE_CLOSE_DAY=8
+  - Applied to both _run_window_daily and _run_window_intraday
+  - Also blocks new entries when any resolved leg is in buffer zone
+
+Design decisions:
+  - Butterfly's day-2 roll rule (ROLL_DAY_BUTTERFLY=1) KEPT as-is —
+    it's a tenor-label mapping rule, independent of position exit.
+    The generic expiry exit is a position exit rule, applied on top.
+  - In practice, only M1-M2 triggers expiry_exit_due because all other
+    instruments have near legs >= 1 month from LTD at entry.
+  - The generic check provides a safety net for all 9 instruments.
+
+Downstream consumers NOT changed: z-score computation, daily panel
+columns, PM/TM features, intraday bar loading, dashboard tabs. Only
+the expiry exit check was generalized.
+
+Validation (minute data, 2024-2026, all 9 instruments):
+  Fallback events before: 3 (all M1-M2)
+  Fallback events after:  0
+  Trade count: 113 (identical to M1-M2-only fix)
+  Adj Sharpe:  0.693 (identical, delta +0.000)
+  Expiry buffer exits: 5 (all M1-M2, as expected)
