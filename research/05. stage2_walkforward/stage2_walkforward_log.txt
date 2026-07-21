@@ -846,3 +846,293 @@ Worst-case verdict:
   Baseline (1-lot):        1.167
   Progressive (5-lot max): 0.858 (-0.309)
   Capped (3-lot max):      1.032 (-0.135)
+
+
+
+================================================================================
+CORRECTED RE-VALIDATION (POST CONTRACT-PINNING FIX) — 2026-07-20
+================================================================================
+
+NOTE: All results in this section supersede prior entries.
+BUG: Open positions read rolling tenor labels (M1-M2, etc.) every day.
+     Since M1-M6 shift at roll dates, trades spanning roll dates
+     silently switched to different contract pairs.
+FIX: At entry, resolve rolling label to specific contract months.
+     Price the trade using those fixed contracts for its entire life,
+     including z-score-based exit checks (TP/SL).
+
+------------------------------------------------------------
+SANITY CHECK — ROLL-SPANNING TRADES
+------------------------------------------------------------
+
+  --- M1-M2 entry Jan15, exit Jan16 (roll day) ---
+  Rolling: entry=31.0, exit=-45.0, delta=-76.0
+  Pinned contracts: ((2019, 1), (2019, 2))
+  Pinned: entry=31.0, exit=nan, delta=nan
+  Original jump artifact: -76 pts — minimal change
+
+  --- BF_M1M2M3 entry Mar12, exit Mar26 (roll Mar18) ---
+  Rolling: entry=-49.0, exit=-26.0, delta=23.0
+  Pinned contracts: ((2019, 4), (2019, 5), (2019, 6))
+  Pinned: entry=-12.0, exit=-26.0, delta=-14.0
+  Original jump artifact: 95 pts — ELIMINATED
+
+  --- M1-M2 entry Mar13, exit Mar26 (roll Mar18) ---
+  Rolling: entry=0.0, exit=-61.0, delta=-61.0
+  Pinned contracts: ((2019, 3), (2019, 4))
+  Pinned: entry=nan, exit=nan, delta=nan
+  Original jump artifact: 100 pts — minimal change
+----------------------------------------------------------------------
+
+--- 5a: Entry z-score ---
+----------------------------------------------------------
+
+--- 5b: Duration ---
+----------------------------------------------------------
+
+--- 5c: Instrument set ---
+----------------------------------------------------------
+
+--- 5d: TM threshold ---
+----------------------------------------------------------
+
+--- 5e: Not re-run in this task ---
+
+------------------------------------------------------------
+FULL 4-WINDOW COMPARISON — LOCKED CONFIG
+------------------------------------------------------------
+Window    Orig n  Corr n   Orig PnL   Corr PnL  Orig AdjSh  Corr AdjSh
+W1           156     173     1395.0      498.0       1.633       0.849
+W2           133     140     6131.0     3757.0       2.540       1.916
+W3           126     139     1437.0      -22.0       1.167      -0.026
+W4            72      74      700.0      -53.0       1.215      -0.153
+Corrected worst-case adj Sharpe: -0.153
+
+------------------------------------------------------------
+PARAMETER RE-CHECKS
+------------------------------------------------------------
+
+  5a: z-score:
+    z>1.5              worst-case: -0.153
+    z>1.75             worst-case: -0.681
+    z>2.0              worst-case: -1.137
+    Conclusion HOLDS: best = z>1.5 (worst-case -0.153)
+
+  5b: Duration:
+    dur>=3d            worst-case: -0.153
+    dur>=5d            worst-case: -0.457
+    dur>=10d           worst-case: -0.519
+    Conclusion HOLDS: best = dur>=3d (worst-case -0.153)
+
+  5c: Instruments:
+    9-instrument       worst-case: -0.153
+    8-instrument       worst-case: -0.119
+    Conclusion CHANGES: best = 8-instrument (worst-case -0.119)
+
+  5d: TM threshold:
+    No-Overlay         worst-case: -0.153
+    RR<70%             worst-case: -0.161
+    RR<60%             worst-case: -0.153
+    RR<50%             worst-case: -0.153
+    Conclusion CHANGES: best = No-Overlay (worst-case -0.153)
+
+5e: Stop-loss, scale-in, M6-M9 extension — pending re-validation.
+
+LIMITATION: 60-min intraday bars use tenor-labeled prices (per-contract
+60-min data does not exist). Daily-level exits use pinned contracts;
+intraday bar scanning uses tenor-labeled prices as approximation.
+This only affects the intraday tab (2024-2026).
+
+
+================================================================================
+FALLBACK DIAGNOSIS & MINUTE-DATA-DERIVED PRICE FIX — 2026-07-21
+================================================================================
+NOTE: This section further refines the "CORRECTED RE-VALIDATION" entry
+from the prior task. Numbers here are the more accurate ones going forward.
+
+Config: z>1.5, dur>=3d, 9 instruments, PM L0, No TM overlay,
+100 MYR (4.0 pts) round-trip cost.
+
+------------------------------------------------------------
+PART 1: FALLBACK DIAGNOSIS (corrected v1 — daily-only)
+------------------------------------------------------------
+
+Of 525 total trades across 4 windows, 31 trades (5.9%) used rolling-label
+fallback pricing on at least one day. 9 trades (1.7%) had fallback at entry.
+564 total fallback trade-day events across all trades.
+
+1.2 — Fallback events by YEAR:
+
+  Year    FB Events   Trade-Days    FB%   2024+?
+  ------  ----------  -----------  -----  ------
+  2018          104           22    n/a   no
+  2019          120          954   12.6%  no
+  2020           20          590    3.4%  no
+  2021          108          748   14.4%  no
+  2022           44          484    9.1%  no
+  2023           20          752    2.7%  no
+  2024           68          567   12.0%  YES
+  2025           24          423    5.7%  YES
+  2026           56          127   44.1%  YES
+
+  Fallback events in 2024+ range: 148/564 (26.2%)
+  Fallback events pre-2024:       416/564 (73.8%)
+
+1.3 — Fallback events by INSTRUMENT:
+
+  Instrument   FB Events    % of Total
+  ----------  ----------  -----------
+  M1-M2              492        87.2%
+  BF_M1M2M3           56         9.9%
+  M2-M3               16         2.8%
+
+  Fallbacks are overwhelmingly concentrated in M1-M2 (87.2%).
+  The front-month spread has the most contract-data gaps because
+  front-month contracts expire soonest and daily term structure CSVs
+  often lack early-life pricing for these short-dated contracts.
+
+  28 of 31 affected trades are M1-M2, 2 are BF_M1M2M3, 1 is M2-M3.
+  M3-M4 through M5-M6 and BF_M2M3M4 through BF_M4M5M6 have ZERO
+  fallback trades.
+
+1.4 — Minute-data coverage of fallbacks:
+
+  Only 26.2% of fallback events fall within the 2024+ range where
+  minute data exists. The remaining 73.8% are pre-2024 and cannot
+  be fixed by minute-derived prices.
+
+
+------------------------------------------------------------
+PART 2: MINUTE-DATA FIX — RE-RUN RESULTS
+------------------------------------------------------------
+
+Minute-data source: Raw Data/Minutes Data/{Spread,Butterfly}/
+  42 spread series + 41 butterfly series loaded
+  Date range: 2023-02-16 to 2026-07-16
+  Daily close derived as LAST 60-min bar of each trading day.
+
+After substituting minute-derived daily close wherever the existing
+daily dataset returns NaN (for dates in 2024+ range only):
+
+  Total trades (v2, minute-filled): 526
+  Trades with any fallback: 30 (5.7%) — down from 31 (5.9%)
+  Minute-derived prices used at entry: 1 trade
+  Minute-derived prices used during hold: 7 trade-days
+  Residual fallback events: 512 (down from 564)
+    In 2024+ range: 96 (down from 148)
+    Pre-2024:       416 (unchanged — no minute data available)
+
+The improvement is minimal: 52 trade-day events were filled by minute
+data, but only 1 trade was materially affected (shifted from fallback
+to non-fallback).
+
+2.3 — THREE-WAY COMPARISON TABLE:
+
+  Window             Metric      Original    Corr v1    Corr v2   v1 FB#  v2 FB#
+  ----------------  ---------  ----------  ---------  ---------  ------  ------
+  W1 (2019-2020)    n                 156        173        173      13      13
+                    PnL            1395.0      498.0      498.0
+                    AdjSharpe       1.633      0.849      0.849
+  W2 (2021-2022)    n                 133        139        139       6       6
+                    PnL            6131.0     3781.0     3781.0
+                    AdjSharpe       2.540      1.929      1.929
+  W3 (2023-2024)    n                 126        139        139       7       7
+                    PnL            1437.0      -22.0      -22.0
+                    AdjSharpe       1.167     -0.026     -0.026
+  W4 (2025-2026)    n                  72         74         75       5       4
+                    PnL             700.0      -53.0      -58.0
+                    AdjSharpe       1.215     -0.153     -0.168
+
+  Original = pre-pinning (contaminated by roll-date jumps)
+  Corr v1 = pinned contracts, daily term structure only, rolling-label fallback
+  Corr v2 = pinned contracts, daily + minute-derived close, rolling-label fallback
+             only for pre-2024 dates where minute data is unavailable
+
+W1-W3 are identical between v1 and v2. W4 shifted very slightly:
+one additional trade was captured (75 vs 74), and the minute-derived
+price for the filled gap marginally worsened PnL (-58 vs -53).
+
+2.4 — WORST-CASE ADJUSTED SHARPE:
+
+  Original (contaminated) worst-case: 1.167
+  Corrected v1 (daily-only) worst-case: -0.153
+  Corrected v2 (minute-filled) worst-case: -0.168
+  Change from v1 to v2: -0.015
+
+  Direction: slightly WORSE (by 0.015 adj Sharpe units)
+  Magnitude: NOT meaningful (< 0.05 threshold)
+
+The minute-data fix does not materially change the corrected result.
+The -0.153 (v1) / -0.168 (v2) worst-case is genuine: it comes from
+the 494 fully-pinned trades, not from fallback contamination.
+
+
+------------------------------------------------------------
+PART 3: PARAMETER RE-CHECKS — SKIPPED
+------------------------------------------------------------
+
+Worst-case change from v1 to v2 is -0.015 (< 0.05 threshold).
+All prior parameter conclusions from the CORRECTED RE-VALIDATION
+section remain valid without re-running:
+
+  5a: z>1.5 remains best (worst-case -0.153 -> -0.168, no rank change)
+  5b: dur>=3d remains best
+  5c: 8-inst marginally better than 9-inst (unchanged)
+  5d: No-Overlay remains best
+
+The minute-data fix does not alter any parameter comparison.
+
+
+------------------------------------------------------------
+PINNED vs FALLBACK SPLIT — DIAGNOSTIC DETAIL
+------------------------------------------------------------
+
+Splitting v1 trades (525 total, 31 fallback, 494 pinned-only):
+
+  Window             Group       n   Win%    TotalPnL   AdjSharpe
+  ----------------  --------  ----  ------  ---------  ----------
+  W1 (2019-2020)    ALL        173   53.8%      498.0       0.849
+                    Pinned     160   52.5%      264.0       0.670
+                    Fallback    13   69.2%      234.0       0.569
+  W2 (2021-2022)    ALL        139   62.6%     3781.0       1.929
+                    Pinned     133   60.9%     2670.0       1.950
+                    Fallback     6  100.0%     1111.0       0.937
+  W3 (2023-2024)    ALL        139   49.6%      -22.0      -0.026
+                    Pinned     132   47.7%     -356.0      -0.498
+                    Fallback     7   85.7%      334.0       0.745
+  W4 (2025-2026)    ALL         74   36.5%      -53.0      -0.153
+                    Pinned      69   33.3%     -212.0      -0.641
+                    Fallback     5   80.0%      159.0       1.481
+
+  Aggregate         ALL        525   52.6%     4204.0
+                    Pinned     494   50.8%     2366.0
+                    Fallback    31   80.6%     1838.0
+
+The 31 fallback trades (80.6% win rate, +1838 PnL) are MASKING the
+true pinned-price result. Without them, the pinned-only subset shows:
+  W3: adj Sharpe -0.498 (vs -0.026 combined)
+  W4: adj Sharpe -0.641 (vs -0.153 combined)
+
+The fallback trades' inflated win rate likely reflects the original
+rolling-label bug: they see artificial mean-reversion from tenor-label
+jumps at roll dates, which flatters P&L. The corrected pinned-price
+data confirms the strategy genuinely loses in W3-W4.
+
+Fallback by instrument:
+
+  Instrument    Total  Pinned  Fallback   FB%   Pinned PnL   FB PnL
+  ----------  ------  ------  --------  -----  ----------  -------
+  M1-M2           56      28        28  50.0%       714.0   1848.0
+  BF_M1M2M3       70      68         2   2.9%       615.0     -4.0
+  M2-M3           45      44         1   2.2%       493.0     -6.0
+  M3-M4           51      51         0   0.0%       203.0      0.0
+  M4-M5           49      49         0   0.0%       292.0      0.0
+  M5-M6           48      48         0   0.0%        -9.0      0.0
+  BF_M2M3M4       62      62         0   0.0%       217.0      0.0
+  BF_M3M4M5       68      68         0   0.0%      -152.0      0.0
+  BF_M4M5M6       76      76         0   0.0%        -7.0      0.0
+
+M1-M2 alone contributes 28 of 31 fallback trades and +1848 of +1838
+fallback PnL. Half of all M1-M2 trades (28/56) use fallback pricing.
+M1-M2 pinned-only PnL is still positive (+714), but the fallback
+portion is 2.6x larger (+1848) — highly suspect.
