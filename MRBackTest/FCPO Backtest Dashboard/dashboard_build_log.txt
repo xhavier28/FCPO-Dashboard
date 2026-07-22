@@ -451,3 +451,31 @@ Visual markers:
 Spot-check (5 cells at 22/44 MYR vs old 100 MYR sweep):
   Trade counts identical at all 5 checkpoints (113, 80, 108, 157, 58).
   PnL/Sharpe differ only due to cost difference, as expected.
+
+======================================================================
+2026-07-22  SPREAD-PAIR CHART — INSTRUMENT × CALENDAR-MONTH PAIR VIEW
+======================================================================
+
+Replaced the old "delivery month" dropdown with an "Instrument × Pair"
+dropdown. Each option is a specific instrument-pair-period, e.g.
+"M3-M4: Feb26-Mar26 (4 trades)" or "BF_M1M2M3: Oct24-Nov24-Dec24 (2 trades)".
+
+Key changes:
+1. build_spread_pair_options() — scans both spread and butterfly wide CSVs
+   to find all instrument × calendar-month pair periods. Sorts by start date.
+   Total: ~275 periods across all 9 instruments, of which 89 have trades.
+
+2. build_spread_pair_chart() — plots ONE instrument-pair-period:
+   - Price line from the correct tenor column in the wide CSV
+   - Trade markers filtered to ONLY trades matching that exact instrument
+     AND resolved contracts (eliminates pile-up from old ANY-leg matching)
+   - Tenor-stage labels: vertical dotted lines + "Xm" annotations at each
+     month boundary showing months-to-near-leg-expiry countdown
+
+3. "Show only pairs with trades" checkbox (default ON) — filters the
+   dropdown from ~275 to 89 options. Uncheck to see all periods.
+
+Validation (baseline 1.5/0.5, 22/44 MYR):
+  M3-M4: Feb26-Mar26 = 4 trades ✓
+  All 113 trades matched to exactly 89 unique instrument-pair combos ✓
+  No duplicate or missing trades ✓
