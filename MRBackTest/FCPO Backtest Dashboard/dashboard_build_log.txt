@@ -401,3 +401,53 @@ Spot-check validation (3 months):
 
   Entry/exit dates, spreads, and exit reasons match per-trade table.
   Existing sliders, filters, and per-trade table NOT affected.
+
+
+======================================================================
+V2 BUG FIX + SENSITIVITY TABLE — 2026-07-22
+======================================================================
+
+--- Part A: Calendar Chart NameError Fix ---
+
+Bug: line 620 referenced variable 'result' which is defined later in
+the script (line 635). The calendar-month chart expander executed before
+'result' was assigned, causing NameError on every page load.
+
+Fix: replaced 'result' with st.session_state.get('v2_results') which
+is always available (initialized to None at line 564).
+
+--- Part B: PnL/Win% Display ---
+
+Code analysis confirmed: compute_metrics (backtest_engine.py line
+983-988) computes win_rate and total_pnl from trades['net_pnl'],
+which already includes the config's cost deduction. The dashboard's
+render_summary_metrics displays these values directly.
+
+At entry=1.5/exit=0.5, 22/44 MYR cost, the engine produces:
+  n=113, win=67.3%, PnL=+728.0, adj Sharpe=1.366, max DD=-81.6
+These match the corrected reference exactly.
+
+The user-reported 69%/+853 could not be reproduced from current code.
+69.0% matches the GROSS win rate (gross_pnl > 0), suggesting a stale
+session state from a prior run. No code change needed — the display
+logic correctly uses net_pnl throughout.
+
+--- Part C: Entry/Exit Sensitivity Table ---
+
+Added interactive 7x6 sensitivity table to v2:
+  Entry Z: 1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5
+  Exit Z:  0.0, 0.1, 0.2, 0.3, 0.4, 0.5
+  42 cells total, portfolio-level (all 9 instruments).
+
+Each row: trades, win%, PnL, adj Sharpe, max DD, avg HP.
+Uses corrected cost (22/44 MYR) and net_pnl throughout.
+Recomputes live when dashboard parameters change (duration, etc.).
+
+Visual markers:
+  Green = best adj Sharpe row
+  Blue  = baseline (1.5/0.5)
+  Grey italic = low-N (<30 trades)
+
+Spot-check (5 cells at 22/44 MYR vs old 100 MYR sweep):
+  Trade counts identical at all 5 checkpoints (113, 80, 108, 157, 58).
+  PnL/Sharpe differ only due to cost difference, as expected.

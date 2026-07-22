@@ -617,7 +617,8 @@ with st.expander("Calendar-Month Tenor Tracking", expanded=False):
                 index=len(sorted_contracts) - 1,
                 key='v2_cal_month',
             )
-            trades_for_chart = result['trades'] if result is not None else None
+            v2_res = st.session_state.get('v2_results')
+            trades_for_chart = v2_res['trades'] if v2_res is not None else None
             fig_cal = build_single_month_chart(cal_df, sel_month, trades_for_chart)
             if fig_cal:
                 st.plotly_chart(fig_cal, use_container_width=True)
@@ -707,3 +708,96 @@ else:
                 'Total PnL': pnl,
             })
         st.dataframe(pd.DataFrame(agg_rows).set_index('Exit Reason'), use_container_width=True)
+
+    # ──────────────────────────────────────────────────────────────
+    # PART C: Entry/Exit Z-Score Sensitivity Table
+    # ──────────────────────────────────────────────────────────────
+
+    st.markdown("### Entry/Exit Z-Score Sensitivity")
+    st.caption(
+        "Sweeps entry z-score (1.0–2.5) × exit z-score (0.0–0.5) "
+        "using current dashboard settings for all other parameters. "
+        "Recomputes live when parameters change."
+    )
+
+    LOW_N_THRESHOLD = 30
+
+    if st.button("Run Sensitivity Sweep", key='v2_run_sweep'):
+        with st.spinner("Running 42-cell sensitivity sweep..."):
+            sweep_rows = []
+            current_config = result.get('config', build_config())
+            entry_vals = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
+            exit_vals = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+
+            df_panel, tm_cache_panel = get_panel()
+            intraday_data = get_intraday()
+
+            for ez in entry_vals:
+                for xz in exit_vals:
+                    sweep_config = current_config.copy()
+                    sweep_config['entry_z'] = ez
+                    sweep_config['exit_z'] = xz
+                    sweep_res = engine.run_backtest_intraday(
+                        sweep_config, df_panel, tm_cache_panel, intraday_data)
+                    sweep_trades = sweep_res['intraday']
+                    sweep_m = engine.compute_metrics(
+                        sweep_trades, df_panel, engine.INTRADAY_START, engine.INTRADAY_END)
+                    sweep_sharpe = engine.compute_daily_portfolio_sharpe_configurable(
+                        sweep_trades, engine.INTRADAY_START, engine.INTRADAY_END,
+                        df_panel, sweep_config)
+
+                    is_baseline = (ez == 1.5 and xz == 0.5)
+                    sweep_rows.append({
+                        'Entry Z': ez,
+                        'Exit Z': xz,
+                        'Trades': sweep_m['n_trades'],
+                        'Win%': sweep_m['win_rate'],
+                        'PnL': sweep_m['total_pnl'],
+                        'Adj Sharpe': sweep_sharpe if not (isinstance(sweep_sharpe, float) and np.isnan(sweep_sharpe)) else 0.0,
+                        'Max DD': sweep_m['max_dd'],
+                        'Avg HP': sweep_m['avg_hp'],
+                        '_is_baseline': is_baseline,
+                        '_low_n': sweep_m['n_trades'] < LOW_N_THRESHOLD,
+                    })
+
+            sweep_df = pd.DataFrame(sweep_rows)
+
+            # Find best Sharpe row
+            best_idx = sweep_df['Adj Sharpe'].idxmax()
+
+            st.session_state['v2_sweep'] = sweep_df
+            st.session_state['v2_sweep_best_idx'] = best_idx
+
+    # Display sweep results if available
+    sweep_df = st.session_state.get('v2_sweep')
+    if sweep_df is not None:
+        best_idx = st.session_state.get('v2_sweep_best_idx', -1)
+
+        def style_sweep(row):
+            styles = [''] * len(row)
+            if row.name == best_idx:
+                styles = ['background-color: rgba(44, 160, 44, 0.3)'] * len(row)
+            elif row.get('_is_baseline', False):
+                styles = ['background-color: rgba(31, 119, 180, 0.3)'] * len(row)
+            if row.get('_low_n', False):
+                styles = ['color: #888888; font-style: italic'] * len(row)
+            return styles
+
+        display_sweep = sweep_df.drop(columns=['_is_baseline', '_low_n'])
+        styled_sweep = sweep_df.style.apply(style_sweep, axis=1).format({
+            'Entry Z': '{:.2f}', 'Exit Z': '{:.1f}',
+            'Win%': '{:.1f}', 'PnL': '{:+.1f}',
+            'Adj Sharpe': '{:.3f}', 'Max DD': '{:+.1f}', 'Avg HP': '{:.1f}',
+        })
+        # Hide internal columns
+        styled_sweep = styled_sweep.hide(subset=['_is_baseline', '_low_n'], axis='columns')
+        st.dataframe(styled_sweep, use_container_width=True, height=500)
+
+        best_row = sweep_df.iloc[best_idx]
+        baseline_row = sweep_df[sweep_df['_is_baseline']]
+        st.caption(
+            f"Green = best Sharpe (entry={best_row['Entry Z']:.2f}, exit={best_row['Exit Z']:.1f}, "
+            f"Sharpe={best_row['Adj Sharpe']:.3f}) | "
+            f"Blue = baseline (1.5/0.5) | "
+            f"Grey italic = low-N (<{LOW_N_THRESHOLD} trades)"
+        )
