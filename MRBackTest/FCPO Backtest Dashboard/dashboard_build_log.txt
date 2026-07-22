@@ -317,3 +317,58 @@ Validation (minute data, 2024-2026, all 9 instruments):
   Trade count: 113 (identical to M1-M2-only fix)
   Adj Sharpe:  0.693 (identical, delta +0.000)
   Expiry buffer exits: 5 (all M1-M2, as expected)
+
+
+======================================================================
+V2 MINUTE-DATA DEBUG DASHBOARD — 2026-07-22
+======================================================================
+
+PURPOSE: Single-tab, minute-data-only dashboard for inspecting exit
+reasons and interactively tweaking entry/exit z-score thresholds.
+Separate from v1 (app.py on port 8506) — v1 NOT modified.
+
+FILE: MRBackTest/FCPO Backtest Dashboard/app_v2.py
+PORT: 8507
+RUN:  python -m streamlit run "MRBackTest/FCPO Backtest Dashboard/app_v2.py" --server.port 8507
+
+ARCHITECTURE:
+  - Single tab, no daily data tab
+  - Reuses validated backtest engine (backtest_engine.py) — no
+    duplicated logic
+  - Reuses tenor_mapping.py for calendar-month labeling
+  - Imports engine via importlib (same pattern as v1)
+
+FEATURES:
+  1. Calendar-month tenor tracking chart (collapsible expander)
+     - Each line = one calendar delivery month contract (e.g. Jan26)
+     - Lines cut off at expiry-buffer deadline (day 8 of delivery month)
+     - Color-coded by delivery month
+  2. Per-trade exit-reason table with filtering
+     - Expiry_buffer trades highlighted in cyan
+     - Filterable by instrument, exit reason, date range
+  3. Aggregate exit reason breakdown (table + pie chart)
+  4. Per-instrument summary with exit reason counts
+  5. Interactive entry/exit/duration threshold controls
+     - Defaults to locked baseline (entry=1.5, exit=0.5, duration>=3d)
+     - "Best Known" button jumps to entry=1.75/exit=0.25
+     - Live re-run updates portfolio + per-instrument metrics
+  6. Cost model defaults to new cost (spread=22, butterfly=44 MYR)
+
+VALIDATION (2026-07-22):
+
+  Reference numbers were generated at OLD COST (100 MYR flat).
+  v2 dashboard defaults to NEW COST (spread=22, butterfly=44 MYR).
+  Engine behavior is IDENTICAL — only cost affects PnL/Sharpe.
+
+  At OLD COST (100 MYR flat):
+    Baseline (1.5/0.5): n=113, win=52.2%, PnL=+408.0, adj Sharpe=0.693, max DD=-160.0 — EXACT MATCH
+    Best (1.75/0.25):   n=80,  PnL=+407.0, adj Sharpe=0.974, max DD=-96.0 — EXACT MATCH
+
+  At NEW COST (spread=22, butterfly=44 MYR):
+    Baseline (1.5/0.5): n=113, win=67.3%, PnL=+728.0, adj Sharpe=1.366, max DD=-81.6
+    Best (1.75/0.25):   n=80,  PnL=+632.8, adj Sharpe=1.484, max DD=-60.9
+
+  Trade counts identical across both cost models (cost does not affect
+  entry/exit decisions). PnL/Sharpe differ only due to cost deduction.
+
+v1 STATUS: NOT MODIFIED. v2 is a new, separate, single-purpose file.
