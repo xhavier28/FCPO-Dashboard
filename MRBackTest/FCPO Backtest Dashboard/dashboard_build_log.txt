@@ -372,3 +372,32 @@ VALIDATION (2026-07-22):
   entry/exit decisions). PnL/Sharpe differ only due to cost deduction.
 
 v1 STATUS: NOT MODIFIED. v2 is a new, separate, single-purpose file.
+
+
+======================================================================
+V2 CHART UPDATE — SINGLE-MONTH DROPDOWN + ENTRY/EXIT MARKERS — 2026-07-22
+======================================================================
+
+Change: Replaced stacked all-months chart with single-month dropdown
+selector + entry/exit trade markers overlaid on the price line.
+
+Details:
+  - Dropdown lists all delivery months in minute-data range (Jan24..latest)
+  - Defaults to most recent month with data
+  - Single price line per selected month, cut off at expiry buffer
+  - Entry markers: green triangles (up=LONG, down=SHORT)
+  - Exit markers: color-coded by exit reason, hexagon for expiry_buffer,
+    X for all others
+  - Trades from ALL instruments shown if any resolved contract leg
+    matches the selected delivery month
+  - Legend moved from top to bottom of chart
+
+Spot-check validation (3 months):
+  Jul24: 5 trades matched (M3-M4, M4-M5, M1-M2, BF_M1M2M3, BF_M3M4M5)
+         M1-M2 expiry_buffer trade on 2024-07-03 correctly appears
+  Jan25: 15 trades matched across 8 instruments
+         M1-M2 invalidated trade on 2024-12-04 correctly appears
+  Apr26: 3 trades matched (M4-M5, M5-M6, BF_M3M4M5)
+
+  Entry/exit dates, spreads, and exit reasons match per-trade table.
+  Existing sliders, filters, and per-trade table NOT affected.

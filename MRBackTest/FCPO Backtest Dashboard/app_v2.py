@@ -228,20 +228,18 @@ def run_intraday(config):
 # PART 2 — CALENDAR-MONTH TENOR TRACKING CHART
 # ══════════════════════════════════════════════════════════════
 
-def build_calendar_month_chart(intraday_df):
-    """Build a chart showing each calendar delivery month's spread price
-    as it ages through tenor positions, cut off at expiry buffer deadline."""
+@st.cache_data
+def build_calendar_month_data():
+    """Build calendar-month price data from spread tenor wide CSV.
+    Returns (cal_df, sorted list of contract labels)."""
     spread_wide = pd.read_csv(
         Path(r'C:/ClaudeCode/research/06. stage3_minute_rebuild/spread_tenor_close_wide.csv'),
         parse_dates=['datetime']
     )
     spread_wide = spread_wide[spread_wide['datetime'] >= engine.INTRADAY_START].copy()
 
-    # Get tenor columns available
     tenor_cols = [c for c in spread_wide.columns if c != 'datetime']
 
-    # Build a mapping: for each datetime, map each tenor to its calendar contract month
-    # Then pivot so each calendar month is a column
     records = []
     for _, row in spread_wide.iterrows():
         dt = row['datetime']
@@ -250,7 +248,6 @@ def build_calendar_month_chart(intraday_df):
             price = row[tenor]
             if pd.isna(price):
                 continue
-            # Parse tenor offset
             if tenor == 'Current':
                 offset = 0
             elif tenor.startswith('+') and tenor.endswith('M'):
@@ -268,12 +265,11 @@ def build_calendar_month_chart(intraday_df):
             })
 
     if not records:
-        return None
+        return None, []
 
     cal_df = pd.DataFrame(records)
 
-    # Determine expiry buffer cutoff for each contract
-    # Expiry buffer: day >= 8 of delivery month
+    # Filter out expiry buffer zone
     def is_in_buffer(row):
         d = row['datetime']
         cy, cm = row['contract_ym']
@@ -282,36 +278,126 @@ def build_calendar_month_chart(intraday_df):
     cal_df['in_buffer'] = cal_df.apply(is_in_buffer, axis=1)
     cal_df = cal_df[~cal_df['in_buffer']].copy()
 
-    # Get unique contracts sorted by contract_ym
-    contracts = cal_df.groupby('contract').first().sort_values('contract_ym')
-    unique_contracts = contracts.index.tolist()
+    # Sort contracts chronologically
+    contracts_first = cal_df.groupby('contract').first().sort_values('contract_ym')
+    sorted_contracts = contracts_first.index.tolist()
+
+    return cal_df, sorted_contracts
+
+
+def build_single_month_chart(cal_df, selected_contract, trades_df=None):
+    """Build a chart for ONE selected delivery month with entry/exit markers."""
+    cdata = cal_df[cal_df['contract'] == selected_contract].sort_values('datetime')
+    if len(cdata) < 2:
+        return None
+
+    ym = cdata['contract_ym'].iloc[0]
+    color = MONTH_COLORS[ym[1] - 1]
 
     fig = go.Figure()
-    for i, contract in enumerate(unique_contracts):
-        cdata = cal_df[cal_df['contract'] == contract].sort_values('datetime')
-        if len(cdata) < 2:
-            continue
-        ym = cdata['contract_ym'].iloc[0]
-        color = MONTH_COLORS[ym[1] - 1]  # Color by delivery month
+
+    # Price line
+    fig.add_trace(go.Scatter(
+        x=cdata['datetime'],
+        y=cdata['price'],
+        mode='lines',
+        name=selected_contract,
+        line=dict(color=color, width=2),
+        hovertemplate=f"{selected_contract}<br>%{{x}}<br>Spread: %{{y:.1f}}<extra></extra>",
+    ))
+
+    # Overlay entry/exit markers from trades if available
+    if trades_df is not None and len(trades_df) > 0:
+        # Find trades on ALL spread instruments whose near-leg contract matches this month
+        # A trade on M1-M2 with near_offset=0 → near_ym = front_month(entry_date)
+        # A trade on M2-M3 with near_offset=1 → near_ym = front_month(entry_date) + 1
+        # The selected contract is a M1-M2 spread for a specific calendar month.
+        # Match trades where the instrument resolves to contracts involving this month.
+        matched_trades = []
+        for _, t in trades_df.iterrows():
+            inst = t['instrument']
+            if inst not in engine.INSTRUMENT_TENOR_OFFSETS:
+                continue
+            cfg = engine.INSTRUMENT_TENOR_OFFSETS[inst]
+            entry_d = pd.Timestamp(t['entry_date'])
+            resolved = engine.resolve_contracts(inst, entry_d)
+            # Check if ANY leg matches the selected contract month
+            if ym in resolved:
+                matched_trades.append(t)
+
+        for t in matched_trades:
+            entry_dt = t.get('entry_datetime', t['entry_date'])
+            exit_dt = t['exit_date']
+            reason = t['exit_reason']
+
+            # Entry marker — green triangle
+            fig.add_trace(go.Scatter(
+                x=[entry_dt],
+                y=[t['entry_spread']],
+                mode='markers',
+                name='',
+                marker=dict(
+                    symbol='triangle-up' if t['direction'] == 'LONG' else 'triangle-down',
+                    size=12, color='#00ff00',
+                    line=dict(width=1.5, color='white'),
+                ),
+                hovertext=(
+                    f"ENTRY {t['direction']}<br>"
+                    f"Inst: {t['instrument']}<br>"
+                    f"Z: {t['entry_z']:.2f}<br>"
+                    f"Spread: {t['entry_spread']:.1f}"
+                ),
+                hoverinfo='text',
+                showlegend=False,
+            ))
+
+            # Exit marker — color-coded by exit reason
+            exit_color = EXIT_COLORS.get(reason, '#888888')
+            exit_symbol = 'hexagon' if reason == 'expiry_buffer' else 'x'
+            exit_size = 14 if reason == 'expiry_buffer' else 11
+            exit_z_str = f"Z: {t['exit_z']:.2f}" if not pd.isna(t.get('exit_z', np.nan)) else ""
+            fig.add_trace(go.Scatter(
+                x=[exit_dt],
+                y=[t['exit_spread']],
+                mode='markers',
+                name='',
+                marker=dict(
+                    symbol=exit_symbol, size=exit_size, color=exit_color,
+                    line=dict(width=2, color='white'),
+                ),
+                hovertext=(
+                    f"EXIT: {EXIT_LABELS.get(reason, reason)}<br>"
+                    f"Inst: {t['instrument']}<br>"
+                    f"PnL: {t['net_pnl']:+.1f}<br>"
+                    f"Days: {t['days_held']}<br>{exit_z_str}"
+                ),
+                hoverinfo='text',
+                showlegend=False,
+            ))
+
+        # Add legend entries for marker types (invisible traces for legend only)
         fig.add_trace(go.Scatter(
-            x=cdata['datetime'],
-            y=cdata['price'],
-            mode='lines',
-            name=contract,
-            line=dict(color=color, width=1.5),
-            hovertemplate=f"{contract}<br>%{{x}}<br>Spread: %{{y:.1f}}<extra></extra>",
+            x=[None], y=[None], mode='markers', name='Entry',
+            marker=dict(symbol='triangle-up', size=10, color='#00ff00'),
         ))
+        for reason, color in EXIT_COLORS.items():
+            fig.add_trace(go.Scatter(
+                x=[None], y=[None], mode='markers',
+                name=f'Exit: {EXIT_LABELS.get(reason, reason)}',
+                marker=dict(symbol='hexagon' if reason == 'expiry_buffer' else 'x',
+                            size=10, color=color),
+            ))
 
     fig.update_layout(
-        title="Calendar-Month Spread Tracking (M1-M2 tenor, cut off at expiry buffer)",
+        title=f"{selected_contract} — Spread Price Through Tenor Lifecycle",
         height=500,
         plot_bgcolor=DARK_PLOT,
         paper_bgcolor=DARK_BG,
         font=dict(color=DARK_TEXT),
         xaxis=dict(gridcolor=DARK_GRID, title='Date'),
         yaxis=dict(gridcolor=DARK_GRID, title='Spread (pts)'),
-        margin=dict(l=60, r=30, t=50, b=40),
-        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1),
+        margin=dict(l=60, r=30, t=50, b=80),
+        legend=dict(orientation='h', yanchor='top', y=-0.15, xanchor='center', x=0.5),
     )
     return fig
 
@@ -516,15 +602,27 @@ if should_run:
 
 with st.expander("Calendar-Month Tenor Tracking", expanded=False):
     st.caption(
-        "Each line = one calendar delivery month contract (e.g. Jan26, Feb26). "
+        "Select a delivery month to see its spread price through the tenor lifecycle. "
         "Lines cut off at expiry-buffer deadline (day 8 of delivery month). "
-        "Color = delivery month (Jan=blue, Feb=orange, etc.)"
+        "Entry/exit markers shown when backtest results are available."
     )
     try:
-        intraday_df = get_intraday()
-        fig_cal = build_calendar_month_chart(intraday_df)
-        if fig_cal:
-            st.plotly_chart(fig_cal, use_container_width=True)
+        cal_data = build_calendar_month_data()
+        cal_df, sorted_contracts = cal_data
+        if cal_df is not None and len(sorted_contracts) > 0:
+            # Default to most recent month with data
+            sel_month = st.selectbox(
+                "Delivery month",
+                options=sorted_contracts,
+                index=len(sorted_contracts) - 1,
+                key='v2_cal_month',
+            )
+            trades_for_chart = result['trades'] if result is not None else None
+            fig_cal = build_single_month_chart(cal_df, sel_month, trades_for_chart)
+            if fig_cal:
+                st.plotly_chart(fig_cal, use_container_width=True)
+            else:
+                st.warning(f"Not enough data for {sel_month}.")
         else:
             st.warning("No calendar-month data available.")
     except Exception as e:

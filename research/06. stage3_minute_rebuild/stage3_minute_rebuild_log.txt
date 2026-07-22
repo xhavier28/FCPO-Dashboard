@@ -1549,3 +1549,78 @@ Key findings:
      and does not generalize — lowering entry to 1.25 adds many losing
      trades in non-M1-M2 instruments.
   6. BF_M1M2M3 is the single largest PnL contributor at every threshold.
+
+
+======================================================================
+MINUTE DATA, 2024-2026 — INVALIDATED-DELAY SWEEP — 2026-07-22
+======================================================================
+
+Locked baseline: entry=1.5, exit=0.5, duration>=3d, time_stop=20d
+Cost: spread=22, butterfly=44 MYR
+Period: 2024-2026 (60-min bars)
+Delay rule: if shape reverts within N days, trade un-invalidates and
+continues. Other exits (TP, SL, time_stop, expiry_buffer, regime_risk)
+override and fire immediately during pending delay.
+
+--- PORTFOLIO-LEVEL ---
+Delay  Trades  Win%      PnL  AdjSh   MaxDD  AvgHP  Inv  Recovered  StillInv
+  0d     113  67.3%   +728.0  1.366   -81.6    4.6   46          0         0
+  1d     113  69.9%   +798.0  1.290   -66.8    5.7   35         15        36
+  2d     111  71.2%   +834.8  1.258  -108.7    6.5   29         26        29
+  3d     111  73.0%   +795.8  0.967  -106.6    7.7   15         45        15
+
+--- PER-INSTRUMENT (delay=0, baseline) ---
+  Instrument    N  Win%      PnL  TP  Inv  TS  EB  RR
+  M2-M3        10  70.0%    +40.2   5    5   0   0   0
+  M3-M4        19  63.2%    +46.3  11    8   0   0   0
+  M4-M5        18  72.2%    +54.2  12    6   0   0   0
+  M5-M6        17  58.8%    +33.0  10    7   0   0   0
+  M1-M2        12  75.0%   +245.4   4    3   0   5   0
+  BF_M1M2M3    10  90.0%   +283.4   8    2   0   0   0
+  BF_M2M3M4    11  72.7%    +33.6   7    4   0   0   0
+  BF_M3M4M5     9  33.3%    -12.8   1    7   1   0   0
+  BF_M4M5M6     7  71.4%     +4.7   3    4   0   0   0
+
+--- PER-INSTRUMENT (delay=1d) ---
+  Instrument    N  Win%      PnL  TP  Inv  TS  EB  RR
+  M2-M3        10  60.0%    +42.2   6    4   0   0   0
+  M3-M4        19  68.4%    +63.3  13    6   0   0   0
+  M4-M5        18  77.8%    +97.2  14    4   0   0   0
+  M5-M6        17  64.7%    +58.0  12    5   0   0   0
+  M1-M2        12  75.0%   +202.4   4    3   0   5   0
+  BF_M1M2M3    10  90.0%   +288.4   8    2   0   0   0
+  BF_M2M3M4    11  81.8%    +61.6   8    3   0   0   0
+  BF_M3M4M5     9  44.4%    -12.8   3    5   1   0   0
+  BF_M4M5M6     7  57.1%     -2.3   3    3   1   0   0
+
+--- PER-INSTRUMENT (delay=2d) ---
+  Instrument    N  Win%      PnL  TP  Inv  TS  EB  RR
+  M2-M3        10  70.0%    +74.2   6    3   1   0   0
+  M3-M4        18  72.2%    +85.2  13    5   0   0   0
+  M4-M5        18  77.8%    +92.2  14    4   0   0   0
+  M5-M6        16  68.8%    +26.9  11    3   2   0   0
+  M1-M2        12  75.0%   +216.4   4    3   0   5   0
+  BF_M1M2M3    10 100.0%   +300.4   8    2   0   0   0
+  BF_M2M3M4    11  72.7%    +72.6   9    2   0   0   0
+  BF_M3M4M5     9  33.3%    -17.8   3    5   1   0   0
+  BF_M4M5M6     7  57.1%    -15.3   3    2   2   0   0
+
+--- PER-INSTRUMENT (delay=3d) ---
+  Instrument    N  Win%      PnL  TP  Inv  TS  EB  RR
+  M2-M3        10  60.0%    -43.8   6    2   2   0   0
+  M3-M4        18  77.8%    +75.2  14    2   0   0   2
+  M4-M5        18  83.3%   +163.2  15    2   0   0   1
+  M5-M6        16  75.0%   +138.9  12    1   2   0   1
+  M1-M2        12  75.0%   +191.4   4    1   0   7   0
+  BF_M1M2M3    10 100.0%   +295.4   8    2   0   0   0
+  BF_M2M3M4    11  72.7%    +37.6  10    1   0   0   0
+  BF_M3M4M5     9  33.3%    -34.8   4    3   1   0   1
+  BF_M4M5M6     7  57.1%    -27.3   4    1   2   0   0
+
+--- SHARPE COMPARISON ---
+  Delay 0d: adj Sharpe = 1.366 (baseline)
+  Delay 1d: adj Sharpe = 1.290 (delta = -0.076)
+  Delay 2d: adj Sharpe = 1.258 (delta = -0.108)
+  Delay 3d: adj Sharpe = 0.967 (delta = -0.399)
+
+No delay value improves adj Sharpe over the delay=0 baseline.
