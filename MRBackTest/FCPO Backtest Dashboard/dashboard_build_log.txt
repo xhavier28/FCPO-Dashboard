@@ -502,3 +502,38 @@ Validation (baseline 1.5/0.5, 22/44 MYR):
      n=527, win%=65.7, PnL=+6336.0, adjSh=1.234, maxDD=-392.5
    Locked (1.5/0.5): adjSh=1.112 (conservative, lower DD)
    REF_BEST updated in app_v2.py.
+
+
+--- REPLACE REGIME TABLE WITH PERIOD-ONLY SENSITIVITY (2026-07-24) ---
+
+1. Removed: Shape Regime x Time Period Breakdown (Part C-1 and Part D).
+   - Removed helper functions: _classify_shape_regime, build_regime_period_breakdown
+   - Removed constants: SHAPE_REGIMES, LOW_N_CELL
+   - Removed sweep-loop regime breakdown computation
+   - Also removes the sorted(...).tolist() AttributeError (bug was in Part D code)
+
+2. Added: Entry/Exit Sensitivity by Time Period (new Part D)
+   - 42 rows (same entry/exit grid), columns per period + full range
+   - Period selector dropdown to sort by selected period's Sharpe
+   - Green highlight = best Sharpe in selected period
+   - Blue highlight = best Sharpe full-range (if different)
+   - Low-n flagging (n<8) with grey italic
+   - Summary line: best combo per period at bottom
+   - CSV download for full period breakdown
+
+3. Caching: sweep fingerprint prevents redundant recomputation when
+   non-threshold params haven't changed.
+
+4. Validation:
+   Full-range 1.5/0.5: n=332, win%=70.8, PnL=+5102.4, adjSh=1.112, maxDD=-287.8 PASS
+   Full-range 1.0/0.1: n=527, win%=65.7, PnL=+6336.0, adjSh=1.234, maxDD=-392.5 PASS
+
+5. Per-period best combo (n>=8):
+   P1 2020-2021: entry=1.00 / exit=0.0 (Sharpe=1.975, n=168)
+   P2 2022-2023: entry=1.00 / exit=0.1 (Sharpe=1.353, n=143)
+   P3 2024-2026: entry=1.00 / exit=0.2 (Sharpe=1.898, n=189)
+   Full range:   entry=1.00 / exit=0.1 (Sharpe=1.234, n=527)
+   FINDING: Entry z=1.0 is best in all 3 periods, but optimal exit
+   shifts: 0.0 (P1) -> 0.1 (P2) -> 0.2 (P3). Exit threshold drifts
+   upward across eras. Locked config 1.5/0.5 is not the per-period
+   best in any period but remains conservative with tighter drawdown.

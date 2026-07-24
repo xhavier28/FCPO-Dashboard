@@ -1684,3 +1684,22 @@ Dashboard integration (app_v2.py):
     - Styled table with LOW-N flagging (* suffix, n<8)
     - CSV download button for full cross-tab
   - Regime x period breakdown integrated into sweep loop (no extra compute)
+
+--- PERIOD-ONLY SENSITIVITY: BEST COMBO SHIFTS BY ERA (2026-07-24) ---
+
+Full 42-combo grid (7 entry x 6 exit), best Adj Sharpe per period (n>=8):
+  P1 2020-2021: entry=1.00 / exit=0.0 (Sharpe=1.975, n=168, win%=51.8, PnL=+1600.5)
+  P2 2022-2023: entry=1.00 / exit=0.1 (Sharpe=1.353, n=143, win%=63.6, PnL=+3415.6)
+  P3 2024-2026: entry=1.00 / exit=0.2 (Sharpe=1.898, n=189, win%=71.4, PnL=+1285.7)
+  Full range:   entry=1.00 / exit=0.1 (Sharpe=1.234, n=527, win%=65.7, PnL=+6336.0)
+
+FINDING: Entry z=1.0 is consistently best across all 3 periods.
+The optimal EXIT threshold drifts upward: 0.0 (P1) -> 0.1 (P2) -> 0.2 (P3).
+This suggests the market's mean-reversion speed has slowed over time — trades
+need a wider exit zone (higher exit z = exit closer to mean) in recent years
+compared to 2020-2021 where exiting at z=0 (full mean reversion) was optimal.
+
+Locked config (1.5/0.5) is NOT the per-period best in any period, but its
+higher entry threshold filters for higher-conviction trades (70.8% win rate
+vs 65.7%), producing tighter drawdown (-287.8 vs -392.5). This is a genuine
+selectivity/volume tradeoff, not a data artifact.

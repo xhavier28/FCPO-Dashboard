@@ -68,18 +68,17 @@ REF_BASELINE = {
     'n': 332, 'win_rate': 70.8, 'pnl': 5102.4, 'adj_sharpe': 1.112, 'max_dd': -287.8,
 }
 REF_BEST = {
-    'entry_z': 1.0, 'exit_z': 0.1,  # best Sharpe from full 42-combo grid (2026-07-24)
-    'n': 527, 'adj_sharpe': 1.234, 'pnl': 6336.0, 'max_dd': -392.5,
+    'entry_z': 1.5, 'exit_z': 0.5,  # locked config — 1.0/0.1 pending robustness check
+    'n': 332, 'adj_sharpe': 1.112, 'pnl': 5102.4, 'max_dd': -287.8,
 }
 
-# ── Shape regime / time period constants ──
-SHAPE_REGIMES = ['SB', 'C', 'SB+C']  # no Transitional (confirmed zero trades)
+# ── Time period constants ──
 TIME_PERIODS = {
     'P1 2020-2021': ('2020-01-01', '2021-12-31'),
     'P2 2022-2023': ('2022-01-01', '2023-12-31'),
     'P3 2024-2026': ('2024-01-01', '2026-12-31'),
 }
-LOW_N_CELL = 8  # per-cell low-n threshold for regime×period breakdown
+LOW_N_THRESHOLD_PERIOD = 8  # per-cell low-n threshold for period breakdown
 
 # Calendar-month color palette (12 months cycling)
 MONTH_COLORS = [
@@ -233,16 +232,6 @@ def run_intraday(config):
     }
 
 
-def _classify_shape_regime(shape):
-    """SB (0.0), C (1), or Transitional (all others)."""
-    s = str(shape)
-    if s == '0.0':
-        return 'SB'
-    elif s == '1':
-        return 'C'
-    return 'Transitional'
-
-
 def _assign_period(entry_date):
     """Assign trade to P1/P2/P3 based on entry date."""
     d = pd.Timestamp(entry_date)
@@ -253,8 +242,8 @@ def _assign_period(entry_date):
     return 'P3 2024-2026'
 
 
-def _cell_metrics(trades_subset, df_panel, period_start, period_end, config):
-    """Compute metrics for one regime×period cell."""
+def _period_metrics(trades_subset, df_panel, period_start, period_end, config):
+    """Compute metrics for one period cell."""
     n = len(trades_subset)
     if n == 0:
         return {'n': 0, 'win_pct': np.nan, 'adj_sharpe': np.nan,
@@ -272,43 +261,6 @@ def _cell_metrics(trades_subset, df_panel, period_start, period_end, config):
         'pnl': pnl,
         'max_dd': max_dd,
     }
-
-
-def build_regime_period_breakdown(trades, df_panel, config):
-    """Build regime×period breakdown rows for a single threshold combo.
-    Returns list of dicts, one per regime×period cell + full-range row."""
-    if len(trades) == 0:
-        return []
-
-    trades = trades.copy()
-    trades['_regime'] = trades['shape'].apply(_classify_shape_regime)
-    trades['_period'] = trades['entry_date'].apply(_assign_period)
-
-    rows = []
-    period_keys = list(TIME_PERIODS.keys()) + ['Full Range']
-
-    for regime in SHAPE_REGIMES:
-        for pk in period_keys:
-            if pk == 'Full Range':
-                p_start, p_end = engine.INTRADAY_START, engine.INTRADAY_END
-                period_trades = trades
-            else:
-                p_start, p_end = TIME_PERIODS[pk]
-                period_trades = trades[trades['_period'] == pk]
-
-            if regime == 'SB+C':
-                cell_trades = period_trades[period_trades['_regime'].isin(['SB', 'C'])]
-            else:
-                cell_trades = period_trades[period_trades['_regime'] == regime]
-
-            cell_trades = cell_trades.reset_index(drop=True)
-            m = _cell_metrics(cell_trades, df_panel, p_start, p_end, config)
-            m['regime'] = regime
-            m['period'] = pk
-            m['low_n'] = m['n'] < LOW_N_CELL
-            rows.append(m)
-
-    return rows
 
 
 # ══════════════════════════════════════════════════════════════
@@ -955,73 +907,101 @@ else:
         st.dataframe(pd.DataFrame(agg_rows).set_index('Exit Reason'), use_container_width=True)
 
     # ──────────────────────────────────────────────────────────────
-    # PART C: Entry/Exit Z-Score Sensitivity Table
+    # PART C: Entry/Exit Z-Score Sensitivity + Period Breakdown
     # ──────────────────────────────────────────────────────────────
 
-    st.markdown("### Entry/Exit Z-Score Sensitivity")
+    st.markdown("### Entry/Exit Z-Score Sensitivity by Time Period")
     st.caption(
         "Sweeps entry z-score (1.0-2.5) x exit z-score (0.0-0.5) "
         "using current dashboard settings for all other parameters. "
-        "Precomputes the full 42-cell grid + regime/period breakdown on click."
+        "Shows full-range metrics plus per-period breakdown (P1/P2/P3)."
     )
 
     LOW_N_THRESHOLD = 30
 
+    # Build a fingerprint of non-threshold config params so we can skip
+    # re-running the sweep if only the entry/exit z-scores changed.
+    current_config = result.get('config', build_config())
+    _sweep_fingerprint = (
+        current_config.get('duration_threshold'),
+        current_config.get('first_entry_lots'),
+        current_config.get('time_stop_days'),
+        current_config.get('stop_loss_z'),
+        tuple(str(t) for t in current_config.get('scale_in_tiers', [])),
+        tuple(current_config.get('instruments', [])),
+        current_config.get('pm_filter_level'),
+        current_config.get('tm_regime_risk_threshold'),
+        current_config.get('cost_spread_myr'),
+        current_config.get('cost_butterfly_myr'),
+    )
+
+    cached_fingerprint = st.session_state.get('v2_sweep_fingerprint')
+    sweep_is_stale = cached_fingerprint != _sweep_fingerprint
+
     if st.button("Run Sensitivity Sweep", key='v2_run_sweep'):
-        with st.spinner("Running 42-cell sensitivity sweep + regime/period breakdown..."):
-            sweep_rows = []
-            breakdown_rows = []
-            current_config = result.get('config', build_config())
-            entry_vals = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
-            exit_vals = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+        if not sweep_is_stale and st.session_state.get('v2_sweep') is not None:
+            st.info("Sweep results already cached for current settings — displaying cached results.")
+        else:
+            with st.spinner("Running 42-cell sensitivity sweep + period breakdown..."):
+                sweep_rows = []
+                period_rows = []
+                entry_vals = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
+                exit_vals = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
 
-            df_panel, tm_cache_panel = get_panel()
-            intraday_data = get_intraday()
+                df_panel, tm_cache_panel = get_panel()
+                intraday_data = get_intraday()
 
-            for ez in entry_vals:
-                for xz in exit_vals:
-                    sweep_config = current_config.copy()
-                    sweep_config['entry_z'] = ez
-                    sweep_config['exit_z'] = xz
-                    sweep_res = engine.run_backtest_intraday(
-                        sweep_config, df_panel, tm_cache_panel, intraday_data)
-                    sweep_trades = sweep_res['intraday']
-                    sweep_m = engine.compute_metrics(
-                        sweep_trades, df_panel, engine.INTRADAY_START, engine.INTRADAY_END)
-                    sweep_sharpe = engine.compute_daily_portfolio_sharpe_configurable(
-                        sweep_trades, engine.INTRADAY_START, engine.INTRADAY_END,
-                        df_panel, sweep_config)
+                for ez in entry_vals:
+                    for xz in exit_vals:
+                        sweep_config = current_config.copy()
+                        sweep_config['entry_z'] = ez
+                        sweep_config['exit_z'] = xz
+                        sweep_res = engine.run_backtest_intraday(
+                            sweep_config, df_panel, tm_cache_panel, intraday_data)
+                        sweep_trades = sweep_res['intraday']
+                        sweep_m = engine.compute_metrics(
+                            sweep_trades, df_panel, engine.INTRADAY_START, engine.INTRADAY_END)
+                        sweep_sharpe = engine.compute_daily_portfolio_sharpe_configurable(
+                            sweep_trades, engine.INTRADAY_START, engine.INTRADAY_END,
+                            df_panel, sweep_config)
 
-                    is_baseline = (ez == 1.5 and xz == 0.5)
-                    sweep_rows.append({
-                        'Entry Z': ez,
-                        'Exit Z': xz,
-                        'Trades': sweep_m['n_trades'],
-                        'Win%': sweep_m['win_rate'],
-                        'PnL': sweep_m['total_pnl'],
-                        'Adj Sharpe': sweep_sharpe if not (isinstance(sweep_sharpe, float) and np.isnan(sweep_sharpe)) else 0.0,
-                        'Max DD': sweep_m['max_dd'],
-                        'Avg HP': sweep_m['avg_hp'],
-                        '_is_baseline': is_baseline,
-                        '_low_n': sweep_m['n_trades'] < LOW_N_THRESHOLD,
-                    })
+                        is_baseline = (ez == 1.5 and xz == 0.5)
+                        sweep_rows.append({
+                            'Entry Z': ez,
+                            'Exit Z': xz,
+                            'Trades': sweep_m['n_trades'],
+                            'Win%': sweep_m['win_rate'],
+                            'PnL': sweep_m['total_pnl'],
+                            'Adj Sharpe': sweep_sharpe if not (isinstance(sweep_sharpe, float) and np.isnan(sweep_sharpe)) else 0.0,
+                            'Max DD': sweep_m['max_dd'],
+                            'Avg HP': sweep_m['avg_hp'],
+                            '_is_baseline': is_baseline,
+                            '_low_n': sweep_m['n_trades'] < LOW_N_THRESHOLD,
+                        })
 
-                    # Build regime × period breakdown for this threshold combo
-                    bd = build_regime_period_breakdown(sweep_trades, df_panel, sweep_config)
-                    for cell in bd:
-                        cell['Entry Z'] = ez
-                        cell['Exit Z'] = xz
-                    breakdown_rows.extend(bd)
+                        # Per-period breakdown for this threshold combo
+                        if len(sweep_trades) > 0:
+                            trades_tagged = sweep_trades.copy()
+                            trades_tagged['_period'] = trades_tagged['entry_date'].apply(_assign_period)
+                            for pk, (p_start, p_end) in TIME_PERIODS.items():
+                                pt = trades_tagged[trades_tagged['_period'] == pk].reset_index(drop=True)
+                                pm = _period_metrics(pt, df_panel, p_start, p_end, sweep_config)
+                                pm['Entry Z'] = ez
+                                pm['Exit Z'] = xz
+                                pm['period'] = pk
+                                pm['low_n'] = pm['n'] < LOW_N_THRESHOLD_PERIOD
+                                period_rows.append(pm)
 
-            sweep_df = pd.DataFrame(sweep_rows)
-            breakdown_df = pd.DataFrame(breakdown_rows)
+                sweep_df = pd.DataFrame(sweep_rows)
+                period_df = pd.DataFrame(period_rows)
 
-            # Find best Sharpe row
-            best_idx = sweep_df['Adj Sharpe'].idxmax()
+                # Find best Sharpe row (full-range)
+                best_idx = sweep_df['Adj Sharpe'].idxmax()
 
-            st.session_state['v2_sweep'] = sweep_df
-            st.session_state['v2_sweep_best_idx'] = best_idx
-            st.session_state['v2_sweep_breakdown'] = breakdown_df
+                st.session_state['v2_sweep'] = sweep_df
+                st.session_state['v2_sweep_best_idx'] = best_idx
+                st.session_state['v2_sweep_period'] = period_df
+                st.session_state['v2_sweep_fingerprint'] = _sweep_fingerprint
 
     # Display sweep results if available
     sweep_df = st.session_state.get('v2_sweep')
@@ -1038,13 +1018,11 @@ else:
                 styles = ['color: #888888; font-style: italic'] * len(row)
             return styles
 
-        display_sweep = sweep_df.drop(columns=['_is_baseline', '_low_n'])
         styled_sweep = sweep_df.style.apply(style_sweep, axis=1).format({
             'Entry Z': '{:.2f}', 'Exit Z': '{:.1f}',
             'Win%': '{:.1f}', 'PnL': '{:+.1f}',
             'Adj Sharpe': '{:.3f}', 'Max DD': '{:+.1f}', 'Avg HP': '{:.1f}',
         })
-        # Hide internal columns
         styled_sweep = styled_sweep.hide(subset=['_is_baseline', '_low_n'], axis='columns')
         st.dataframe(styled_sweep, use_container_width=True, height=500)
 
@@ -1057,83 +1035,155 @@ else:
         )
 
     # ──────────────────────────────────────────────────────────────
-    # PART D: Shape Regime x Time Period Breakdown
+    # PART D: Sensitivity by Time Period
     # ──────────────────────────────────────────────────────────────
 
-    breakdown_df = st.session_state.get('v2_sweep_breakdown')
-    if breakdown_df is not None and len(breakdown_df) > 0:
-        st.markdown("### Shape Regime x Time Period Breakdown")
+    period_df = st.session_state.get('v2_sweep_period')
+    if period_df is not None and len(period_df) > 0:
+        st.markdown("### Sensitivity by Time Period")
+        st.caption(
+            "Same 42 entry/exit combos, broken down by time period. "
+            "Select a period to sort/filter. Green = best Sharpe in that period."
+        )
 
-        # Filter controls
-        bd_col1, bd_col2 = st.columns(2)
-        with bd_col1:
-            bd_entry = st.selectbox(
-                "Entry Z", options=sorted(breakdown_df['Entry Z'].unique()),
-                index=sorted(breakdown_df['Entry Z'].unique()).tolist().index(1.5)
-                if 1.5 in breakdown_df['Entry Z'].values else 0,
-                key='bd_entry_z')
-        with bd_col2:
-            bd_exit = st.selectbox(
-                "Exit Z", options=sorted(breakdown_df['Exit Z'].unique()),
-                index=sorted(breakdown_df['Exit Z'].unique()).tolist().index(0.5)
-                if 0.5 in breakdown_df['Exit Z'].values else 0,
-                key='bd_exit_z')
+        # Period selector
+        period_options = list(TIME_PERIODS.keys())
+        selected_period = st.selectbox(
+            "View period", options=period_options, index=0, key='v2_period_view')
 
-        # Filter to selected threshold
-        sel = breakdown_df[
-            (breakdown_df['Entry Z'] == bd_entry) &
-            (breakdown_df['Exit Z'] == bd_exit)
-        ].copy()
+        # Build the display table: 42 rows, columns per period + full-range
+        period_order = list(TIME_PERIODS.keys()) + ['Full Range']
 
-        if len(sel) > 0:
-            # Pivot: rows = regime, columns = period metrics
-            period_order = list(TIME_PERIODS.keys()) + ['Full Range']
+        # Merge full-range from sweep_df and per-period from period_df
+        display_rows_d = []
+        sweep_df_d = st.session_state.get('v2_sweep')
+        for _, srow in sweep_df_d.iterrows():
+            ez, xz = srow['Entry Z'], srow['Exit Z']
+            row_data = {
+                'Entry Z': ez,
+                'Exit Z': xz,
+            }
+            # Full range columns
+            row_data['Full n'] = int(srow['Trades'])
+            row_data['Full Win%'] = srow['Win%']
+            row_data['Full Sharpe'] = srow['Adj Sharpe']
+            row_data['Full PnL'] = srow['PnL']
+            row_data['Full MaxDD'] = srow['Max DD']
+            row_data['_full_low_n'] = srow['Trades'] < LOW_N_THRESHOLD
 
-            # Build display table: one row per regime, columns grouped by period
-            display_rows = []
-            for regime in SHAPE_REGIMES:
-                row_data = {'Regime': regime}
-                for pk in period_order:
-                    cell = sel[(sel['regime'] == regime) & (sel['period'] == pk)]
-                    if len(cell) == 0 or cell.iloc[0]['n'] == 0:
-                        row_data[f'{pk} n'] = 0
-                        row_data[f'{pk} Win%'] = ''
-                        row_data[f'{pk} Sharpe'] = ''
-                        row_data[f'{pk} PnL'] = ''
-                        row_data[f'{pk} MaxDD'] = ''
-                    else:
-                        c = cell.iloc[0]
-                        low_tag = '*' if c['low_n'] else ''
-                        row_data[f'{pk} n'] = int(c['n'])
-                        row_data[f'{pk} Win%'] = f"{c['win_pct']:.1f}%{low_tag}"
-                        sh_val = c['adj_sharpe']
-                        row_data[f'{pk} Sharpe'] = f"{sh_val:.3f}{low_tag}" if not np.isnan(sh_val) else f"nan{low_tag}"
-                        row_data[f'{pk} PnL'] = f"{c['pnl']:+.1f}{low_tag}"
-                        row_data[f'{pk} MaxDD'] = f"{c['max_dd']:+.1f}"
-                display_rows.append(row_data)
+            # Per-period columns
+            for pk in period_options:
+                pcell = period_df[(period_df['Entry Z'] == ez) &
+                                  (period_df['Exit Z'] == xz) &
+                                  (period_df['period'] == pk)]
+                if len(pcell) > 0:
+                    pc = pcell.iloc[0]
+                    row_data[f'{pk} n'] = int(pc['n'])
+                    row_data[f'{pk} Win%'] = pc['win_pct']
+                    row_data[f'{pk} Sharpe'] = pc['adj_sharpe']
+                    row_data[f'{pk} PnL'] = pc['pnl']
+                    row_data[f'{pk} MaxDD'] = pc['max_dd']
+                    row_data[f'{pk} _low_n'] = pc['low_n']
+                else:
+                    row_data[f'{pk} n'] = 0
+                    row_data[f'{pk} Win%'] = np.nan
+                    row_data[f'{pk} Sharpe'] = np.nan
+                    row_data[f'{pk} PnL'] = 0.0
+                    row_data[f'{pk} MaxDD'] = 0.0
+                    row_data[f'{pk} _low_n'] = True
 
-            bd_display = pd.DataFrame(display_rows).set_index('Regime')
+            display_rows_d.append(row_data)
 
-            # Style: highlight low-n cells
-            def style_breakdown(val):
-                if isinstance(val, str) and '*' in val:
-                    return 'color: #888888; font-style: italic'
-                return ''
+        full_period_df = pd.DataFrame(display_rows_d)
 
-            styled_bd = bd_display.style.map(style_breakdown)
-            st.dataframe(styled_bd, use_container_width=True, height=180)
-            st.caption(
-                f"Showing entry={bd_entry:.2f} / exit={bd_exit:.1f} | "
-                f"* = LOW-N (n<{LOW_N_CELL}) | "
-                f"SB = shape 0.0 (backwardation), C = shape 1 (contango), "
-                f"SB+C = combined resting shapes"
-            )
+        # Find best Sharpe per period (n >= LOW_N_THRESHOLD_PERIOD)
+        best_per_period = {}
+        for pk in period_options:
+            sh_col = f'{pk} Sharpe'
+            n_col = f'{pk} n'
+            qualified = full_period_df[full_period_df[n_col] >= LOW_N_THRESHOLD_PERIOD]
+            if len(qualified) > 0:
+                best_idx_pk = qualified[sh_col].idxmax()
+                best_per_period[pk] = best_idx_pk
+        # Full range best
+        qualified_full = full_period_df[full_period_df['Full n'] >= LOW_N_THRESHOLD]
+        if len(qualified_full) > 0:
+            best_per_period['Full Range'] = qualified_full['Full Sharpe'].idxmax()
 
-        # Full breakdown CSV download
-        csv_data = breakdown_df.to_csv(index=False)
+        # Build display columns for the selected period + full range
+        sp = selected_period
+        show_cols = ['Entry Z', 'Exit Z',
+                     f'{sp} n', f'{sp} Win%', f'{sp} Sharpe', f'{sp} PnL', f'{sp} MaxDD',
+                     'Full n', 'Full Win%', 'Full Sharpe', 'Full PnL', 'Full MaxDD']
+
+        display_d = full_period_df[show_cols].copy()
+
+        # Rename for cleaner display
+        display_d = display_d.rename(columns={
+            f'{sp} n': f'{sp}|n', f'{sp} Win%': f'{sp}|Win%',
+            f'{sp} Sharpe': f'{sp}|Sharpe', f'{sp} PnL': f'{sp}|PnL',
+            f'{sp} MaxDD': f'{sp}|MaxDD',
+            'Full n': 'Full|n', 'Full Win%': 'Full|Win%',
+            'Full Sharpe': 'Full|Sharpe', 'Full PnL': 'Full|PnL',
+            'Full MaxDD': 'Full|MaxDD',
+        })
+
+        # Sort by selected period Sharpe descending
+        sort_col = f'{sp}|Sharpe'
+        display_d = display_d.sort_values(sort_col, ascending=False, na_position='last')
+
+        # Style: highlight best row for selected period + full range
+        best_period_idx = best_per_period.get(sp)
+        best_full_idx = best_per_period.get('Full Range')
+
+        def style_period_table(row):
+            styles = [''] * len(row)
+            orig_idx = row.name
+            if orig_idx == best_period_idx:
+                styles = ['background-color: rgba(44, 160, 44, 0.3)'] * len(row)
+            elif orig_idx == best_full_idx and best_full_idx != best_period_idx:
+                styles = ['background-color: rgba(31, 119, 180, 0.2)'] * len(row)
+            # Low-n in selected period
+            ln_col = f'{sp} _low_n'
+            if full_period_df.loc[orig_idx, ln_col]:
+                styles = ['color: #888888; font-style: italic'] * len(row)
+            return styles
+
+        styled_d = display_d.style.apply(style_period_table, axis=1).format({
+            'Entry Z': '{:.2f}', 'Exit Z': '{:.1f}',
+            f'{sp}|Win%': '{:.1f}', f'{sp}|Sharpe': '{:.3f}',
+            f'{sp}|PnL': '{:+.1f}', f'{sp}|MaxDD': '{:+.1f}',
+            'Full|Win%': '{:.1f}', 'Full|Sharpe': '{:.3f}',
+            'Full|PnL': '{:+.1f}', 'Full|MaxDD': '{:+.1f}',
+        }, na_rep='—')
+        st.dataframe(styled_d, use_container_width=True, height=500)
+
+        # Summary: best combo per period
+        st.markdown("**Best Adj Sharpe per period:**")
+        summary_parts = []
+        for pk in period_options + ['Full Range']:
+            bidx = best_per_period.get(pk)
+            if bidx is not None:
+                r = full_period_df.iloc[bidx]
+                sh_col = f'{pk} Sharpe' if pk != 'Full Range' else 'Full Sharpe'
+                n_col = f'{pk} n' if pk != 'Full Range' else 'Full n'
+                summary_parts.append(
+                    f"- **{pk}**: entry={r['Entry Z']:.2f} / exit={r['Exit Z']:.1f} "
+                    f"(Sharpe={r[sh_col]:.3f}, n={int(r[n_col])})"
+                )
+        st.markdown('\n'.join(summary_parts))
+        st.caption(
+            f"Green = best Sharpe in selected period | "
+            f"Blue = best Sharpe full-range (if different) | "
+            f"Grey italic = low-N (n<{LOW_N_THRESHOLD_PERIOD}) | "
+            f"Sorted by {sp} Sharpe descending"
+        )
+
+        # CSV download
+        csv_data = full_period_df.to_csv(index=False)
         st.download_button(
-            "Download full cross-tab CSV",
+            "Download period breakdown CSV",
             data=csv_data,
-            file_name="shape_regime_time_crosstab.csv",
+            file_name="sensitivity_by_period.csv",
             mime="text/csv",
         )
