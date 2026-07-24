@@ -1624,3 +1624,63 @@ Delay  Trades  Win%      PnL  AdjSh   MaxDD  AvgHP  Inv  Recovered  StillInv
   Delay 3d: adj Sharpe = 0.967 (delta = -0.399)
 
 No delay value improves adj Sharpe over the delay=0 baseline.
+
+
+======================================================================
+SHAPE REGIME × TIME PERIOD CROSS-TABULATION — 2026-07-24
+======================================================================
+
+Config: z>1.5, z_exit=0.5, dur>=3d, 1 lot, PM L0, TM RR<50%,
+  all 9 instruments, spread=22 MYR, butterfly=44 MYR,
+  20d time stop, no SL, no scale-in
+Period: 2020-01-01 to latest available (60-min bars)
+Rebuilt tenor-mapped CSVs: 2020-2027 (89 butterfly + 90 spread contracts)
+
+Full 2020-2026 baseline: n=332, win%=70.8, PnL=5102.4, adjSh=1.112, maxDD=-287.76
+2024-2026 subset check: n=113, win%=67.3, PnL=+728.0, adjSh=1.366 CONFIRMED
+
+Time period boundaries:
+  P1: 2020-01-01 to 2021-12-31
+  P2: 2022-01-01 to 2023-12-31
+  P3: 2024-01-01 to latest available
+
+Shape regimes: SB (shape 0.0), C (shape 1), Transitional (all others),
+  SB+C (union of SB and C = resting shapes only)
+
+Full cross-tab exported to: C:\ClaudeCode\research\06. stage3_minute_rebuild\shape_regime_time_crosstab.csv
+Total cells: 216 (18 threshold combos × 12)
+LOW-N cells (n<8): 72 / 216
+
+--- DASHBOARD INTEGRATION + FULL 42-COMBO GRID (2026-07-24) ---
+
+Part 3.1 â€” Baseline validation (entry=1.5, exit=0.5, 2020-2026):
+  n=332, win%=70.8, PnL=+5102.4, adjSh=1.112, maxDD=-287.8
+  ALL 5 CHECKS PASSED (matches reference exactly)
+
+Part 3.2 â€” Regime x Period breakdown (1.5/0.5):
+  SB   P1: n=115 w=72.2% sh=1.813 | P2: n=58 w=74.1% sh=1.111 | P3: n=72 w=68.1% sh=1.334 | Full: n=245 w=71.4% sh=1.059
+  C    P1: n=0 (no data)          | P2: n=46 w=71.7% sh=0.590 | P3: n=41 w=65.9% sh=0.367 | Full: n=87 w=69.0% sh=0.390
+  SB+C P1: n=115 w=72.2% sh=1.813 | P2: n=104 w=73.1% sh=1.198 | P3: n=113 w=67.3% sh=1.366 | Full: n=332 w=70.8% sh=1.112
+  Zero Transitional trades confirmed.
+
+Part 3.3 â€” Full 42-combo grid (7 entry x 6 exit):
+  Best Sharpe (n>=30): entry=1.00, exit=0.1
+    n=527, win%=65.7, PnL=+6336.0, adjSh=1.234, maxDD=-392.5
+  Locked (1.5/0.5): n=332, win%=70.8, PnL=+5102.4, adjSh=1.112, maxDD=-287.8
+  Delta Sharpe: +0.122 (new best vs locked)
+  NOTE: Lower entry z-score means more trades, higher PnL, higher Sharpe,
+    but wider drawdown (-393 vs -288) and lower win rate (65.7% vs 70.8%).
+    Top-5 combos by Sharpe are all entry=1.0 or 1.25.
+  Full grid saved: full_42combo_grid.csv
+
+Dashboard integration (app_v2.py):
+  - INTRADAY_START changed to 2020-01-01 (backtest_engine.py)
+  - Caption updated to 2020-2026
+  - REF_BASELINE updated to 2020-2026 confirmed numbers
+  - REF_BEST updated to entry=1.0/exit=0.1 (Sharpe 1.234)
+  - Added Part D: Shape Regime x Time Period Breakdown
+    - Precomputed during 42-cell sensitivity sweep
+    - Selectbox filters for Entry Z / Exit Z
+    - Styled table with LOW-N flagging (* suffix, n<8)
+    - CSV download button for full cross-tab
+  - Regime x period breakdown integrated into sweep loop (no extra compute)

@@ -3,7 +3,7 @@ FCPO CALENDAR SPREAD — BACKTEST DASHBOARD BUILD LOG
 ======================================================================
 
 Generated: 2026-07-20
-Updated:   2026-07-20 (v2 — all 6 spec gaps fixed)
+Updated:   2026-07-24 (2020-2026 extension + regime x period breakdown)
 
 
 --- A.5 VALIDATION: OLD COST (100 MYR flat) ---
@@ -479,3 +479,26 @@ Validation (baseline 1.5/0.5, 22/44 MYR):
   M3-M4: Feb26-Mar26 = 4 trades ✓
   All 113 trades matched to exactly 89 unique instrument-pair combos ✓
   No duplicate or missing trades ✓
+
+
+--- 2020-2026 DATA EXTENSION + REGIME x PERIOD BREAKDOWN (2026-07-24) ---
+
+1. INTRADAY_START extended from 2024-01-01 to 2020-01-01.
+   Tenor-mapped CSVs rebuilt from 89 butterfly + 90 spread contracts (2020-2027).
+   2024+ slice integrity verified (NaN-aware, exact match).
+
+2. Baseline validation (entry=1.5, exit=0.5, 2020-2026):
+   n=332, win%=70.8, PnL=+5102.4, adjSh=1.112, maxDD=-287.8 — ALL PASS
+
+3. Part D added: Shape Regime x Time Period Breakdown
+   - Precomputed during 42-cell sensitivity sweep (no extra compute cost)
+   - UI: selectbox for Entry Z / Exit Z, styled table, CSV download
+   - Regimes: SB (shape 0.0), C (shape 1), SB+C (combined resting)
+   - Periods: P1 2020-2021, P2 2022-2023, P3 2024-2026, Full Range
+   - LOW-N flagging: cells with n<8 marked with * suffix, grey italic
+
+4. Full 42-combo grid (7 entry x 6 exit):
+   Best Sharpe (n>=30): entry=1.00, exit=0.1
+     n=527, win%=65.7, PnL=+6336.0, adjSh=1.234, maxDD=-392.5
+   Locked (1.5/0.5): adjSh=1.112 (conservative, lower DD)
+   REF_BEST updated in app_v2.py.

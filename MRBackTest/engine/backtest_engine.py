@@ -68,7 +68,7 @@ WINDOWS = [
     {'name': 'W4', 'label': 'W4 (2025-2026)', 'test_start': '2025-01-01', 'test_end': '2026-12-31'},
 ]
 
-INTRADAY_START = '2024-01-01'
+INTRADAY_START = '2020-01-01'  # extended from 2024 after tenor-mapped CSV rebuild (2026-07-24)
 INTRADAY_END = '2026-12-31'  # loads up to most recent available
 
 RESTING_SHAPES = ('0.0', '1')
@@ -401,7 +401,7 @@ def load_intraday_data():
     spread_df = pd.read_csv(spread_path, parse_dates=['datetime'])
     bf_df = pd.read_csv(bf_path, parse_dates=['datetime'])
 
-    # Filter to reliable range (2024+)
+    # Filter to INTRADAY_START (2020-01-01 after tenor CSV rebuild)
     spread_df = spread_df[spread_df['datetime'] >= INTRADAY_START].copy()
     bf_df = bf_df[bf_df['datetime'] >= INTRADAY_START].copy()
 

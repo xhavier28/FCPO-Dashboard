@@ -62,15 +62,24 @@ EXIT_LABELS = {
     'expiry_buffer': 'Expiry Buffer',
 }
 
-# Reference numbers from confirmed sensitivity sweep (2026-07-21)
+# Reference numbers from confirmed 2020-2026 baseline (2026-07-24)
 REF_BASELINE = {
     'entry_z': 1.5, 'exit_z': 0.5,
-    'n': 113, 'win_rate': 52.2, 'pnl': 408, 'adj_sharpe': 0.693, 'max_dd': -160,
+    'n': 332, 'win_rate': 70.8, 'pnl': 5102.4, 'adj_sharpe': 1.112, 'max_dd': -287.8,
 }
 REF_BEST = {
-    'entry_z': 1.75, 'exit_z': 0.25,
-    'n': 80, 'adj_sharpe': 0.974, 'pnl': 407, 'max_dd': -96,
+    'entry_z': 1.0, 'exit_z': 0.1,  # best Sharpe from full 42-combo grid (2026-07-24)
+    'n': 527, 'adj_sharpe': 1.234, 'pnl': 6336.0, 'max_dd': -392.5,
 }
+
+# ── Shape regime / time period constants ──
+SHAPE_REGIMES = ['SB', 'C', 'SB+C']  # no Transitional (confirmed zero trades)
+TIME_PERIODS = {
+    'P1 2020-2021': ('2020-01-01', '2021-12-31'),
+    'P2 2022-2023': ('2022-01-01', '2023-12-31'),
+    'P3 2024-2026': ('2024-01-01', '2026-12-31'),
+}
+LOW_N_CELL = 8  # per-cell low-n threshold for regime×period breakdown
 
 # Calendar-month color palette (12 months cycling)
 MONTH_COLORS = [
@@ -89,7 +98,7 @@ st.set_page_config(
 )
 
 st.title("FCPO Calendar Spread — Minute-Data Debug Dashboard (v2)")
-st.caption("Single-purpose tool: inspect exit reasons + tweak thresholds against 60-min intraday data (2024-2026)")
+st.caption("Single-purpose tool: inspect exit reasons + tweak thresholds against 60-min intraday data (2020-2026)")
 
 # ══════════════════════════════════════════════════════════════
 # SIDEBAR CONTROLS
@@ -222,6 +231,84 @@ def run_intraday(config):
         'adj_sharpe': adj_sharpe, 'metrics': metrics, 'trades': trades,
         'config': config,
     }
+
+
+def _classify_shape_regime(shape):
+    """SB (0.0), C (1), or Transitional (all others)."""
+    s = str(shape)
+    if s == '0.0':
+        return 'SB'
+    elif s == '1':
+        return 'C'
+    return 'Transitional'
+
+
+def _assign_period(entry_date):
+    """Assign trade to P1/P2/P3 based on entry date."""
+    d = pd.Timestamp(entry_date)
+    if d < pd.Timestamp('2022-01-01'):
+        return 'P1 2020-2021'
+    elif d < pd.Timestamp('2024-01-01'):
+        return 'P2 2022-2023'
+    return 'P3 2024-2026'
+
+
+def _cell_metrics(trades_subset, df_panel, period_start, period_end, config):
+    """Compute metrics for one regime×period cell."""
+    n = len(trades_subset)
+    if n == 0:
+        return {'n': 0, 'win_pct': np.nan, 'adj_sharpe': np.nan,
+                'pnl': 0.0, 'max_dd': 0.0}
+    wins = (trades_subset['net_pnl'] > 0).sum()
+    pnl = round(trades_subset['net_pnl'].sum(), 1)
+    cum = trades_subset['net_pnl'].cumsum()
+    max_dd = round((cum - cum.cummax()).min(), 1)
+    adj_sh = engine.compute_daily_portfolio_sharpe_configurable(
+        trades_subset, period_start, period_end, df_panel, config)
+    return {
+        'n': n,
+        'win_pct': round(wins / n * 100, 1),
+        'adj_sharpe': round(adj_sh, 3) if not np.isnan(adj_sh) else np.nan,
+        'pnl': pnl,
+        'max_dd': max_dd,
+    }
+
+
+def build_regime_period_breakdown(trades, df_panel, config):
+    """Build regime×period breakdown rows for a single threshold combo.
+    Returns list of dicts, one per regime×period cell + full-range row."""
+    if len(trades) == 0:
+        return []
+
+    trades = trades.copy()
+    trades['_regime'] = trades['shape'].apply(_classify_shape_regime)
+    trades['_period'] = trades['entry_date'].apply(_assign_period)
+
+    rows = []
+    period_keys = list(TIME_PERIODS.keys()) + ['Full Range']
+
+    for regime in SHAPE_REGIMES:
+        for pk in period_keys:
+            if pk == 'Full Range':
+                p_start, p_end = engine.INTRADAY_START, engine.INTRADAY_END
+                period_trades = trades
+            else:
+                p_start, p_end = TIME_PERIODS[pk]
+                period_trades = trades[trades['_period'] == pk]
+
+            if regime == 'SB+C':
+                cell_trades = period_trades[period_trades['_regime'].isin(['SB', 'C'])]
+            else:
+                cell_trades = period_trades[period_trades['_regime'] == regime]
+
+            cell_trades = cell_trades.reset_index(drop=True)
+            m = _cell_metrics(cell_trades, df_panel, p_start, p_end, config)
+            m['regime'] = regime
+            m['period'] = pk
+            m['low_n'] = m['n'] < LOW_N_CELL
+            rows.append(m)
+
+    return rows
 
 
 # ══════════════════════════════════════════════════════════════
@@ -873,16 +960,17 @@ else:
 
     st.markdown("### Entry/Exit Z-Score Sensitivity")
     st.caption(
-        "Sweeps entry z-score (1.0–2.5) × exit z-score (0.0–0.5) "
+        "Sweeps entry z-score (1.0-2.5) x exit z-score (0.0-0.5) "
         "using current dashboard settings for all other parameters. "
-        "Recomputes live when parameters change."
+        "Precomputes the full 42-cell grid + regime/period breakdown on click."
     )
 
     LOW_N_THRESHOLD = 30
 
     if st.button("Run Sensitivity Sweep", key='v2_run_sweep'):
-        with st.spinner("Running 42-cell sensitivity sweep..."):
+        with st.spinner("Running 42-cell sensitivity sweep + regime/period breakdown..."):
             sweep_rows = []
+            breakdown_rows = []
             current_config = result.get('config', build_config())
             entry_vals = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5]
             exit_vals = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
@@ -918,13 +1006,22 @@ else:
                         '_low_n': sweep_m['n_trades'] < LOW_N_THRESHOLD,
                     })
 
+                    # Build regime × period breakdown for this threshold combo
+                    bd = build_regime_period_breakdown(sweep_trades, df_panel, sweep_config)
+                    for cell in bd:
+                        cell['Entry Z'] = ez
+                        cell['Exit Z'] = xz
+                    breakdown_rows.extend(bd)
+
             sweep_df = pd.DataFrame(sweep_rows)
+            breakdown_df = pd.DataFrame(breakdown_rows)
 
             # Find best Sharpe row
             best_idx = sweep_df['Adj Sharpe'].idxmax()
 
             st.session_state['v2_sweep'] = sweep_df
             st.session_state['v2_sweep_best_idx'] = best_idx
+            st.session_state['v2_sweep_breakdown'] = breakdown_df
 
     # Display sweep results if available
     sweep_df = st.session_state.get('v2_sweep')
@@ -952,10 +1049,91 @@ else:
         st.dataframe(styled_sweep, use_container_width=True, height=500)
 
         best_row = sweep_df.iloc[best_idx]
-        baseline_row = sweep_df[sweep_df['_is_baseline']]
         st.caption(
             f"Green = best Sharpe (entry={best_row['Entry Z']:.2f}, exit={best_row['Exit Z']:.1f}, "
             f"Sharpe={best_row['Adj Sharpe']:.3f}) | "
             f"Blue = baseline (1.5/0.5) | "
             f"Grey italic = low-N (<{LOW_N_THRESHOLD} trades)"
+        )
+
+    # ──────────────────────────────────────────────────────────────
+    # PART D: Shape Regime x Time Period Breakdown
+    # ──────────────────────────────────────────────────────────────
+
+    breakdown_df = st.session_state.get('v2_sweep_breakdown')
+    if breakdown_df is not None and len(breakdown_df) > 0:
+        st.markdown("### Shape Regime x Time Period Breakdown")
+
+        # Filter controls
+        bd_col1, bd_col2 = st.columns(2)
+        with bd_col1:
+            bd_entry = st.selectbox(
+                "Entry Z", options=sorted(breakdown_df['Entry Z'].unique()),
+                index=sorted(breakdown_df['Entry Z'].unique()).tolist().index(1.5)
+                if 1.5 in breakdown_df['Entry Z'].values else 0,
+                key='bd_entry_z')
+        with bd_col2:
+            bd_exit = st.selectbox(
+                "Exit Z", options=sorted(breakdown_df['Exit Z'].unique()),
+                index=sorted(breakdown_df['Exit Z'].unique()).tolist().index(0.5)
+                if 0.5 in breakdown_df['Exit Z'].values else 0,
+                key='bd_exit_z')
+
+        # Filter to selected threshold
+        sel = breakdown_df[
+            (breakdown_df['Entry Z'] == bd_entry) &
+            (breakdown_df['Exit Z'] == bd_exit)
+        ].copy()
+
+        if len(sel) > 0:
+            # Pivot: rows = regime, columns = period metrics
+            period_order = list(TIME_PERIODS.keys()) + ['Full Range']
+
+            # Build display table: one row per regime, columns grouped by period
+            display_rows = []
+            for regime in SHAPE_REGIMES:
+                row_data = {'Regime': regime}
+                for pk in period_order:
+                    cell = sel[(sel['regime'] == regime) & (sel['period'] == pk)]
+                    if len(cell) == 0 or cell.iloc[0]['n'] == 0:
+                        row_data[f'{pk} n'] = 0
+                        row_data[f'{pk} Win%'] = ''
+                        row_data[f'{pk} Sharpe'] = ''
+                        row_data[f'{pk} PnL'] = ''
+                        row_data[f'{pk} MaxDD'] = ''
+                    else:
+                        c = cell.iloc[0]
+                        low_tag = '*' if c['low_n'] else ''
+                        row_data[f'{pk} n'] = int(c['n'])
+                        row_data[f'{pk} Win%'] = f"{c['win_pct']:.1f}%{low_tag}"
+                        sh_val = c['adj_sharpe']
+                        row_data[f'{pk} Sharpe'] = f"{sh_val:.3f}{low_tag}" if not np.isnan(sh_val) else f"nan{low_tag}"
+                        row_data[f'{pk} PnL'] = f"{c['pnl']:+.1f}{low_tag}"
+                        row_data[f'{pk} MaxDD'] = f"{c['max_dd']:+.1f}"
+                display_rows.append(row_data)
+
+            bd_display = pd.DataFrame(display_rows).set_index('Regime')
+
+            # Style: highlight low-n cells
+            def style_breakdown(val):
+                if isinstance(val, str) and '*' in val:
+                    return 'color: #888888; font-style: italic'
+                return ''
+
+            styled_bd = bd_display.style.map(style_breakdown)
+            st.dataframe(styled_bd, use_container_width=True, height=180)
+            st.caption(
+                f"Showing entry={bd_entry:.2f} / exit={bd_exit:.1f} | "
+                f"* = LOW-N (n<{LOW_N_CELL}) | "
+                f"SB = shape 0.0 (backwardation), C = shape 1 (contango), "
+                f"SB+C = combined resting shapes"
+            )
+
+        # Full breakdown CSV download
+        csv_data = breakdown_df.to_csv(index=False)
+        st.download_button(
+            "Download full cross-tab CSV",
+            data=csv_data,
+            file_name="shape_regime_time_crosstab.csv",
+            mime="text/csv",
         )
