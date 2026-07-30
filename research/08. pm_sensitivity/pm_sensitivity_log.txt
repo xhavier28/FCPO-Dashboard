@@ -1,0 +1,383 @@
+======================================================================
+PM SENSITIVITY SWEEP — PER-FEATURE BOUNDARY DETECTION
+Run: 2026-07-30
+Script: sensitivity_sweep.py
+======================================================================
+Config:
+  Anchor date: 2026-06-26
+  Model: PM (Model C), XGBoost classifier
+  Feature set: 11 TM_FEATURES
+  Sweep grid: 300 linear points (continuous), discrete values (categorical)
+  Min/max source: build_tm_daily_panel() full panel 2018-03-22 to 2026-06-26
+    Base: research/03. validation_analysis/shape_log_enriched.csv
+    MPOB: Raw Data/Stock and Production/ (3 Excel files)
+    Macro: Raw Data/Variable Analysis Extra Data/ (FX, Palm-Soy CSVs)
+    ENSO: Raw Data/ENSO/oni.ascii.txt
+
+Today's feature vector (2026-06-26):
+  stock_pct=0.8172  prod_mom_3m=10.1302  prod_yoy=-10.4022
+  export_yoy=-12.3060  oni=0.4800  usd_myr_chg_4w=3.3915
+  palm_soy_chg_4w=12.2854  days_in_shape=34  prior_shape_enc=4
+  month=6  stock_prod_interaction=0
+  Observed shape: 1 (C)
+
+Per-feature band table:
+
+  stock_pct (continuous, min=0.0121, max=0.9958):
+    [0.0121, 0.2983] -> SB
+    [0.3016, 0.3247] -> Mixed
+    [0.3280, 0.3345] -> C
+    [0.3378, 0.3806] -> Mixed
+    [0.3839, 0.3970] -> C
+    [0.4003, 0.5221] -> Mixed
+    [0.5254, 0.9958] -> C
+
+  prod_mom_3m (continuous, min=-35.7380, max=49.1227):
+    [-35.7380, 49.1227] -> C  (no flips)
+
+  prod_yoy (continuous, min=-35.2041, max=42.4232):
+    [-35.2041, 42.4232] -> C  (no flips)
+
+  export_yoy (continuous, min=-35.5961, max=57.5950):
+    [-35.5961, 57.5950] -> C  (no flips)
+
+  oni (continuous, min=-1.2000, max=2.0600):
+    [-1.2000, 2.0600] -> C  (no flips)
+
+  usd_myr_chg_4w (continuous, min=-7.9389, max=5.7534):
+    [-7.9389, 5.7534] -> C  (no flips)
+
+  palm_soy_chg_4w (continuous, min=-23.8461, max=21.2418):
+    [-23.8461, 21.2418] -> C  (no flips)
+
+  days_in_shape (continuous, min=1, max=177):
+    [1, 177] -> C  (no flips)
+
+  prior_shape_enc (discrete, values=0,1,2,3,4):
+    [0] -> Mixed
+    [1, 4] -> C
+
+  month (discrete, values=1-12):
+    [1, 12] -> C  (no flips)
+
+  stock_prod_interaction (discrete, values=0,1,2,3):
+    [0, 3] -> C  (no flips)
+
+DO NOT GUESS flags triggered and resolution:
+  1. Feature encoding: Confirmed from feature_prep.py code. prior_shape_enc
+     uses LabelEncoder (5 classes: 0-4), month is dt.month (1-12),
+     stock_prod_interaction is quad_map (0-3). All three swept discretely.
+  2. Data sources: Confirmed from feature_prep.py loader functions. Min/max
+     pulled from full non-null panel (n=2016 rows).
+  3. Today's vector: Pulled from most recent row (2026-06-26) of live panel,
+     not assumed. Confirmed this is genuinely the latest via source file dates.
+  4. Model mismatch: pm_engine.py docstring says ~90.0%, MODEL_REFERENCE.txt
+     says 89.4%. Consistent (rounding). Feature set matches exactly. No flag.
+
+======================================================================
+PM SENSITIVITY SWEEP — MULTI-ANCHOR (LOW-CONFIDENCE DAYS)
+Run: 2026-07-30
+Script: sensitivity_sweep.py multi
+======================================================================
+Config:
+  Confidence threshold: 0.70 (days with PM max-class probability < 0.70)
+  Anchor days tested: 31
+  Panel date range: 2018-03-22 to 2026-06-26 (n=2016)
+  Sweep grid: 300 linear points (continuous), discrete values (categorical)
+  Min/max source: build_tm_daily_panel() full panel
+    Base: research/03. validation_analysis/shape_log_enriched.csv
+    MPOB: Raw Data/Stock and Production/ (3 Excel files)
+    Macro: Raw Data/Variable Analysis Extra Data/ (FX, Palm-Soy CSVs)
+    ENSO: Raw Data/ENSO/oni.ascii.txt
+
+Selected anchor days (31 rows, PM confidence < 0.70):
+
+  Date          Observed  Predicted  Confidence
+  2025-04-21    SB        SB         0.5228
+  2025-04-22    SB        SB         0.6844
+  2025-04-23    SB        SB         0.5160
+  2025-04-24    SB        C          0.5070
+  2025-04-25    SB        SB         0.4920
+  2025-04-28    SB        C          0.5302
+  2025-04-29    SB        SB         0.4834
+  2025-04-30    SB        SB         0.5999
+  2025-06-13    MB        SB         0.5628
+  2025-06-16    MB        SB         0.6026
+  2025-06-23    C         C          0.6099
+  2025-07-02    F         Mixed      0.5375
+  2025-07-03    F         F          0.4859
+  2025-07-04    F         F          0.4765
+  2025-07-07    F         F          0.5072
+  2025-07-08    F         F          0.6532
+  2025-07-09    F         F          0.3819
+  2025-07-10    F         F          0.4510
+  2025-07-11    F         C          0.3732
+  2025-07-16    F         F          0.5597
+  2025-07-17    F         F          0.5707
+  2025-07-23    F         F          0.6586
+  2025-07-24    F         F          0.5751
+  2025-07-28    F         F          0.4710
+  2025-11-12    F         F          0.5845
+  2025-11-17    F         F          0.6740
+  2026-01-14    C         MB         0.6140
+  2026-03-09    MB        C          0.6675
+  2026-03-17    MB        C          0.5187
+  2026-03-18    MB        C          0.5538
+  2026-04-08    F         C          0.5532
+
+Per-anchor flip counts and flipped features:
+
+  2025-04-21: 7 features — stock_pct(3), prod_mom_3m(2), prod_yoy(2), oni(2), usd_myr_chg_4w(3), prior_shape_enc(2), stock_prod_interaction(1)
+  2025-04-22: 5 features — stock_pct(7), prod_yoy(4), oni(4), usd_myr_chg_4w(3), prior_shape_enc(2)
+  2025-04-23: 7 features — stock_pct(3), prod_mom_3m(2), prod_yoy(2), oni(2), usd_myr_chg_4w(3), prior_shape_enc(2), stock_prod_interaction(1)
+  2025-04-24: 10 features — stock_pct(1), prod_mom_3m(3), prod_yoy(1), export_yoy(2), usd_myr_chg_4w(3), palm_soy_chg_4w(1), days_in_shape(2), prior_shape_enc(3), month(1), stock_prod_interaction(1)
+  2025-04-25: 7 features — stock_pct(3), prod_mom_3m(2), prod_yoy(1), oni(2), usd_myr_chg_4w(3), prior_shape_enc(2), stock_prod_interaction(1)
+  2025-04-28: 10 features — stock_pct(1), prod_mom_3m(3), prod_yoy(1), export_yoy(2), usd_myr_chg_4w(3), palm_soy_chg_4w(1), days_in_shape(2), prior_shape_enc(3), month(1), stock_prod_interaction(1)
+  2025-04-29: 10 features — stock_pct(3), prod_mom_3m(2), prod_yoy(2), export_yoy(2), oni(2), usd_myr_chg_4w(4), days_in_shape(1), prior_shape_enc(2), month(1), stock_prod_interaction(1)
+  2025-04-30: 6 features — stock_pct(3), oni(2), usd_myr_chg_4w(2), days_in_shape(1), prior_shape_enc(2), stock_prod_interaction(1)
+  2025-06-13: 7 features — stock_pct(1), export_yoy(2), oni(2), usd_myr_chg_4w(2), palm_soy_chg_4w(1), prior_shape_enc(3), stock_prod_interaction(1)
+  2025-06-16: 6 features — stock_pct(1), oni(2), usd_myr_chg_4w(2), palm_soy_chg_4w(1), prior_shape_enc(3), stock_prod_interaction(1)
+  2025-06-23: 7 features — stock_pct(2), prod_mom_3m(1), prod_yoy(2), export_yoy(2), usd_myr_chg_4w(3), palm_soy_chg_4w(1), prior_shape_enc(4)
+  2025-07-02: 10 features — stock_pct(1), prod_mom_3m(1), prod_yoy(3), oni(1), usd_myr_chg_4w(2), palm_soy_chg_4w(1), days_in_shape(3), prior_shape_enc(3), month(2), stock_prod_interaction(1)
+  2025-07-03: 8 features — stock_pct(1), prod_yoy(2), export_yoy(1), oni(1), usd_myr_chg_4w(1), palm_soy_chg_4w(1), days_in_shape(4), prior_shape_enc(3)
+  2025-07-04: 6 features — stock_pct(1), prod_mom_3m(1), export_yoy(1), palm_soy_chg_4w(1), days_in_shape(2), prior_shape_enc(3)
+  2025-07-07: 5 features — stock_pct(1), export_yoy(1), palm_soy_chg_4w(1), days_in_shape(2), prior_shape_enc(3)
+  2025-07-08: 5 features — stock_pct(2), export_yoy(1), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(3)
+  2025-07-09: 9 features — stock_pct(1), prod_mom_3m(5), prod_yoy(2), export_yoy(1), oni(3), usd_myr_chg_4w(5), palm_soy_chg_4w(2), days_in_shape(2), prior_shape_enc(3)
+  2025-07-10: 7 features — stock_pct(2), prod_yoy(2), oni(4), usd_myr_chg_4w(2), palm_soy_chg_4w(2), days_in_shape(2), prior_shape_enc(3)
+  2025-07-11: 11 features — stock_pct(3), prod_mom_3m(3), prod_yoy(4), export_yoy(3), oni(4), usd_myr_chg_4w(3), palm_soy_chg_4w(6), days_in_shape(2), prior_shape_enc(1), month(2), stock_prod_interaction(1)
+  2025-07-16: 6 features — stock_pct(1), prod_yoy(1), usd_myr_chg_4w(2), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(4)
+  2025-07-17: 4 features — stock_pct(2), palm_soy_chg_4w(3), days_in_shape(1), prior_shape_enc(3)
+  2025-07-23: 4 features — stock_pct(1), palm_soy_chg_4w(2), days_in_shape(1), prior_shape_enc(4)
+  2025-07-24: 5 features — stock_pct(3), usd_myr_chg_4w(2), palm_soy_chg_4w(2), days_in_shape(1), prior_shape_enc(3)
+  2025-07-28: 6 features — stock_pct(1), prod_yoy(1), usd_myr_chg_4w(1), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(3)
+  2025-11-12: 7 features — stock_pct(1), prod_yoy(1), usd_myr_chg_4w(1), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(4), month(2)
+  2025-11-17: 5 features — stock_pct(1), usd_myr_chg_4w(3), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(4)
+  2026-01-14: 9 features — prod_mom_3m(1), prod_yoy(2), export_yoy(3), oni(1), usd_myr_chg_4w(3), palm_soy_chg_4w(3), days_in_shape(1), prior_shape_enc(2), month(2)
+  2026-03-09: 4 features — stock_pct(1), oni(1), palm_soy_chg_4w(1), prior_shape_enc(1)
+  2026-03-17: 9 features — stock_pct(1), prod_mom_3m(1), prod_yoy(2), oni(2), palm_soy_chg_4w(1), days_in_shape(2), prior_shape_enc(1), month(1), stock_prod_interaction(2)
+  2026-03-18: 6 features — stock_pct(1), prod_mom_3m(1), prod_yoy(2), oni(1), palm_soy_chg_4w(1), prior_shape_enc(4)
+  2026-04-08: 7 features — stock_pct(1), prod_mom_3m(1), export_yoy(1), oni(2), days_in_shape(1), prior_shape_enc(3), stock_prod_interaction(1)
+
+Cross-anchor summary (feature x anchor-days-with-flips):
+
+  Feature                        Anchors w/ flip   of 31
+  -------------------------------------------------------
+  prior_shape_enc                31                31/31
+  stock_pct                      30                30/31
+  palm_soy_chg_4w                24                24/31
+  usd_myr_chg_4w                 22                22/31
+  days_in_shape                  22                22/31
+  prod_yoy                       19                19/31
+  oni                            18                18/31
+  prod_mom_3m                    15                15/31
+  export_yoy                     13                13/31
+  stock_prod_interaction         13                13/31
+  month                           8                 8/31
+
+======================================================================
+PM SENSITIVITY SWEEP — SELECTED ANCHORS + NEAR-MISS ANALYSIS
+Run: 2026-07-30
+Script: sensitivity_sweep.py selected
+======================================================================
+Config:
+  Confidence threshold for "low-confidence": 0.70
+  Anchor days tested: 9 (8 low-conf selected + 2026-06-26 high-conf)
+  Panel date range: 2018-03-22 to 2026-06-26 (n=2016)
+  Sweep grid: 300 linear points (continuous), discrete for categorical
+  Min/max source: build_tm_daily_panel() full panel
+
+Confidence distribution (full panel, n=2016):
+  Below 50%:     8 (0.4%)
+  Below 60%:    23 (1.1%)
+  Below 70%:    31 (1.5%)
+  Below 80%:    52 (2.6%)
+  Below 90%:    94 (4.7%)
+  Mean: 0.9802   Median: 0.9978   Min: 0.3732
+
+Selected anchor days:
+
+  #  Date          Obs    Pred   Conf
+  1  2025-04-25    SB     SB     0.4920
+  2  2025-04-24    SB     C      0.5070
+  3  2025-06-13    MB     SB     0.5628
+  4  2025-06-23    C      C      0.6099
+  5  2025-07-02    F      Mixed  0.5375
+  6  2025-07-11    F      C      0.3732
+  7  2025-11-12    F      F      0.5845
+  8  2026-01-14    C      MB     0.6140
+  9  2026-06-26    C      C      0.9964
+
+Per-anchor flip counts and flipped features:
+
+  2025-04-25: 7 features — stock_pct(3), prod_mom_3m(2), prod_yoy(1), oni(2), usd_myr_chg_4w(3), prior_shape_enc(2), stock_prod_interaction(1)
+    Closest non-flip: palm_soy_chg_4w (swing=0.4723)
+  2025-04-24: 10 features — stock_pct(1), prod_mom_3m(3), prod_yoy(1), export_yoy(2), usd_myr_chg_4w(3), palm_soy_chg_4w(1), days_in_shape(2), prior_shape_enc(3), month(1), stock_prod_interaction(1)
+    Closest non-flip: oni (swing=0.3021)
+  2025-06-13: 7 features — stock_pct(1), export_yoy(2), oni(2), usd_myr_chg_4w(2), palm_soy_chg_4w(1), prior_shape_enc(3), stock_prod_interaction(1)
+    Closest non-flip: prod_yoy (swing=0.3107)
+  2025-06-23: 7 features — stock_pct(2), prod_mom_3m(1), prod_yoy(2), export_yoy(2), usd_myr_chg_4w(3), palm_soy_chg_4w(1), prior_shape_enc(4)
+    Closest non-flip: oni (swing=0.3327)
+  2025-07-02: 10 features — stock_pct(1), prod_mom_3m(1), prod_yoy(3), oni(1), usd_myr_chg_4w(2), palm_soy_chg_4w(1), days_in_shape(3), prior_shape_enc(3), month(2), stock_prod_interaction(1)
+    Closest non-flip: export_yoy (swing=0.4358)
+  2025-07-11: 11 features — ALL 11 flipped. stock_pct(3), prod_mom_3m(3), prod_yoy(4), export_yoy(3), oni(4), usd_myr_chg_4w(3), palm_soy_chg_4w(6), days_in_shape(2), prior_shape_enc(1), month(2), stock_prod_interaction(1)
+    (no non-flipping features)
+  2025-11-12: 7 features — stock_pct(1), prod_yoy(1), usd_myr_chg_4w(1), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(4), month(2)
+    Closest non-flip: oni (swing=0.4159)
+  2026-01-14: 9 features — prod_mom_3m(1), prod_yoy(2), export_yoy(3), oni(1), usd_myr_chg_4w(3), palm_soy_chg_4w(3), days_in_shape(1), prior_shape_enc(2), month(2)
+    Closest non-flip: stock_pct (swing=0.3817)
+  2026-06-26: 2 features — stock_pct(6), prior_shape_enc(1)
+    Closest non-flip: days_in_shape (swing=0.1768)
+
+Cross-anchor summary (feature x anchor-days-with-flips, 9 anchors):
+
+  Feature                        Flipped on   Never flipped
+  -----------------------------------------------------------
+  prior_shape_enc                9/9          0/9
+  stock_pct                      8/9          1/9
+  usd_myr_chg_4w                 8/9          1/9
+  prod_yoy                       7/9          2/9
+  palm_soy_chg_4w                7/9          2/9
+  prod_mom_3m                    6/9          3/9
+  export_yoy                     5/9          4/9
+  oni                            5/9          4/9
+  days_in_shape                  5/9          4/9
+  month                          5/9          4/9
+  stock_prod_interaction         5/9          4/9
+
+  Always flip (all 9): prior_shape_enc
+  Never flip (0/9):    (none)
+
+======================================================================
+PM SENSITIVITY SWEEP — MID-CONFIDENCE BAND (70-90%)
+Run: 2026-07-30
+Script: sensitivity_sweep.py midconf
+======================================================================
+Config:
+  Confidence band tested: 0.70 to 0.90 (strictly >=0.70 and <0.90)
+  Band size: 63 days out of 2016 total panel rows
+  Anchors selected: 7
+  Panel date range: 2018-03-22 to 2026-06-26
+
+Band distribution (63 days):
+  Observed shapes: C(20), F(18), MB(14), SB(6), Mixed(5)
+  Months: Jan(2), Feb(4), Mar(6), Apr(9), May(16), Jun(12),
+          Jul(3), Aug(3), Oct(2), Nov(3), Dec(3). Sep missing.
+  Correct predictions: 55/63 (87.3%)
+
+Selected mid-confidence anchor days:
+
+  #  Date          Obs    Pred   Conf
+  1  2020-03-05    MB     MB     0.7379
+  2  2023-06-15    SB     SB     0.7055
+  3  2024-05-16    Mixed  Mixed  0.7784
+  4  2025-06-30    C      C      0.7150
+  5  2025-07-18    F      F      0.7318
+  6  2025-05-13    F      Mixed  0.8979
+  7  2026-03-16    MB     C      0.7552
+
+Per-anchor flip counts and flipped features:
+
+  2020-03-05: 6 features — stock_pct(1), prod_yoy(4), usd_myr_chg_4w(2), palm_soy_chg_4w(3), prior_shape_enc(3), month(2)
+    Closest non-flip: prod_mom_3m (swing=0.2921)
+  2023-06-15: 3 features — stock_pct(1), usd_myr_chg_4w(4), prior_shape_enc(3)
+    Closest non-flip: stock_prod_interaction (swing=0.3742)
+  2024-05-16: 7 features — stock_pct(1), prod_mom_3m(1), prod_yoy(2), oni(1), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(4)
+    Closest non-flip: export_yoy (swing=0.3046)
+  2025-06-30: 5 features — prod_mom_3m(1), prod_yoy(1), export_yoy(1), palm_soy_chg_4w(1), prior_shape_enc(3)
+    Closest non-flip: stock_pct (swing=0.5026)
+  2025-07-18: 4 features — stock_pct(1), palm_soy_chg_4w(1), days_in_shape(1), prior_shape_enc(4)
+    Closest non-flip: oni (swing=0.2703)
+  2025-05-13: 4 features — stock_pct(1), oni(1), palm_soy_chg_4w(1), prior_shape_enc(2)
+    Closest non-flip: stock_prod_interaction (swing=0.2440)
+  2026-03-16: 5 features — stock_pct(1), prod_yoy(1), oni(2), palm_soy_chg_4w(3), prior_shape_enc(3)
+    Closest non-flip: days_in_shape (swing=0.3255)
+
+Mid-confidence-only cross-anchor (7 anchors):
+
+  Feature                        Flipped on
+  -------------------------------------------
+  prior_shape_enc                7/7
+  stock_pct                      6/7
+  palm_soy_chg_4w                6/7
+  prod_yoy                       4/7
+  oni                            3/7
+  prod_mom_3m                    2/7
+  usd_myr_chg_4w                 2/7
+  days_in_shape                  2/7
+  export_yoy                     1/7
+  month                          1/7
+  stock_prod_interaction         0/7
+
+Master cross-anchor summary (9 prior + 7 mid-conf = 16 total):
+
+  Feature                        Prior(9)  Mid(7)  Total(16)  Rate
+  ------------------------------------------------------------------
+  prior_shape_enc                9/9       7/7     16/16      100.0%
+  stock_pct                      8/9       6/7     14/16       87.5%
+  palm_soy_chg_4w                7/9       6/7     13/16       81.2%
+  prod_yoy                       7/9       4/7     11/16       68.8%
+  usd_myr_chg_4w                 8/9       2/7     10/16       62.5%
+  prod_mom_3m                    6/9       2/7      8/16       50.0%
+  oni                            5/9       3/7      8/16       50.0%
+  days_in_shape                  5/9       2/7      7/16       43.8%
+  export_yoy                     5/9       1/7      6/16       37.5%
+  month                          5/9       1/7      6/16       37.5%
+  stock_prod_interaction         5/9       0/7      5/16       31.2%
+
+  Always flip (all 16): prior_shape_enc
+  Never flip (0/16):    (none)
+
+======================================================================
+2026-07-30 — Qualitative Band Labels & Friendly Names Applied
+======================================================================
+
+Script: pm_sensitivity_app.py (modified in place)
+
+Merge algorithm (approved):
+  Phase 1: merge adjacent bands with same predicted shape (no info loss).
+  Phase 2: iteratively merge adjacent pair with smallest combined width
+           until ≤5 groups remain. Merged group shape = wider constituent
+           band's shape (dominant by range coverage).
+
+Label assignment by group count:
+  1 group  -> de-emphasized "flat today" display (no selector)
+  2 groups -> Low, High
+  3 groups -> Low, Med, High
+  4 groups -> Low, Low-Med, Med-High, High
+  5 groups -> Very Low, Low, Med, High, Very High
+
+stock_pct example (7 raw bands -> 5 groups, anchor 2026-07-30):
+  Raw bands:
+    [0.0121 – 0.2983] SB,   [0.3016 – 0.3247] Mixed,
+    [0.3280 – 0.3345] C,    [0.3378 – 0.3806] Mixed,
+    [0.3839 – 0.3970] C,    [0.4003 – 0.5221] Mixed,
+    [0.5254 – 0.9958] C
+  After merge:
+    Very Low [0.01 – 0.30] -> SB
+    Low      [0.30 – 0.33] -> Mixed  (contains narrow C sub-band near 0.3280)
+    Med      [0.34 – 0.40] -> Mixed  (contains narrow C sub-band near 0.3839)
+    High     [0.40 – 0.52] -> Mixed
+    Very High[0.53 – 1.00] -> C
+  Today's value (0.8172) falls in Very High.
+
+1-band features (9 of 11 on this anchor): shown as de-emphasized display
+with note "Flat today (no flip in range) — historically sensitive on other
+dates, see Tier N."
+
+Friendly names applied to all 11 features:
+  stock_pct              -> Stock Level (percentile)
+  prod_mom_3m            -> Production Momentum (3-month change)
+  prod_yoy               -> Production (Year-over-Year change)
+  export_yoy             -> Exports (Year-over-Year change)
+  oni                    -> ENSO Index (ONI)
+  usd_myr_chg_4w         -> USD/MYR (4-week change)
+  palm_soy_chg_4w        -> Palm-Soy Spread (4-week change)
+  days_in_shape          -> Days in Current Regime
+  prior_shape_enc        -> Previous Curve Shape
+  month                  -> Calendar Month
+  stock_prod_interaction -> Stock/Production Quadrant
+
+One-line definitions added as captions below each feature selector.
+Merged-group tooltips flag multi-shape content (e.g. "contains narrow C
+sub-band near 0.3280").
