@@ -381,3 +381,39 @@ Friendly names applied to all 11 features:
 One-line definitions added as captions below each feature selector.
 Merged-group tooltips flag multi-shape content (e.g. "contains narrow C
 sub-band near 0.3280").
+
+======================================================================
+2026-07-30 — Flat-Feature Slider + Free Date Entry
+======================================================================
+
+Script: pm_sensitivity_app.py (modified in place)
+
+Flat-feature slider behavior:
+  1-band (no-flip) features now render as a disabled single-position
+  select_slider showing the anchor's actual value, instead of a static
+  text display. Caption below reads: "Flat today (no flip in range) —
+  historically sensitive on other dates, see Tier N."
+
+Free date entry:
+  st.date_input allows any date in the panel range (2018-03-22 to
+  latest available, currently 2026-06-26). Selecting a date triggers
+  full 11-feature band recomputation anchored to that date's feature
+  vector.
+
+Out-of-range/missing date handling:
+  - Date outside panel range: error "Date X is outside the panel range
+    (2018-03-22 to 2026-06-26)."
+  - Non-trading day (weekend/holiday): error "No data for X (non-trading
+    day). Nearest available dates: Y, Z." with actual nearest trading
+    dates shown.
+  - Row with NaN features: error "Date X has missing feature values (NaN)."
+  No silent fallback in any case.
+
+Tested edge cases:
+  Latest (2026-06-26): OK, shape=C
+  Panel start (2018-03-22): OK, shape=MB
+  Before panel (2017-01-01): blocked with range error
+  After panel (2030-01-01): blocked with range error
+  Weekend Sat (2025-07-05): blocked, nearest 2025-07-04, 2025-07-07
+  Weekend Sun (2025-07-06): blocked, nearest 2025-07-04, 2025-07-07
+  Low-conf day (2025-07-11): OK, all 11 features show multiple bands

@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+from datetime import date as dt_date
 
 from models.feature_prep import build_tm_daily_panel, TM_FEATURES
 import models.pm_engine as pm_mod
@@ -99,7 +100,7 @@ def merge_bands_to_groups(bands):
 
     Phase 1: merge adjacent bands with the same predicted shape.
     Phase 2: iteratively merge the adjacent pair with the smallest
-             combined width until ≤5 remain.
+             combined width until <=5 remain.
 
     Returns list of dicts:
       {start, end, dominant_shape, dominant_abbrev, sub_bands}
@@ -133,7 +134,6 @@ def merge_bands_to_groups(bands):
         for g in groups[1:]:
             prev = new_groups[-1]
             if _dominant(prev) == _dominant(g):
-                # Merge
                 new_groups[-1] = {
                     'start': prev['start'],
                     'end': g['end'],
@@ -144,9 +144,8 @@ def merge_bands_to_groups(bands):
                 new_groups.append(g)
         groups = new_groups
 
-    # Phase 2: smallest-width merge until ≤5
+    # Phase 2: smallest-width merge until <=5
     while len(groups) > 5:
-        # Find adjacent pair with smallest combined width
         min_width = float('inf')
         min_idx = 0
         for i in range(len(groups) - 1):
@@ -155,7 +154,6 @@ def merge_bands_to_groups(bands):
             if combined < min_width:
                 min_width = combined
                 min_idx = i
-        # Merge groups[min_idx] and groups[min_idx + 1]
         a, b = groups[min_idx], groups[min_idx + 1]
         merged_group = {
             'start': a['start'],
@@ -169,7 +167,6 @@ def merge_bands_to_groups(bands):
         dom = _dominant(g)
         g['dominant_shape'] = dom
         g['dominant_abbrev'] = SHAPE_ABBREV.get(dom, dom)
-        # Check if group contains multiple distinct shapes
         distinct = set(sb['shape'] for sb in g['sub_bands'])
         g['mixed'] = len(distinct) > 1
         g['all_shapes'] = distinct
@@ -181,14 +178,13 @@ def build_group_tooltip(group, feat_name):
     """Build tooltip text for a merged group, flagging multi-shape merges."""
     is_discrete = feat_name in DISCRETE_FEATURES
     if is_discrete:
-        rng = f"{group['start']:.0f} – {group['end']:.0f}"
+        rng = f"{group['start']:.0f} \u2013 {group['end']:.0f}"
     else:
-        rng = f"{group['start']:.4f} – {group['end']:.4f}"
+        rng = f"{group['start']:.4f} \u2013 {group['end']:.4f}"
 
-    tip = f"[{rng}] → {group['dominant_abbrev']}"
+    tip = f"[{rng}] \u2192 {group['dominant_abbrev']}"
 
     if group['mixed']:
-        # List the minority sub-bands
         minority = []
         for sb in group['sub_bands']:
             sb_abbrev = SHAPE_ABBREV.get(sb['shape'], sb['shape'])
@@ -227,12 +223,13 @@ def load_model():
 
 
 @st.cache_data(show_spinner="Computing sensitivity bands...")
-def compute_bands(_panel_hash, today_vector, hist_mins, hist_maxs):
+def compute_bands(_panel_hash, anchor_vector_tuple, hist_mins, hist_maxs):
     """Sweep each feature to find shape-flip boundaries."""
+    anchor_vector = np.array(anchor_vector_tuple)
     raw_bands = {}
     for feat_idx, feat_name in enumerate(TM_FEATURES):
         grid = build_grid(feat_name, hist_mins[feat_idx], hist_maxs[feat_idx])
-        results = sweep_feature_with_probs(feat_name, grid, today_vector, feat_idx)
+        results = sweep_feature_with_probs(feat_name, grid, anchor_vector, feat_idx)
         raw_bands[feat_name] = find_bands([(r[0], r[1]) for r in results])
     return raw_bands
 
@@ -257,28 +254,28 @@ def friendly(feat_name):
     return FRIENDLY_NAMES.get(feat_name, feat_name)
 
 
-def build_selector(feat_name, raw_bands, today_val):
+def build_selector(feat_name, raw_bands, anchor_val):
     """
     Render a selector widget for a feature and return the selected value.
 
-    Discrete features (prior_shape_enc, month, stock_prod_interaction)
-    keep their categorical selectbox. Continuous features with ≥2 bands
-    get qualitative-label select_slider. Features with 1 band (no flips)
-    get a de-emphasized read-only display.
+    Discrete features keep their categorical selectbox.
+    Continuous features with >=2 bands get qualitative-label select_slider.
+    Features with 1 band (flat) get a single-position slider with a caption
+    noting historical sensitivity.
     """
     is_discrete = feat_name in DISCRETE_FEATURES
     label = friendly(feat_name)
     definition = FEATURE_DEFS.get(feat_name, '')
     tier = FEATURE_TIER.get(feat_name, '?')
 
-    # ── Discrete features: categorical selectbox (unchanged logic) ──
+    # ── Discrete features: categorical selectbox ──
     if is_discrete:
         st.caption(f"*{definition}*")
         options = DISCRETE_FEATURES[feat_name]
         labels = [discrete_label(feat_name, v) for v in options]
         today_idx = 0
         for i, v in enumerate(options):
-            if int(round(today_val)) == v:
+            if int(round(anchor_val)) == v:
                 today_idx = i
                 break
         key = f"sel_{feat_name}"
@@ -287,51 +284,50 @@ def build_selector(feat_name, raw_bands, today_val):
             labels,
             index=today_idx,
             key=key,
-            help=f"{definition}. Today's value: {discrete_label(feat_name, today_val)}",
+            help=f"{definition}. Anchor value: {discrete_label(feat_name, anchor_val)}",
         )
         return float(options[labels.index(selected_label)])
 
     # ── Continuous features ──
     groups = merge_bands_to_groups(raw_bands)
 
-    # Single band (no flips): de-emphasized read-only display
+    # Single band (flat): interactive slider with single position + caption
     if len(groups) <= 1:
-        st.markdown(
-            f"<span style='color:#888'><b>{label}</b></span>",
-            unsafe_allow_html=True,
-        )
         st.caption(f"*{definition}*")
-        if is_discrete:
-            val_str = discrete_label(feat_name, today_val)
-        else:
-            val_str = f"{today_val:.4f}"
-        st.markdown(
-            f"<span style='color:#666'>Flat today (no flip in range) — "
-            f"historically sensitive on other dates, see Tier {tier}. "
-            f"Today's value: **{val_str}**</span>",
-            unsafe_allow_html=True,
+        key = f"slider_{feat_name}"
+        # Single-option select_slider — still interactive widget, just one position
+        st.select_slider(
+            label,
+            options=[0],
+            value=0,
+            format_func=lambda _x: f"{anchor_val:.4f}",
+            key=key,
+            help=f"{definition}. Anchor value: {anchor_val:.4f}",
+            disabled=True,
         )
-        return float(today_val)
+        st.caption(
+            f"Flat today (no flip in range) \u2014 historically sensitive "
+            f"on other dates, see Tier {tier}."
+        )
+        return float(anchor_val)
 
     # Multiple groups: qualitative-label select_slider
     st.caption(f"*{definition}*")
     n = len(groups)
     qual = QUAL_LABELS.get(n, [f"G{i+1}" for i in range(n)])
 
-    # Build option labels with shape and tooltip info
     option_labels = []
     option_values = []  # midpoint representative values
     tooltips = []
-    today_group = find_today_group_idx(groups, today_val)
+    today_group = find_today_group_idx(groups, anchor_val)
 
     for i, g in enumerate(groups):
         mid = (g['start'] + g['end']) / 2.0
         option_values.append(mid)
         tip = build_group_tooltip(g, feat_name)
         tooltips.append(tip)
-        option_labels.append(f"{qual[i]} → {g['dominant_abbrev']}")
+        option_labels.append(f"{qual[i]} \u2192 {g['dominant_abbrev']}")
 
-    # Use indices as slider options, format with labels
     key = f"slider_{feat_name}"
     selected_idx = st.select_slider(
         label,
@@ -339,17 +335,58 @@ def build_selector(feat_name, raw_bands, today_val):
         value=today_group,
         format_func=lambda i: option_labels[i],
         key=key,
-        help=f"{definition}. Today's value: {today_val:.4f} ({qual[today_group]})",
+        help=f"{definition}. Anchor value: {anchor_val:.4f} ({qual[today_group]})",
     )
 
     # Show tooltip detail below the slider
     g = groups[selected_idx]
     tip = tooltips[selected_idx]
-    is_today = (selected_idx == today_group)
-    marker = " *(today)*" if is_today else ""
+    is_anchor = (selected_idx == today_group)
+    marker = " *(anchor)*" if is_anchor else ""
     st.caption(f"{tip}{marker}")
 
     return option_values[selected_idx]
+
+
+# ── date resolution ────────────────────────────────────────────
+def resolve_anchor_row(df, selected_date):
+    """
+    Resolve a selected date to a panel row.
+
+    Returns (row, error_message). If row is None, error_message explains why.
+    """
+    ts = pd.Timestamp(selected_date)
+    panel_min = df['date'].iloc[0]
+    panel_max = df['date'].iloc[-1]
+
+    if ts < panel_min or ts > panel_max:
+        return None, (
+            f"Date {selected_date} is outside the panel range "
+            f"({panel_min.date()} to {panel_max.date()})."
+        )
+
+    exact = df[df['date'] == ts]
+    if len(exact) > 0:
+        row = exact.iloc[0]
+        vec = row[TM_FEATURES].values.astype(float)
+        if np.any(np.isnan(vec)):
+            return None, f"Date {selected_date} has missing feature values (NaN)."
+        return row, None
+
+    # No exact match — find nearest available dates
+    before = df[df['date'] < ts]
+    after = df[df['date'] > ts]
+    nearest_before = before['date'].iloc[-1].date() if len(before) > 0 else None
+    nearest_after = after['date'].iloc[0].date() if len(after) > 0 else None
+    parts = []
+    if nearest_before:
+        parts.append(str(nearest_before))
+    if nearest_after:
+        parts.append(str(nearest_after))
+    return None, (
+        f"No data for {selected_date} (non-trading day). "
+        f"Nearest available dates: {', '.join(parts)}."
+    )
 
 
 # ── main app ───────────────────────────────────────────────────
@@ -365,41 +402,68 @@ def main():
         st.error(f"Failed to load model: {e}")
         return
 
-    df = panel.sort_values('date')
+    df = panel.sort_values('date').reset_index(drop=True)
     latest = df.iloc[-1]
-    today_date = latest['date']
-    today_vector = latest[TM_FEATURES].values.astype(float)
-    today_shape = str(latest['shape'])
+    latest_date = latest['date'].date()
+    panel_min_date = df['date'].iloc[0].date()
 
-    if np.any(np.isnan(today_vector)):
-        st.error("Latest row has NaN features — cannot run sensitivity.")
+    # Historical stats for grid bounds (constant across all anchor dates)
+    hist_mins = tuple(float(df[f].min()) for f in TM_FEATURES)
+    hist_maxs = tuple(float(df[f].max()) for f in TM_FEATURES)
+
+    # ── Date selector ──
+    st.subheader("Anchor Date")
+    dc1, dc2 = st.columns([1, 2])
+    with dc1:
+        selected_date = st.date_input(
+            "Select any date in panel",
+            value=latest_date,
+            min_value=panel_min_date,
+            max_value=latest_date,
+            key="anchor_date",
+            help=f"Panel range: {panel_min_date} to {latest_date}. "
+                 f"Pick any trading day to anchor the sensitivity sweep.",
+        )
+
+    # Resolve selected date to a panel row
+    anchor_row, date_error = resolve_anchor_row(df, selected_date)
+    if date_error:
+        with dc2:
+            st.error(date_error)
         return
 
-    # Historical stats for grid bounds
-    hist_mins = np.array([df[f].min() for f in TM_FEATURES])
-    hist_maxs = np.array([df[f].max() for f in TM_FEATURES])
+    anchor_date = anchor_row['date']
+    anchor_vector = anchor_row[TM_FEATURES].values.astype(float)
+    anchor_shape = str(anchor_row['shape'])
+    is_latest = (anchor_date.date() == latest_date)
 
-    # Compute bands (cached)
-    panel_hash = len(df)
-    all_bands = compute_bands(panel_hash, today_vector, tuple(hist_mins), tuple(hist_maxs))
+    with dc2:
+        if is_latest:
+            st.info(f"Showing latest available date: {anchor_date.date()}")
+        else:
+            st.info(f"Anchored to historical date: {anchor_date.date()}")
 
-    # Baseline prediction
-    probs_baseline = model.predict_proba(today_vector.reshape(1, -1))[0]
+    # Compute bands for this anchor (cached per unique vector)
+    anchor_vector_tuple = tuple(float(v) for v in anchor_vector)
+    all_bands = compute_bands(len(df), anchor_vector_tuple, hist_mins, hist_maxs)
+
+    # Baseline prediction at anchor
+    probs_baseline = model.predict_proba(anchor_vector.reshape(1, -1))[0]
     pred_enc_baseline = probs_baseline.argmax()
     pred_shape_baseline = str(le.inverse_transform([pred_enc_baseline])[0])
     conf_baseline = float(probs_baseline.max())
 
     # ── Anchor summary ──
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Date", str(today_date.date()))
-    c2.metric("Observed Shape", abbrev(today_shape))
+    c1.metric("Date", str(anchor_date.date()))
+    c2.metric("Observed Shape", abbrev(anchor_shape))
     c3.metric("PM Predicted", abbrev(pred_shape_baseline))
     c4.metric("PM Confidence", f"{conf_baseline:.1%}")
 
     st.divider()
 
     # ── Reset button ──
-    if st.button("Reset to today's values"):
+    if st.button("Reset to anchor values"):
         for key in list(st.session_state.keys()):
             if key.startswith("sel_") or key.startswith("slider_"):
                 del st.session_state[key]
@@ -409,33 +473,36 @@ def main():
     selected_values = {}
 
     # Tier 1
-    st.subheader("Tier 1 — Primary Drivers")
+    st.subheader("Tier 1 \u2014 Primary Drivers")
     cols = st.columns(len(TIER_1))
     for col, feat in zip(cols, TIER_1):
         feat_idx = TM_FEATURES.index(feat)
         with col:
-            selected_values[feat] = build_selector(feat, all_bands[feat], today_vector[feat_idx])
+            selected_values[feat] = build_selector(
+                feat, all_bands[feat], anchor_vector[feat_idx])
 
     # Tier 2
-    with st.expander("Tier 2 — Secondary Drivers", expanded=True):
+    with st.expander("Tier 2 \u2014 Secondary Drivers", expanded=True):
         cols = st.columns(len(TIER_2))
         for col, feat in zip(cols, TIER_2):
             feat_idx = TM_FEATURES.index(feat)
             with col:
-                selected_values[feat] = build_selector(feat, all_bands[feat], today_vector[feat_idx])
+                selected_values[feat] = build_selector(
+                    feat, all_bands[feat], anchor_vector[feat_idx])
 
     # Tier 3
-    with st.expander("Tier 3 — Minor Drivers", expanded=False):
+    with st.expander("Tier 3 \u2014 Minor Drivers", expanded=False):
         cols = st.columns(len(TIER_3))
         for col, feat in zip(cols, TIER_3):
             feat_idx = TM_FEATURES.index(feat)
             with col:
-                selected_values[feat] = build_selector(feat, all_bands[feat], today_vector[feat_idx])
+                selected_values[feat] = build_selector(
+                    feat, all_bands[feat], anchor_vector[feat_idx])
 
     st.divider()
 
     # ── Build modified vector and predict ──
-    modified_vector = today_vector.copy()
+    modified_vector = anchor_vector.copy()
     for feat, val in selected_values.items():
         feat_idx = TM_FEATURES.index(feat)
         modified_vector[feat_idx] = val
@@ -456,12 +523,13 @@ def main():
     abbrev_new = abbrev(pred_shape_new)
     color = SHAPE_COLORS.get(abbrev_new, '#fafafa')
 
-    rc1.markdown(f"### Predicted Shape: <span style='color:{color}'>{abbrev_new}</span>",
-                 unsafe_allow_html=True)
+    rc1.markdown(
+        f"### Predicted Shape: <span style='color:{color}'>{abbrev_new}</span>",
+        unsafe_allow_html=True)
     rc2.metric("Confidence", f"{conf_new:.1%}",
-               delta=f"{conf_new - conf_baseline:+.1%}" if abs(conf_new - conf_baseline) > 0.001 else None)
+               delta=f"{conf_new - conf_baseline:+.1%}"
+               if abs(conf_new - conf_baseline) > 0.001 else None)
 
-    # Delta indicator
     if pred_shape_new != pred_shape_baseline:
         rc3.warning(f"Shape changed: {abbrev(pred_shape_baseline)} \u2192 {abbrev_new}")
     else:
