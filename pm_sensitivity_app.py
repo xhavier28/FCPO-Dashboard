@@ -51,7 +51,6 @@ for f in TIER_2:
 for f in TIER_3:
     FEATURE_TIER[f] = 3
 
-# Friendly names and one-line definitions (verbatim from spec)
 FRIENDLY_NAMES = {
     'stock_pct':              'Stock Level (percentile)',
     'prod_mom_3m':            'Production Momentum (3-month change)',
@@ -84,13 +83,24 @@ DARK_BG   = "#0e1117"
 DARK_PLOT = "#262730"
 DARK_TEXT = "#fafafa"
 
-# Qualitative label sets by group count
 QUAL_LABELS = {
     2: ['Low', 'High'],
     3: ['Low', 'Med', 'High'],
     4: ['Low', 'Low-Med', 'Med-High', 'High'],
     5: ['Very Low', 'Low', 'Med', 'High', 'Very High'],
 }
+
+# 16 preset anchor dates from the sensitivity study
+PRESET_DATES = [
+    # High-conf
+    '2026-06-26',
+    # Low-conf (8)
+    '2025-04-25', '2025-04-24', '2025-06-13', '2025-06-23',
+    '2025-07-02', '2025-07-11', '2025-11-12', '2026-01-14',
+    # Mid-conf (7)
+    '2020-03-05', '2023-06-15', '2024-05-16', '2025-06-30',
+    '2025-07-18', '2025-05-13', '2026-03-16',
+]
 
 
 # ── merge algorithm ────────────────────────────────────────────
@@ -101,16 +111,10 @@ def merge_bands_to_groups(bands):
     Phase 1: merge adjacent bands with the same predicted shape.
     Phase 2: iteratively merge the adjacent pair with the smallest
              combined width until <=5 remain.
-
-    Returns list of dicts:
-      {start, end, dominant_shape, dominant_abbrev, sub_bands}
-    where sub_bands is the list of original bands that were merged into
-    this group (for tooltip flagging).
     """
     if not bands:
         return []
 
-    # Wrap each raw band with a sub_bands list for provenance tracking
     groups = []
     for b in bands:
         groups.append({
@@ -119,7 +123,6 @@ def merge_bands_to_groups(bands):
             'sub_bands': [b],
         })
 
-    # Phase 1: merge adjacent groups whose sub_bands all share one shape
     def _dominant(g):
         shapes = {}
         for sb in g['sub_bands']:
@@ -144,7 +147,6 @@ def merge_bands_to_groups(bands):
                 new_groups.append(g)
         groups = new_groups
 
-    # Phase 2: smallest-width merge until <=5
     while len(groups) > 5:
         min_width = float('inf')
         min_idx = 0
@@ -162,7 +164,6 @@ def merge_bands_to_groups(bands):
         }
         groups = groups[:min_idx] + [merged_group] + groups[min_idx + 2:]
 
-    # Compute dominant shape and abbrev for each final group
     for g in groups:
         dom = _dominant(g)
         g['dominant_shape'] = dom
@@ -204,7 +205,6 @@ def find_today_group_idx(groups, today_val):
     for i, g in enumerate(groups):
         if g['start'] <= today_val <= g['end']:
             return i
-    # Fallback: closest group
     dists = [min(abs(today_val - g['start']), abs(today_val - g['end'])) for g in groups]
     return int(np.argmin(dists))
 
@@ -234,6 +234,43 @@ def compute_bands(_panel_hash, anchor_vector_tuple, hist_mins, hist_maxs):
     return raw_bands
 
 
+@st.cache_data(show_spinner="Scoring preset anchors...")
+def build_preset_labels(_panel_hash):
+    """Build display labels for the 16 preset anchor dates."""
+    panel = load_panel()
+    model, le = load_model()
+    df = panel.sort_values('date').reset_index(drop=True)
+
+    labels = []
+    valid_dates = []
+    for ds in PRESET_DATES:
+        ts = pd.Timestamp(ds)
+        match = df[df['date'] == ts]
+        if len(match) == 0:
+            # Try nearest before
+            mask = df['date'] <= ts
+            if not mask.any():
+                continue
+            match = df.loc[mask].iloc[[-1]]
+        row = match.iloc[0]
+        vec = row[TM_FEATURES].values.astype(float)
+        if np.any(np.isnan(vec)):
+            continue
+        probs = model.predict_proba(vec.reshape(1, -1))[0]
+        pred_enc = probs.argmax()
+        pred_shape = str(le.inverse_transform([pred_enc])[0])
+        obs_shape = str(row['shape'])
+        conf = float(probs.max())
+        actual_date = row['date'].date()
+
+        obs_a = abbrev(obs_shape)
+        pred_a = abbrev(pred_shape)
+        labels.append(f"{actual_date}  |  obs={obs_a}, pred={pred_a}, conf={conf:.1%}")
+        valid_dates.append(actual_date)
+
+    return labels, valid_dates
+
+
 # ── helpers ────────────────────────────────────────────────────
 def abbrev(shape_code):
     return SHAPE_ABBREV.get(str(shape_code), str(shape_code))
@@ -254,14 +291,14 @@ def friendly(feat_name):
     return FRIENDLY_NAMES.get(feat_name, feat_name)
 
 
-def build_selector(feat_name, raw_bands, anchor_val):
+def build_selector(feat_name, raw_bands, anchor_val, hist_min, hist_max):
     """
     Render a selector widget for a feature and return the selected value.
 
     Discrete features keep their categorical selectbox.
     Continuous features with >=2 bands get qualitative-label select_slider.
-    Features with 1 band (flat) get a single-position slider with a caption
-    noting historical sensitivity.
+    Features with 1 band (flat) get a disabled slider spanning the full
+    historical range with the handle at the anchor value.
     """
     is_discrete = feat_name in DISCRETE_FEATURES
     label = friendly(feat_name)
@@ -291,18 +328,26 @@ def build_selector(feat_name, raw_bands, anchor_val):
     # ── Continuous features ──
     groups = merge_bands_to_groups(raw_bands)
 
-    # Single band (flat): interactive slider with single position + caption
+    # Single band (flat): disabled slider spanning historical min/max
     if len(groups) <= 1:
         st.caption(f"*{definition}*")
         key = f"slider_{feat_name}"
-        # Single-option select_slider — still interactive widget, just one position
+        # Build options from hist range + anchor value, deduped and sorted
+        opts = sorted(set([round(hist_min, 6), round(float(anchor_val), 6), round(hist_max, 6)]))
+        # Find anchor position in options
+        anchor_rounded = round(float(anchor_val), 6)
+        default_val = anchor_rounded
+        if default_val not in opts:
+            # Snap to nearest
+            default_val = min(opts, key=lambda x: abs(x - anchor_rounded))
         st.select_slider(
             label,
-            options=[0],
-            value=0,
-            format_func=lambda _x: f"{anchor_val:.4f}",
+            options=opts,
+            value=default_val,
+            format_func=lambda x: f"{x:.4f}",
             key=key,
-            help=f"{definition}. Anchor value: {anchor_val:.4f}",
+            help=f"{definition}. Anchor value: {anchor_val:.4f}. "
+                 f"Range: [{hist_min:.4f}, {hist_max:.4f}]",
             disabled=True,
         )
         st.caption(
@@ -317,7 +362,7 @@ def build_selector(feat_name, raw_bands, anchor_val):
     qual = QUAL_LABELS.get(n, [f"G{i+1}" for i in range(n)])
 
     option_labels = []
-    option_values = []  # midpoint representative values
+    option_values = []
     tooltips = []
     today_group = find_today_group_idx(groups, anchor_val)
 
@@ -338,7 +383,6 @@ def build_selector(feat_name, raw_bands, anchor_val):
         help=f"{definition}. Anchor value: {anchor_val:.4f} ({qual[today_group]})",
     )
 
-    # Show tooltip detail below the slider
     g = groups[selected_idx]
     tip = tooltips[selected_idx]
     is_anchor = (selected_idx == today_group)
@@ -352,7 +396,6 @@ def build_selector(feat_name, raw_bands, anchor_val):
 def resolve_anchor_row(df, selected_date):
     """
     Resolve a selected date to a panel row.
-
     Returns (row, error_message). If row is None, error_message explains why.
     """
     ts = pd.Timestamp(selected_date)
@@ -373,7 +416,6 @@ def resolve_anchor_row(df, selected_date):
             return None, f"Date {selected_date} has missing feature values (NaN)."
         return row, None
 
-    # No exact match — find nearest available dates
     before = df[df['date'] < ts]
     after = df[df['date'] > ts]
     nearest_before = before['date'].iloc[-1].date() if len(before) > 0 else None
@@ -411,37 +453,58 @@ def main():
     hist_mins = tuple(float(df[f].min()) for f in TM_FEATURES)
     hist_maxs = tuple(float(df[f].max()) for f in TM_FEATURES)
 
+    # Build preset labels (cached)
+    preset_labels, preset_dates = build_preset_labels(len(df))
+
     # ── Date selector ──
     st.subheader("Anchor Date")
-    dc1, dc2 = st.columns([1, 2])
+    dc1, dc2, dc3 = st.columns([1, 1, 1])
+
+    # Preset dropdown
+    CUSTOM_OPTION = "Custom date..."
+    LATEST_OPTION = f"Today (latest): {latest_date}"
+    dropdown_options = [LATEST_OPTION] + preset_labels + [CUSTOM_OPTION]
+
     with dc1:
-        selected_date = st.date_input(
-            "Select any date in panel",
-            value=latest_date,
-            min_value=panel_min_date,
-            max_value=latest_date,
-            key="anchor_date",
-            help=f"Panel range: {panel_min_date} to {latest_date}. "
-                 f"Pick any trading day to anchor the sensitivity sweep.",
+        preset_choice = st.selectbox(
+            "Quick-select anchor",
+            dropdown_options,
+            index=0,
+            key="preset_select",
+            help="16 tested anchor dates from the sensitivity study, or pick any date.",
         )
+
+    # Determine effective date
+    if preset_choice == CUSTOM_OPTION:
+        with dc2:
+            selected_date = st.date_input(
+                "Pick any date in panel",
+                value=latest_date,
+                min_value=panel_min_date,
+                max_value=latest_date,
+                key="anchor_date",
+                help=f"Panel range: {panel_min_date} to {latest_date}.",
+            )
+    elif preset_choice == LATEST_OPTION:
+        selected_date = latest_date
+    else:
+        # Extract date from preset label ("2025-07-11  |  obs=...")
+        idx = preset_labels.index(preset_choice)
+        selected_date = preset_dates[idx]
 
     # Resolve selected date to a panel row
     anchor_row, date_error = resolve_anchor_row(df, selected_date)
     if date_error:
-        with dc2:
+        with dc3:
             st.error(date_error)
         return
 
     anchor_date = anchor_row['date']
     anchor_vector = anchor_row[TM_FEATURES].values.astype(float)
     anchor_shape = str(anchor_row['shape'])
-    is_latest = (anchor_date.date() == latest_date)
 
-    with dc2:
-        if is_latest:
-            st.info(f"Showing latest available date: {anchor_date.date()}")
-        else:
-            st.info(f"Anchored to historical date: {anchor_date.date()}")
+    with dc3:
+        st.info(f"Anchored to: {anchor_date.date()}")
 
     # Compute bands for this anchor (cached per unique vector)
     anchor_vector_tuple = tuple(float(v) for v in anchor_vector)
@@ -479,7 +542,8 @@ def main():
         feat_idx = TM_FEATURES.index(feat)
         with col:
             selected_values[feat] = build_selector(
-                feat, all_bands[feat], anchor_vector[feat_idx])
+                feat, all_bands[feat], anchor_vector[feat_idx],
+                hist_mins[feat_idx], hist_maxs[feat_idx])
 
     # Tier 2
     with st.expander("Tier 2 \u2014 Secondary Drivers", expanded=True):
@@ -488,7 +552,8 @@ def main():
             feat_idx = TM_FEATURES.index(feat)
             with col:
                 selected_values[feat] = build_selector(
-                    feat, all_bands[feat], anchor_vector[feat_idx])
+                    feat, all_bands[feat], anchor_vector[feat_idx],
+                    hist_mins[feat_idx], hist_maxs[feat_idx])
 
     # Tier 3
     with st.expander("Tier 3 \u2014 Minor Drivers", expanded=False):
@@ -497,7 +562,8 @@ def main():
             feat_idx = TM_FEATURES.index(feat)
             with col:
                 selected_values[feat] = build_selector(
-                    feat, all_bands[feat], anchor_vector[feat_idx])
+                    feat, all_bands[feat], anchor_vector[feat_idx],
+                    hist_mins[feat_idx], hist_maxs[feat_idx])
 
     st.divider()
 

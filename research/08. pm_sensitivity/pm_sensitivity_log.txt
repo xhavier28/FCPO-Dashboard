@@ -417,3 +417,47 @@ Tested edge cases:
   Weekend Sat (2025-07-05): blocked, nearest 2025-07-04, 2025-07-07
   Weekend Sun (2025-07-06): blocked, nearest 2025-07-04, 2025-07-07
   Low-conf day (2025-07-11): OK, all 11 features show multiple bands
+
+======================================================================
+2026-07-30 — Bug Fix: Flat-Slider Crash + Missing Preset Dropdown
+======================================================================
+
+Script: pm_sensitivity_app.py (modified in place)
+
+Bug 1 — "RangeError: min (0) is equal/bigger than max (0)":
+  Root cause: flat (1-band) features used st.select_slider(options=[0]),
+  giving a single-element list where Streamlit's internal JS slider
+  component computed min=0, max=0 and crashed client-side.
+  Fix: replaced with options=[hist_min, anchor_val, hist_max] (deduped,
+  sorted), giving the slider a real range. Handle fixed at anchor value
+  via disabled=True. Minimum 2 distinct options guaranteed since
+  hist_min < hist_max always holds.
+
+Bug 2 — 16-preset dropdown empty/not populated:
+  Root cause: the preset dropdown was never implemented. Only a
+  st.date_input existed. This was independent of Bug 1.
+  Fix: added st.selectbox with dropdown_options = ["Today (latest): DATE"]
+  + 16 preset labels + ["Custom date..."]. Each preset labeled as:
+  "YYYY-MM-DD  |  obs=SHAPE, pred=SHAPE, conf=XX.X%"
+  Labels computed via build_preset_labels() (cached). When "Custom date..."
+  is selected, the free st.date_input appears.
+
+All 16 presets verified:
+  2026-06-26 obs=C    pred=C     conf=99.6%
+  2025-04-25 obs=SB   pred=SB    conf=49.2%
+  2025-04-24 obs=SB   pred=C     conf=50.7%
+  2025-06-13 obs=MB   pred=SB    conf=56.3%
+  2025-06-23 obs=C    pred=C     conf=61.0%
+  2025-07-02 obs=F    pred=Mixed conf=53.7%
+  2025-07-11 obs=F    pred=C     conf=37.3%
+  2025-11-12 obs=F    pred=F     conf=58.4%
+  2026-01-14 obs=C    pred=MB    conf=61.4%
+  2020-03-05 obs=MB   pred=MB    conf=73.8%
+  2023-06-15 obs=SB   pred=SB    conf=70.6%
+  2024-05-16 obs=Mixed pred=Mixed conf=77.8%
+  2025-06-30 obs=C    pred=C     conf=71.5%
+  2025-07-18 obs=F    pred=F     conf=73.2%
+  2025-05-13 obs=F    pred=Mixed conf=89.8%
+  2026-03-16 obs=MB   pred=C     conf=75.5%
+
+Both bugs confirmed resolved independently.
