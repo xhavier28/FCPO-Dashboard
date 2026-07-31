@@ -81,7 +81,10 @@ FEATURE_DEFS = {
 
 DARK_BG   = "#0e1117"
 DARK_PLOT = "#262730"
+DARK_GRID = "#3a3a4a"
 DARK_TEXT = "#fafafa"
+
+CURVE_MONTHS = ['M1', 'M2', 'M3', 'M4', 'M5', 'M6']
 
 QUAL_LABELS = {
     2: ['Low', 'High'],
@@ -207,6 +210,38 @@ def find_today_group_idx(groups, today_val):
             return i
     dists = [min(abs(today_val - g['start']), abs(today_val - g['end'])) for g in groups]
     return int(np.argmin(dists))
+
+
+# ── nearest-neighbor for curve overlay ─────────────────────────
+def find_nearest_neighbor(panel_df, modified_vector, target_shape, hist_mins, hist_maxs):
+    """
+    Find the historical day whose 11 PM features are closest (min-max
+    normalized Euclidean distance) to the slider-adjusted vector, among
+    days classified as *target_shape*.
+
+    Returns (matched_row, distance) or (None, None) if no match exists.
+    """
+    candidates = panel_df[panel_df['shape'] == target_shape]
+    if len(candidates) == 0:
+        return None, None
+
+    ranges = np.array(hist_maxs) - np.array(hist_mins)
+    ranges[ranges == 0] = 1.0  # avoid division by zero for constant features
+
+    mod_norm = (modified_vector - np.array(hist_mins)) / ranges
+
+    feat_vals = candidates[TM_FEATURES].values.astype(float)
+    feat_norm = (feat_vals - np.array(hist_mins)) / ranges
+
+    dists = np.sqrt(((feat_norm - mod_norm) ** 2).sum(axis=1))
+    best_idx = int(np.argmin(dists))
+    return candidates.iloc[best_idx], float(dists[best_idx])
+
+
+def normalize_curve(row):
+    """Return M1–M6 as spread from M1 (MYR delta)."""
+    m = row[CURVE_MONTHS].values.astype(float)
+    return m - m[0]
 
 
 # ── caching ────────────────────────────────────────────────────
@@ -624,6 +659,71 @@ def main():
         font_color=DARK_TEXT,
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    # ── Term-structure curve chart ──
+    st.subheader("Term Structure (M1–M6)")
+
+    anchor_curve = normalize_curve(anchor_row)
+    fig_ts = go.Figure()
+
+    # Always show anchor curve
+    fig_ts.add_trace(go.Scatter(
+        x=CURVE_MONTHS, y=anchor_curve,
+        mode='lines+markers',
+        name=f"Anchor {anchor_date.date()} ({abbrev(pred_shape_baseline)})",
+        line=dict(color='#00ccff', width=3),
+        marker=dict(size=8),
+    ))
+
+    caption_text = None
+
+    # Check for shape flip: new predicted shape != anchor's predicted shape
+    shape_flipped = pred_shape_new != pred_shape_baseline
+    if shape_flipped:
+        nn_row, nn_dist = find_nearest_neighbor(
+            df, modified_vector, pred_shape_new, hist_mins, hist_maxs)
+
+        if nn_row is None:
+            st.error(
+                f"Shape flipped to {abbrev(pred_shape_new)} but no historical "
+                f"days with that shape exist in the panel. This is unexpected."
+            )
+        else:
+            nn_curve = normalize_curve(nn_row)
+            nn_date = nn_row['date'].date()
+            nn_shape_abbrev = abbrev(str(nn_row['shape']))
+
+            fig_ts.add_trace(go.Scatter(
+                x=CURVE_MONTHS, y=nn_curve,
+                mode='lines+markers',
+                name=f"Potential: {nn_date} ({nn_shape_abbrev})",
+                line=dict(color='#ff6b6b', width=2, dash='dash'),
+                marker=dict(size=6, symbol='diamond'),
+            ))
+
+            caption_text = (
+                f"Potential curve if shape flips to "
+                f"**{abbrev(pred_shape_new)}**: nearest historical match is "
+                f"**{nn_date}**, classified **{nn_shape_abbrev}** "
+                f"(distance: {nn_dist:.3f})."
+            )
+
+    fig_ts.update_layout(
+        yaxis_title="Spread from M1 (MYR)",
+        xaxis_title="Contract Month",
+        height=350,
+        margin=dict(l=60, r=30, t=20, b=40),
+        paper_bgcolor=DARK_BG,
+        plot_bgcolor=DARK_PLOT,
+        font_color=DARK_TEXT,
+        xaxis=dict(gridcolor=DARK_GRID),
+        yaxis=dict(gridcolor=DARK_GRID, zeroline=True, zerolinecolor=DARK_GRID),
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
+    )
+    st.plotly_chart(fig_ts, use_container_width=True)
+
+    if caption_text:
+        st.caption(caption_text)
 
 
 if __name__ == '__main__':

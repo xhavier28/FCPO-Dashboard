@@ -461,3 +461,38 @@ All 16 presets verified:
   2026-03-16 obs=MB   pred=C     conf=75.5%
 
 Both bugs confirmed resolved independently.
+
+======================================================================
+TERM-STRUCTURE CURVE CHART — M1–M6 OVERLAY ON SHAPE FLIP
+Date: 2026-07-31
+Script: pm_sensitivity_app.py
+======================================================================
+Data source:
+  M1–M6 daily settlement prices from build_tm_daily_panel() panel,
+  originally derived from per-contract CSVs in Raw Data/Term Structure/
+  via load_contracts() → build_daily_table() → shape_classifier →
+  shape_log_enriched.csv → feature_prep.build_tm_daily_panel().
+  2268 rows, 2017-01-02 to 2026-06-26, zero nulls in M1–M6.
+
+Normalization method:
+  Spread from M1 (MYR delta): each tenor expressed as M_n - M1.
+  M1 is always 0. Positive = contango, negative = backwardation.
+  No absolute price scaling — shape only.
+
+Nearest-neighbor distance metric:
+  Standard Euclidean distance on min-max normalized features.
+  Each of the 11 PM features scaled to [0,1] using historical
+  min/max from the full panel before computing distance.
+  Features: prior_shape_enc, stock_pct, palm_soy_chg_4w, prod_yoy,
+  usd_myr_chg_4w, prod_mom_3m, oni, days_in_shape, export_yoy,
+  month, stock_prod_interaction.
+
+Feature vector for matching:
+  Uses the slider-adjusted (hypothetical) vector, not the original
+  anchor's unmodified vector. Search restricted to historical days
+  whose observed shape equals the new predicted shape.
+
+Chart trigger:
+  Second curve shown only on strict shape-class flip:
+  new predicted class != anchor's predicted class.
+  No flip → single anchor curve only.
