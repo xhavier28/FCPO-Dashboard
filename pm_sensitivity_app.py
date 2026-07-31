@@ -244,6 +244,20 @@ def normalize_curve(row):
     return m - m[0]
 
 
+def average_shape_curve(panel_df, target_shape):
+    """
+    Average normalized M1–M6 curve across all historical days classified
+    as *target_shape*.  Returns (avg_curve, n_days) or (None, 0).
+    """
+    candidates = panel_df[panel_df['shape'] == target_shape]
+    n = len(candidates)
+    if n == 0:
+        return None, 0
+    curves = candidates[CURVE_MONTHS].values.astype(float)
+    deltas = curves - curves[:, [0]]  # each row: spread from M1
+    return deltas.mean(axis=0), n
+
+
 # ── caching ────────────────────────────────────────────────────
 @st.cache_resource(show_spinner="Loading data panel...")
 def load_panel():
@@ -663,6 +677,25 @@ def main():
     # ── Term-structure curve chart ──
     st.subheader("Term Structure (M1–M6)")
 
+    shape_flipped = pred_shape_new != pred_shape_baseline
+
+    # Toggle for potential-curve method (only relevant on flip, but always
+    # rendered so the widget key stays stable across reruns)
+    ts_col1, ts_col2 = st.columns([1, 3])
+    with ts_col1:
+        curve_method = st.radio(
+            "Potential curve method",
+            ["Nearest Match", "Shape Average"],
+            index=0,
+            key="curve_method",
+            help=(
+                "Nearest Match: single closest historical day to the current "
+                "slider vector. Shape Average: average curve across all "
+                "historical days classified as the new predicted shape."
+            ),
+            disabled=not shape_flipped,
+        )
+
     anchor_curve = normalize_curve(anchor_row)
     fig_ts = go.Figure()
 
@@ -677,36 +710,65 @@ def main():
 
     caption_text = None
 
-    # Check for shape flip: new predicted shape != anchor's predicted shape
-    shape_flipped = pred_shape_new != pred_shape_baseline
     if shape_flipped:
-        nn_row, nn_dist = find_nearest_neighbor(
-            df, modified_vector, pred_shape_new, hist_mins, hist_maxs)
+        new_abbrev = abbrev(pred_shape_new)
 
-        if nn_row is None:
-            st.error(
-                f"Shape flipped to {abbrev(pred_shape_new)} but no historical "
-                f"days with that shape exist in the panel. This is unexpected."
-            )
-        else:
-            nn_curve = normalize_curve(nn_row)
-            nn_date = nn_row['date'].date()
-            nn_shape_abbrev = abbrev(str(nn_row['shape']))
+        if curve_method == "Nearest Match":
+            nn_row, nn_dist = find_nearest_neighbor(
+                df, modified_vector, pred_shape_new, hist_mins, hist_maxs)
 
-            fig_ts.add_trace(go.Scatter(
-                x=CURVE_MONTHS, y=nn_curve,
-                mode='lines+markers',
-                name=f"Potential: {nn_date} ({nn_shape_abbrev})",
-                line=dict(color='#ff6b6b', width=2, dash='dash'),
-                marker=dict(size=6, symbol='diamond'),
-            ))
+            if nn_row is None:
+                st.error(
+                    f"Shape flipped to {new_abbrev} but no historical "
+                    f"days with that shape exist in the panel."
+                )
+            else:
+                nn_curve = normalize_curve(nn_row)
+                nn_date = nn_row['date'].date()
+                nn_shape_abbrev = abbrev(str(nn_row['shape']))
 
-            caption_text = (
-                f"Potential curve if shape flips to "
-                f"**{abbrev(pred_shape_new)}**: nearest historical match is "
-                f"**{nn_date}**, classified **{nn_shape_abbrev}** "
-                f"(distance: {nn_dist:.3f})."
-            )
+                fig_ts.add_trace(go.Scatter(
+                    x=CURVE_MONTHS, y=nn_curve,
+                    mode='lines+markers',
+                    name=f"Potential: {nn_date} ({nn_shape_abbrev})",
+                    line=dict(color='#ff6b6b', width=2, dash='dash'),
+                    marker=dict(size=6, symbol='diamond'),
+                ))
+
+                caption_text = (
+                    f"Potential curve if shape flips to "
+                    f"**{new_abbrev}**: nearest historical match is "
+                    f"**{nn_date}**, classified **{nn_shape_abbrev}** "
+                    f"(distance: {nn_dist:.3f})."
+                )
+
+        else:  # Shape Average
+            avg_curve, n_days = average_shape_curve(df, pred_shape_new)
+
+            if avg_curve is None:
+                st.error(
+                    f"Shape flipped to {new_abbrev} but no historical "
+                    f"days with that shape exist in the panel."
+                )
+            else:
+                fig_ts.add_trace(go.Scatter(
+                    x=CURVE_MONTHS, y=avg_curve,
+                    mode='lines+markers',
+                    name=f"Potential: {new_abbrev} avg (n={n_days})",
+                    line=dict(color='#ff6b6b', width=2, dash='dash'),
+                    marker=dict(size=6, symbol='diamond'),
+                ))
+
+                caption_text = (
+                    f"Potential curve if shape flips to "
+                    f"**{new_abbrev}**: average of **{n_days}** historical "
+                    f"days classified as {new_abbrev}."
+                )
+                if n_days < 20:
+                    caption_text += (
+                        f" ⚠ Small sample (n={n_days}) — interpret "
+                        f"average shape with caution."
+                    )
 
     fig_ts.update_layout(
         yaxis_title="Spread from M1 (MYR)",

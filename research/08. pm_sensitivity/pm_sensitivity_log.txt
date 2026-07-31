@@ -496,3 +496,29 @@ Chart trigger:
   Second curve shown only on strict shape-class flip:
   new predicted class != anchor's predicted class.
   No flip → single anchor curve only.
+
+======================================================================
+POTENTIAL CURVE METHOD TOGGLE — NEAREST MATCH / SHAPE AVERAGE
+Date: 2026-07-31
+Script: pm_sensitivity_app.py
+======================================================================
+Added radio toggle for flip-triggered second curve source:
+  Mode A (Nearest Match, default): single closest historical day to the
+    slider-adjusted vector, min-max normalized Euclidean, filtered to
+    new predicted shape. Unchanged from prior implementation.
+  Mode B (Shape Average): point-by-point average of normalized M1–M6
+    curves (delta from M1, MYR) across all historical days classified
+    as the new predicted shape.
+
+Toggle disabled when no flip has occurred (single anchor curve only).
+
+Shape average sample sizes (full panel):
+  SB: n=740, MB: n=244, Mixed: n=98, C: n=655, F: n=279.
+  All above 20. Caption warning shown if n < 20.
+
+Average curves (spread from M1, MYR):
+  SB:    [0, -129, -261, -357, -427, -480]
+  MB:    [0,   -9,  -57, -116, -182, -245]
+  Mixed: [0,  -49,  -74,  -79,  -68,  -49]
+  C:     [0,  +31,  +61,  +88, +113, +133]
+  F:     [0,  +53,  +76,  +84,  +78,  +63]
