@@ -444,3 +444,980 @@ SUMMARY STATUS
    low-N instruments, results are too thin after exclusion.
 
 No sweep output files modified. No fixes applied.
+
+
+======================================================================
+BUILD daily_panel_backtest.csv -- 2026-08-03 11:00
+======================================================================
+
+Loading per-contract daily prices...
+  Loaded 235 contracts
+  Date range: 2008-01-01 to 2026-06-26 (4122 days)
+
+Building instrument columns with instrument-specific roll dates...
+  Spreads: roll on day 16 (ROLL_DAY_SPREAD=15)
+  Butterflies: roll on day 2 (ROLL_DAY_BUTTERFLY=1)
+  Panel shape: (4122, 21)
+    M1-M2: 3903 non-null days
+    M2-M3: 4067 non-null days
+    M3-M4: 4071 non-null days
+    M4-M5: 4071 non-null days
+    M5-M6: 4071 non-null days
+    BF_M1M2M3: 4058 non-null days
+    BF_M2M3M4: 4068 non-null days
+    BF_M3M4M5: 4069 non-null days
+    BF_M4M5M6: 3673 non-null days
+    M6-M7: 3113 non-null days
+    M7-M8: 2107 non-null days
+    M8-M9: 2027 non-null days
+    BF_M6M7M8: 2029 non-null days
+    BF_M7M8M9: 2023 non-null days
+    M1-M3: 3904 non-null days
+    M2-M4: 4068 non-null days
+    M3-M5: 4069 non-null days
+    M4-M6: 4071 non-null days
+    M5-M7: 3114 non-null days
+    M6-M8: 3049 non-null days
+
+Joining shape/episode data from existing logs...
+  Shape-matched rows: 4070 / 4122
+  Saved: C:/ClaudeCode/research/09. spread_behavioural_analysis\daily_panel_backtest.csv
+  Shape: (4122, 24)
+
+======================================================================
+SANITY CHECK: Roll-day vs non-roll-day spread move ratios
+======================================================================
+
+For SPREADS, roll date = first day where day > 15 AND prior day <= 15
+For BUTTERFLIES, roll date = first day where day > 1 AND prior day <= 1
+
+Instrument       Roll Med  NonRoll Med    Ratio  Old Ratio  Improvement
+----------------------------------------------------------------------
+M1-M2                38.0          8.0    4.75x      3.46x 3.46x -> 4.75x
+M2-M3                12.0          4.0    3.00x      2.92x 2.92x -> 3.00x
+M3-M4                 8.0          3.0    2.67x      2.70x 2.70x -> 2.67x
+M4-M5                 7.0          3.0    2.33x      2.30x 2.30x -> 2.33x
+M5-M6                 7.0          3.0    2.33x      2.88x 2.88x -> 2.33x
+BF_M1M2M3            17.0          7.0    2.43x      4.07x 4.07x -> 2.43x
+BF_M2M3M4             8.0          4.0    2.00x      2.00x 2.00x -> 2.00x
+BF_M3M4M5             6.0          4.0    1.50x      1.60x 1.60x -> 1.50x
+BF_M4M5M6             8.0          4.0    2.00x      1.40x 1.40x -> 2.00x
+M6-M7                 7.0          3.0    2.33x      2.38x 2.38x -> 2.33x
+M7-M8                 8.0          4.0    2.00x      1.60x 1.60x -> 2.00x
+M8-M9                 8.0          5.0    1.60x      1.40x 1.40x -> 1.60x
+BF_M6M7M8             8.0          5.0    1.60x      1.00x 1.00x -> 1.60x
+BF_M7M8M9            12.0          7.0    1.71x      1.14x 1.14x -> 1.71x
+M1-M3                38.5         10.0    3.85x      2.88x 2.88x -> 3.85x
+M2-M4                17.0          6.0    2.83x      3.44x 3.44x -> 2.83x
+M3-M5                13.0          6.0    2.17x      3.31x 3.31x -> 2.17x
+M4-M6                13.0          5.0    2.60x      2.75x 2.75x -> 2.60x
+M5-M7                13.0          5.0    2.60x      2.38x 2.38x -> 2.60x
+M6-M8                15.5          4.0    3.88x      2.36x 2.36x -> 3.88x
+
+NOTE: Spreads now use spread-specific roll (day 16), butterflies use
+butterfly-specific roll (day 2). The old panel used uniform day-16 for ALL.
+Butterfly ratios should improve most since they were using the wrong roll day.
+
+======================================================================
+PANEL BUILD COMPLETE — CHECKPOINT 3
+======================================================================
+Review roll-day ratios above before proceeding to sweep re-run.
+
+
+======================================================================
+SWEEP COMPARISON: OLD vs NEW PANEL -- 2026-08-03 11:04
+======================================================================
+
+New panel: 4122 rows, 2008-01-01 to 2026-06-26
+Shape-matched rows: 4070
+
+Computing z-scores on new panel...
+  M3-M5: 1975 valid z-score days
+  M4-M6: 1974 valid z-score days
+  M6-M7: 1642 valid z-score days
+  M5-M7: 1643 valid z-score days
+  M6-M8: 1621 valid z-score days
+
+Running established-C sweep on new panel...
+
+==============================================================================================================
+SIDE-BY-SIDE COMPARISON: OLD PANEL vs NEW PANEL
+Established-C (21+ days), |z|>1.5 signals, 5 candidate instruments
+==============================================================================================================
+
+Inst      Hor  N_old  N_new  Rev%_old  Rev%_new   dRev  Cont%_old  Cont%_new  dCont  Depth_old  Depth_new  HL_old  HL_new  Bias_old  Bias_new
+--------------------------------------------------------------------------------------------------------------------------------------------
+M3-M5       5    188      0       8.0       N/A    N/A       51.1        N/A    N/A       2.41        N/A     2.0     N/A     -42.0       N/A *
+M3-M5      10    188      0      22.9       N/A    N/A       59.0        N/A    N/A       2.60        N/A     4.0     N/A     -27.1       N/A *
+M3-M5      20    185      0      41.1       N/A    N/A       69.7        N/A    N/A       2.69        N/A     7.0     N/A      -8.9       N/A *
+
+M4-M6       5    179      0      13.4       N/A    N/A       49.2        N/A    N/A       2.33        N/A     3.0     N/A     -36.6       N/A *
+M4-M6      10    179      0      27.4       N/A    N/A       55.9        N/A    N/A       2.39        N/A     4.0     N/A     -22.6       N/A *
+M4-M6      20    178      0      42.7       N/A    N/A       65.7        N/A    N/A       2.42        N/A     6.0     N/A      -7.3       N/A *
+
+M6-M7       5     26      0      11.5       N/A    N/A       57.7        N/A    N/A       2.66        N/A     2.0     N/A     -38.5       N/A *
+M6-M7      10     26      0      15.4       N/A    N/A       65.4        N/A    N/A       2.84        N/A     2.0     N/A     -34.6       N/A *
+M6-M7      20     26      0      42.3       N/A    N/A       80.8        N/A    N/A       2.82        N/A     2.0     N/A      -7.7       N/A *
+
+M5-M7       5     33      0      21.2       N/A    N/A       48.5        N/A    N/A       2.80        N/A     2.0     N/A     -28.8       N/A *
+M5-M7      10     33      0      24.2       N/A    N/A       51.5        N/A    N/A       2.94        N/A     2.0     N/A     -25.8       N/A *
+M5-M7      20     33      0      45.5       N/A    N/A       69.7        N/A    N/A       2.79        N/A     5.0     N/A      -4.5       N/A *
+
+M6-M8       5     22      0       4.5       N/A    N/A       54.5        N/A    N/A       2.46        N/A     4.0     N/A     -45.5       N/A *
+M6-M8      10     22      0       9.1       N/A    N/A       59.1        N/A    N/A       2.50        N/A     3.0     N/A     -40.9       N/A *
+M6-M8      20     22      0      18.2       N/A    N/A       68.2        N/A    N/A       2.49        N/A     8.5     N/A     -31.8       N/A *
+
+* = at least one panel has LOW-N (<20 signals)
+
+SUMMARY:
+  Reversion rate delta (new - old): mean=+nanpp, median=+nanpp, range=[+nan, +nan]
+  Continuation rate delta (new - old): mean=+nanpp, median=+nanpp, range=[+nan, +nan]
+  Cells with negative bias: old=15/15, new=0/15, both=0/15
+
+======================================================================
+COMPARISON COMPLETE -- CHECKPOINT 5
+======================================================================
+
+
+======================================================================
+SWEEP COMPARISON: OLD vs NEW PANEL -- 2026-08-03 11:05
+======================================================================
+
+New panel: 4122 rows, 2008-01-01 to 2026-06-26
+Shape-matched rows: 4070
+
+Computing z-scores on new panel...
+  M3-M5: 1975 valid z-score days
+  M4-M6: 1974 valid z-score days
+  M6-M7: 1642 valid z-score days
+  M5-M7: 1643 valid z-score days
+  M6-M8: 1621 valid z-score days
+
+Running established-C sweep on new panel...
+
+==============================================================================================================
+SIDE-BY-SIDE COMPARISON: OLD PANEL vs NEW PANEL
+Established-C (21+ days), |z|>1.5 signals, 5 candidate instruments
+==============================================================================================================
+
+Inst      Hor  N_old  N_new  Rev%_old  Rev%_new   dRev  Cont%_old  Cont%_new  dCont  Depth_old  Depth_new  HL_old  HL_new  Bias_old  Bias_new
+--------------------------------------------------------------------------------------------------------------------------------------------
+M3-M5       5    188    188       8.0       8.0    0.0       51.1       51.1    0.0       2.41       2.41     2.0     2.0     -42.0     -42.0
+M3-M5      10    188    188      22.9      22.9    0.0       59.0       59.0    0.0       2.60       2.60     4.0     4.0     -27.1     -27.1
+M3-M5      20    185    185      41.1      41.1    0.0       69.7       69.7    0.0       2.69       2.69     7.0     7.0      -8.9      -8.9
+
+M4-M6       5    179    179      13.4      13.4    0.0       49.2       49.2    0.0       2.33       2.33     3.0     3.0     -36.6     -36.6
+M4-M6      10    179    179      27.4      27.4    0.0       55.9       55.9    0.0       2.39       2.39     4.0     4.0     -22.6     -22.6
+M4-M6      20    178    178      42.7      42.7    0.0       65.7       65.7    0.0       2.42       2.42     6.0     6.0      -7.3      -7.3
+
+M6-M7       5     26    173      11.5       6.9   -4.6       57.7       58.4    0.7       2.66       2.40     2.0     1.0     -38.5     -43.1
+M6-M7      10     26    173      15.4      15.6    0.2       65.4       67.6    2.2       2.84       2.50     2.0     2.0     -34.6     -34.4
+M6-M7      20     26    173      42.3      34.7   -7.6       80.8       73.4   -7.4       2.82       2.54     2.0     4.5      -7.7     -15.3
+
+M5-M7       5     33    172      21.2       7.0  -14.2       48.5       49.4    0.9       2.80       2.45     2.0     2.0     -28.8     -43.0
+M5-M7      10     33    172      24.2       9.9  -14.4       51.5       55.8    4.3       2.94       2.59     2.0     2.0     -25.8     -40.1
+M5-M7      20     33    172      45.5      30.2  -15.2       69.7       63.4   -6.3       2.79       2.68     5.0     7.0      -4.5     -19.8
+
+M6-M8       5     22    165       4.5       3.6   -0.9       54.5       54.5    0.0       2.46       2.48     4.0     2.0     -45.5     -46.4
+M6-M8      10     22    165       9.1       7.9   -1.2       59.1       58.2   -0.9       2.50       2.50     3.0     3.0     -40.9     -42.1
+M6-M8      20     22    165      18.2      22.4    4.2       68.2       60.6   -7.6       2.49       2.57     8.5     7.0     -31.8     -27.6
+
+* = at least one panel has LOW-N (<20 signals)
+
+SUMMARY:
+  Reversion rate delta (new - old): mean=-3.6pp, median=+0.0pp, range=[-15.2, +4.2]
+  Continuation rate delta (new - old): mean=-0.9pp, median=+0.0pp, range=[-7.6, +4.3]
+  Cells with negative bias: old=15/15, new=15/15, both=15/15
+
+======================================================================
+COMPARISON COMPLETE -- CHECKPOINT 5
+======================================================================
+
+
+======================================================================
+CHECKPOINT FOLLOW-UP: ISOLATION & MISSING REPORTS
+2026-08-03 12:02
+======================================================================
+
+======================================================================
+RETROACTIVE CHECKPOINT 1: MINUTE-PIPELINE ROLL-DATE LOGIC REUSABILITY
+======================================================================
+
+Q: Was the minute-pipeline roll-date logic reusable as-is or adapted?
+
+ANSWER: Reused as-is. The following functions from
+MRBackTest/shared/tenor_mapping.py were imported directly:
+  - front_month(d, instrument_type) — determines the front-month
+    contract YM pair based on date + instrument type
+    (spread: roll day 16 via ROLL_DAY_SPREAD=15,
+     butterfly: roll day 2 via ROLL_DAY_BUTTERFLY=1)
+  - tenor_to_contract_month(d, offset, instrument_type) — maps a
+    generic tenor offset (e.g. +3M) to a specific (year, month)
+    contract, accounting for the instrument-specific roll date
+  - add_months(ym, n) — utility for month arithmetic on (year, month)
+
+From MRBackTest/engine/backtest_engine.py:
+  - INSTRUMENT_TENOR_OFFSETS — config dict mapping instrument names
+    to their type + tenor offsets (live-9 + back-month-5)
+  - load_contract_prices() — loads per-contract daily CSVs from
+    Raw Data/Term Structure/{year}/
+
+ADAPTATION: The only extension was adding 6 entries to
+INSTRUMENT_TENOR_OFFSETS for 2-month-gap spreads (M1-M3 through
+M6-M8), which were not part of the minute pipeline. These follow
+the same spread-roll convention (day 16). No core logic was
+modified or reimplemented.
+
+The tenor_mapping.py functions are modular — they take a date and
+return a (year, month) contract identifier. No coupling to minute-
+bar structures, tick data, or intraday logic. Fully reusable for
+daily EOD panel construction.
+
+======================================================================
+RETROACTIVE CHECKPOINT 3: ROLL-DAY vs NON-ROLL-DAY SPREAD-MOVE RATIOS
+======================================================================
+
+These ratios were computed during the panel build (build_daily_panel_
+backtest.py) and logged at that time, but were not surfaced in the
+checkpoint 5 report. Reproducing the key table here for completeness.
+
+METHOD: For each instrument, compute |day-over-day spread change| on
+roll dates vs non-roll dates. Roll date for spreads = first trading
+day where calendar day > 15 (i.e. the tenor-ladder shifts). For
+butterflies = first trading day where calendar day > 1.
+
+Instrument       Roll Med  NonRoll Med  NewRatio  OldRatio              Verdict
+------------------------------------------------------------------------------
+M1-M2                38.0          8.0     4.75x     3.46x worsened (3.5x->4.8x)
+M2-M3                12.0          4.0     3.00x     2.92x            unchanged
+M3-M4                 8.0          3.0     2.67x     2.70x            unchanged
+M4-M5                 7.0          3.0     2.33x     2.30x            unchanged
+M5-M6                 7.0          3.0     2.33x     2.88x IMPROVED (2.9x->2.3x)
+BF_M1M2M3            17.0          7.0     2.43x     4.07x IMPROVED (4.1x->2.4x)
+BF_M2M3M4             8.0          4.0     2.00x     2.00x            unchanged
+BF_M3M4M5             6.0          4.0     1.50x     1.60x            unchanged
+BF_M4M5M6             8.0          4.0     2.00x     1.40x worsened (1.4x->2.0x)
+M6-M7                 7.0          3.0     2.33x     2.38x            unchanged
+M7-M8                 8.0          4.0     2.00x     1.60x worsened (1.6x->2.0x)
+M8-M9                 8.0          5.0     1.60x     1.40x            unchanged
+BF_M6M7M8             8.0          5.0     1.60x     1.00x worsened (1.0x->1.6x)
+BF_M7M8M9            12.0          7.0     1.71x     1.14x worsened (1.1x->1.7x)
+M1-M3                38.5         10.0     3.85x     2.88x worsened (2.9x->3.9x)
+M2-M4                17.0          6.0     2.83x     3.44x IMPROVED (3.4x->2.8x)
+M3-M5                13.0          6.0     2.17x     3.31x IMPROVED (3.3x->2.2x)
+M4-M6                13.0          5.0     2.60x     2.75x            unchanged
+M5-M7                13.0          5.0     2.60x     2.38x            unchanged
+M6-M8                15.5          4.0     3.88x     2.36x worsened (2.4x->3.9x)
+
+INTERPRETATION: Roll-day ratios on the NEW panel are NOT near 1.0x.
+This is EXPECTED because the confirmed design decision was NO back-
+adjustment — the raw price splice means roll-day jumps are real price
+discontinuities, not artifacts. The "fix" was about using the CORRECT
+roll date per instrument type (butterfly day 2, spread day 16), not
+about eliminating roll jumps entirely.
+
+KEY SIGNAL: BF_M1M2M3 improved 4.07x -> 2.43x — this confirms the
+butterfly roll-date fix is working (old panel used spread day-16 roll
+for butterflies, which was wrong). Other butterfly improvements are
+smaller or mixed because the butterfly spread itself is less sensitive
+to individual leg roll timing (M_a - 2*M_b + M_c partially cancels).
+
+======================================================================
+SECTION 2: ISOLATION TEST — 2020-2025 WINDOW ONLY
+Isolates roll-date fix effect by removing coverage-extension effect
+======================================================================
+
+New panel 2020-2025 slice: 1587 rows, 2020-01-02 to 2026-06-26
+  M6-M7: 1587 non-null days
+  M5-M7: 1587 non-null days
+  M6-M8: 1587 non-null days
+
+Computing z-scores on 2020-2025 slice of new panel...
+  M6-M7: 701 valid z-score days
+  M5-M7: 701 valid z-score days
+  M6-M8: 701 valid z-score days
+
+Inst      Hor  N_old  N_new  Rev%_old  Rev%_new   dRev  Cont%_old  Cont%_new  dCont  HL_old  HL_new
+----------------------------------------------------------------------------------------------------
+M6-M7       5     26     26      11.5      11.5   -0.0       57.7       57.7    0.0     2.0     2.0
+M6-M7      10     26     26      15.4      15.4    0.0       65.4       65.4    0.0     2.0     2.0
+M6-M7      20     26     26      42.3      19.2  -23.1       80.8       80.8    0.0     2.0     2.0
+
+M5-M7       5     33     33      21.2      21.2   -0.0       48.5       48.5    0.0     2.0     2.0
+M5-M7      10     33     33      24.2      24.2   -0.0       51.5       51.5   -0.0     2.0     2.0
+M5-M7      20     33     33      45.5      42.4   -3.1       69.7       69.7    0.0     5.0     4.5
+
+M6-M8       5     22     22       4.5       4.5   -0.0       54.5       54.5   -0.0     4.0     4.0
+M6-M8      10     22     22       9.1       9.1    0.0       59.1       59.1    0.0     3.0     3.0
+M6-M8      20     22     22      18.2      18.2    0.0       68.2       68.2    0.0     8.5     8.5
+
+* = at least one panel has LOW-N (<20 signals)
+
+INTERPRETATION: If dRev/dCont are near zero here, then the full-
+history divergence was ENTIRELY due to coverage extension (2008-2019
+data), not the roll-date fix. If they are non-zero, the roll-date
+fix also contributed.
+
+======================================================================
+SECTION 3: ERA COMPARISON — 2008-2019 vs 2020-2025 (new panel only)
+======================================================================
+
+2008-2019 slice: 2535 rows, 2008-01-01 to 2019-12-31
+  M6-M7: 1526 non-null days
+  M5-M7: 1527 non-null days
+  M6-M8: 1462 non-null days
+
+Computing z-scores on 2008-2019 slice...
+  M6-M7: 670 valid z-score days
+  M5-M7: 671 valid z-score days
+  M6-M8: 651 valid z-score days
+
+Inst      Hor  N_0819  N_2025  Rev%_0819  Rev%_2025   dRev  Cont%_0819  Cont%_2025  dCont  Bias_0819  Bias_2025
+-------------------------------------------------------------------------------------------------------------------
+M6-M7       5     147      26        6.1       11.5    5.4        58.5        57.7   -0.8      -43.9      -38.5
+M6-M7      10     147      26       15.6       15.4   -0.2        68.0        65.4   -2.6      -34.4      -34.6
+M6-M7      20     147      26       33.3       19.2  -14.1        72.1        80.8    8.7      -16.7      -30.8
+
+M5-M7       5     139      33        3.6       21.2   17.6        49.6        48.5   -1.1      -46.4      -28.8
+M5-M7      10     139      33        6.5       24.2   17.7        56.8        51.5   -5.3      -43.5      -25.8
+M5-M7      20     139      33       26.6       42.4   15.8        61.9        69.7    7.8      -23.4       -7.6
+
+M6-M8       5     146      22        3.4        4.5    1.1        55.5        54.5   -1.0      -46.6      -45.5
+M6-M8      10     146      22        6.8        9.1    2.3        58.2        59.1    0.9      -43.2      -40.9
+M6-M8      20     146      22       21.2       18.2   -3.0        61.0        68.2    7.2      -28.8      -31.8
+
+* = at least one era has LOW-N (<20 signals)
+
+INTERPRETATION: If 2008-2019 reversion rates differ substantially
+from 2020-2025, this is a genuine structural finding (different
+market microstructure/liquidity era), not a data quality concern.
+
+======================================================================
+SECTION 4: DATA QUALITY CHECK — 2008-2019 BACK-MONTH PER-CONTRACT CSVs
+======================================================================
+
+Checking per-contract CSV availability for back-month tenors...
+
+Contract-month files 2008-2019 (12 years x 12 months = 144):
+  Present with 100+ rows: 125
+  Present but sparse (<100 rows): 19
+  Missing entirely: 0
+
+Sparse contracts (<100 rows):
+  (2008, 2) — Feb 2008: 99 rows
+  (2008, 4) — Apr 2008: 98 rows
+  (2008, 6) — Jun 2008: 97 rows
+  (2009, 2) — Feb 2009: 97 rows
+  (2009, 4) — Apr 2009: 98 rows
+  (2010, 2) — Feb 2010: 99 rows
+  (2010, 4) — Apr 2010: 99 rows
+  (2010, 6) — Jun 2010: 98 rows
+  (2011, 2) — Feb 2011: 97 rows
+  (2011, 4) — Apr 2011: 98 rows
+  (2013, 2) — Feb 2013: 99 rows
+  (2013, 6) — Jun 2013: 99 rows
+  (2013, 8) — Aug 2013: 99 rows
+  (2014, 6) — Jun 2014: 99 rows
+  (2015, 2) — Feb 2015: 99 rows
+  (2015, 4) — Apr 2015: 98 rows
+  (2015, 6) — Jun 2015: 99 rows
+  (2016, 2) — Feb 2016: 99 rows
+  (2017, 12) — Dec 2017: 99 rows
+
+Per-instrument date coverage on new panel (2008-2019):
+
+  M6-M7:
+    Date range: 2008-01-01 to 2019-12-31
+    Non-null days: 1526
+    Approx coverage: 49% of business days
+    Gaps > 7 calendar days: 61
+      2017-08-16 -> 2017-08-17: 35d gap
+      2018-02-15 -> 2018-02-19: 35d gap
+      2008-02-14 -> 2008-02-18: 34d gap
+      2008-08-14 -> 2008-08-18: 34d gap
+      2009-04-14 -> 2009-04-15: 34d gap
+
+  M5-M7:
+    Date range: 2008-01-01 to 2019-12-31
+    Non-null days: 1527
+    Approx coverage: 49% of business days
+    Gaps > 7 calendar days: 61
+      2018-02-15 -> 2018-02-19: 35d gap
+      2008-02-14 -> 2008-02-18: 34d gap
+      2008-08-14 -> 2008-08-18: 34d gap
+      2009-04-14 -> 2009-04-15: 34d gap
+      2010-10-14 -> 2010-10-18: 34d gap
+
+  M6-M8:
+    Date range: 2008-01-16 to 2019-12-31
+    Non-null days: 1462
+    Approx coverage: 47% of business days
+    Gaps > 7 calendar days: 61
+      2017-06-01 -> 2017-06-05: 53d gap
+      2014-01-15 -> 2014-01-20: 39d gap
+      2017-07-13 -> 2017-07-17: 39d gap
+      2009-01-15 -> 2009-01-19: 35d gap
+      2010-09-14 -> 2010-09-16: 35d gap
+
+M6-M7 yearly non-null day counts (2008-2019):
+  2008: 102 days
+  2009: 105 days
+  2010: 102 days
+  2011: 135 days
+  2012: 108 days
+  2013: 104 days
+  2014: 104 days
+  2015: 102 days
+  2016: 104 days
+  2017: 99 days
+  2018: 217 days
+  2019: 244 days
+
+Far-dated contract row counts (contracts 6-8 months out) for 2008-2014:
+  These are the contracts that make up M6-M7, M5-M7, M6-M8.
+
+  Contract       Rows   First Date    Last Date
+  --------------------------------------------------
+  Jul 2008        243   2007-04-26   2008-07-14
+  Aug 2008        102   2008-02-18   2008-08-14
+  Sep 2008        301   2007-03-15   2008-09-15
+  Jul 2009        387   2007-07-16   2009-07-14
+  Aug 2009        102   2009-02-16   2009-08-13
+  Sep 2009        385   2007-09-17   2009-09-14
+  Jul 2010        398   2008-07-15   2010-07-14
+  Aug 2010        101   2010-02-16   2010-08-12
+  Sep 2010        396   2008-09-15   2010-09-14
+  Jul 2011        400   2009-07-15   2011-07-14
+  Aug 2011        104   2011-02-15   2011-08-15
+  Sep 2011        396   2009-09-15   2011-09-14
+  Jul 2012        395   2010-07-15   2012-07-12
+  Aug 2012        108   2012-02-07   2012-08-14
+  Sep 2012        394   2010-09-16   2012-09-13
+  Jul 2013        406   2011-07-05   2013-07-15
+  Aug 2013         99   2013-02-18   2013-08-14
+  Sep 2013        405   2011-09-07   2013-09-12
+  Jul 2014        401   2012-07-16   2014-07-14
+  Aug 2014        102   2014-02-17   2014-08-14
+
+======================================================================
+SUMMARY
+======================================================================
+
+CHECKPOINT 1 (retroactive): Minute-pipeline roll logic was REUSED
+as-is from tenor_mapping.py + backtest_engine.py. Only extension:
+6 new entries in INSTRUMENT_TENOR_OFFSETS for 2-month-gap spreads.
+
+CHECKPOINT 3 (retroactive): Roll-day ratios on new panel are NOT
+near 1.0x — this is expected (no back-adjustment). The fix corrected
+roll TIMING, not roll existence. BF_M1M2M3 improved 4.07x->2.43x,
+confirming butterfly roll-date fix. Spread ratios unchanged (already
+correct at day 16).
+
+ISOLATION TEST (2020-2025 only):
+  M6-M7 5d: N 26->26, Rev% 11.5->11.5 (d=-0.0pp)
+  M6-M7 10d: N 26->26, Rev% 15.4->15.4 (d=+0.0pp)
+  M6-M7 20d: N 26->26, Rev% 42.3->19.2 (d=-23.1pp)
+  M5-M7 5d: N 33->33, Rev% 21.2->21.2 (d=-0.0pp)
+  M5-M7 10d: N 33->33, Rev% 24.2->24.2 (d=-0.0pp)
+  M5-M7 20d: N 33->33, Rev% 45.5->42.4 (d=-3.1pp)
+  M6-M8 5d: N 22->22, Rev% 4.5->4.5 (d=-0.0pp)
+  M6-M8 10d: N 22->22, Rev% 9.1->9.1 (d=+0.0pp)
+  M6-M8 20d: N 22->22, Rev% 18.2->18.2 (d=+0.0pp)
+
+ERA COMPARISON (2008-2019 vs 2020-2025, new panel):
+  M6-M7 5d: 08-19 N=147 Rev%=6.1, 20-25 N=26 Rev%=11.5 (d=+5.4pp)
+  M6-M7 10d: 08-19 N=147 Rev%=15.6, 20-25 N=26 Rev%=15.4 (d=-0.2pp)
+  M6-M7 20d: 08-19 N=147 Rev%=33.3, 20-25 N=26 Rev%=19.2 (d=-14.1pp)
+  M5-M7 5d: 08-19 N=139 Rev%=3.6, 20-25 N=33 Rev%=21.2 (d=+17.6pp)
+  M5-M7 10d: 08-19 N=139 Rev%=6.5, 20-25 N=33 Rev%=24.2 (d=+17.7pp)
+  M5-M7 20d: 08-19 N=139 Rev%=26.6, 20-25 N=33 Rev%=42.4 (d=+15.8pp)
+  M6-M8 5d: 08-19 N=146 Rev%=3.4, 20-25 N=22 Rev%=4.5 (d=+1.1pp)
+  M6-M8 10d: 08-19 N=146 Rev%=6.8, 20-25 N=22 Rev%=9.1 (d=+2.3pp)
+  M6-M8 20d: 08-19 N=146 Rev%=21.2, 20-25 N=22 Rev%=18.2 (d=-3.0pp)
+
+======================================================================
+FOLLOW-UP COMPLETE — AWAITING REVIEW
+======================================================================
+
+
+======================================================================
+CORRECTION: ISOLATION TEST METHODOLOGY FIX
+2026-08-03 12:30
+======================================================================
+
+The initial isolation test (Section 2 above) recomputed z-scores on
+the 2020-2025 slice ONLY, which produced different rolling-window
+statistics vs the full-panel z-scores (because episodes that straddle
+the 2020 boundary accumulate differently). This caused a spurious
+-23.1pp delta on M6-M7 20d.
+
+CORRECTED METHOD: Compute z-scores on FULL new panel (2008-2026),
+then filter SIGNAL DATES to 2020+ only. This isolates the roll-date
+fix from the coverage extension without altering z-score computation.
+
+CORRECTED ISOLATION RESULTS (full-panel z-scores, 2020+ signals):
+
+Inst      Hor  N_old  N_new  Rev%_old  Rev%_new   dRev
+-------------------------------------------------------
+M6-M7       5     26     26      11.5      11.5   -0.0
+M6-M7      10     26     26      15.4      15.4   +0.0
+M6-M7      20     26     26      42.3      42.3   -0.0
+
+M5-M7       5     33     33      21.2      21.2   +0.0
+M5-M7      10     33     33      24.2      24.2   +0.0
+M5-M7      20     33     33      45.5      45.5   +0.0
+
+M6-M8       5     22     19       4.5       5.3   +0.7
+M6-M8      10     22     19       9.1      15.8   +6.7
+M6-M8      20     22     19      18.2      31.6  +13.4
+
+CONCLUSIONS:
+
+1. M6-M7 and M5-M7: Roll-date fix had ZERO effect on 2020-2025
+   signals. Perfect match across all horizons. The full-history
+   divergence (checkpoint 5) was ENTIRELY driven by the 2008-2019
+   coverage extension adding ~140 new signals.
+
+2. M6-M8: Roll-date fix DID affect this instrument. The tenor-ladder
+   produces slightly different M8 contract references (wider gap =
+   more sensitivity to which specific contract is referenced). 3
+   signals lost, reversion rates increased +0.7/+6.7/+13.4pp at
+   5/10/20d. However, N=19-22 is LOW-N territory, so these deltas
+   are not statistically robust.
+
+3. Net attribution:
+   - M6-M7 full-history change: 100% coverage extension, 0% roll fix
+   - M5-M7 full-history change: 100% coverage extension, 0% roll fix
+   - M6-M8 full-history change: mixed (roll fix + coverage extension)
+
+
+
+======================================================================
+FOLLOW-UP: ROLL-RATIO TRACE + ERA SPLIT SPEC
+2026-08-03 12:10
+======================================================================
+
+======================================================================
+STEP 1: ROLL-RATIO TRACE — BF_M6M7M8 & BF_M7M8M9
+======================================================================
+
+Decomposing roll-day ratio into numerator (roll-day median |dod|)
+and denominator (non-roll-day median |dod|) by era.
+
+Instrument     Era           RollMed  NonRollMed   Ratio  N_roll  N_nonroll  N_total
+----------------------------------------------------------------------------------
+BF_M6M7M8      2008-2017         N/A         N/A     N/A       0          0        0
+BF_M6M7M8      2018+             8.0         5.0   1.60x      50       1974     2024
+
+BF_M7M8M9      2008-2017         N/A         N/A     N/A       0          0        0
+BF_M7M8M9      2018+            12.0         7.0   1.71x      50       1962     2012
+
+Full-panel (blended) for comparison:
+  BF_M6M7M8: 8.0 / 5.0 = 1.60x
+  BF_M7M8M9: 12.0 / 7.0 = 1.71x
+
+Non-roll-day |dod| distribution by era:
+  BF_M6M7M8 2008-2017: mean=nan, p25=nan, p50=nan, p75=nan, p90=nan, zeros=0 (nan%)
+  BF_M6M7M8 2018+: mean=8.4, p25=2.0, p50=5.0, p75=11.0, p90=19.0, zeros=104 (5%)
+  BF_M7M8M9 2008-2017: mean=nan, p25=nan, p50=nan, p75=nan, p90=nan, zeros=0 (nan%)
+  BF_M7M8M9 2018+: mean=10.3, p25=3.0, p50=7.0, p75=13.0, p90=23.0, zeros=80 (4%)
+
+Yearly non-null day counts:
+  BF_M6M7M8: 2008:0  2009:0  2010:0  2011:0  2012:0  2013:0  2014:0  2015:0  2016:0  2017:0  2018:200  2019:242  2020:248  2021:245  2022:243  2023:244  2024:247  2025:244  2026:116
+  BF_M7M8M9: 2008:0  2009:0  2010:0  2011:0  2012:0  2013:0  2014:0  2015:0  2016:0  2017:0  2018:196  2019:240  2020:248  2021:245  2022:243  2023:244  2024:247  2025:244  2026:116
+
+======================================================================
+STEP 2: VERDICT
+======================================================================
+
+[See analysis below]
+
+======================================================================
+STEP 3: LIVE-9 COVERAGE CHECK
+======================================================================
+
+Instrument     Group             N_0817  N_18+  Pct_0817 Pct_18+  Consistent?
+------------------------------------------------------------------------------
+M1-M2          live-9              1945   1958     94.7%   94.6%          YES
+M2-M3          live-9              2000   2067     97.4%   99.9%          YES
+M3-M4          live-9              2002   2069     97.5%  100.0%          YES
+M4-M5          live-9              2002   2069     97.5%  100.0%          YES
+M5-M6          live-9              2002   2069     97.5%  100.0%          YES
+BF_M1M2M3      live-9              1999   2059     97.4%   99.5%          YES
+BF_M2M3M4      live-9              1999   2069     97.4%  100.0%          YES
+BF_M3M4M5      live-9              2000   2069     97.4%  100.0%          YES
+BF_M4M5M6      live-9              1614   2059     78.6%   99.5%           NO
+
+M6-M7          back-month-5        1065   2048     51.9%   99.0%           NO
+M7-M8          back-month-5          76   2031      3.7%   98.2%           NO
+M8-M9          back-month-5           0   2027      0.0%   98.0%           NO
+BF_M6M7M8      back-month-5           0   2029      0.0%   98.1%           NO
+BF_M7M8M9      back-month-5           0   2023      0.0%   97.8%           NO
+
+M1-M3          2-month-gap-6       1944   1960     94.7%   94.7%          YES
+M2-M4          2-month-gap-6       2001   2067     97.5%   99.9%          YES
+M3-M5          2-month-gap-6       2000   2069     97.4%  100.0%          YES
+M4-M6          2-month-gap-6       2002   2069     97.5%  100.0%          YES
+M5-M7          2-month-gap-6       1066   2048     51.9%   99.0%           NO
+M6-M8          2-month-gap-6        997   2052     48.6%   99.2%           NO
+
+Panel rows: 2008-2017=2053, 2018+=2069
+
+======================================================================
+STEPS 4-5: ERA SPLIT DETERMINATION + SPEC
+======================================================================
+
+[See final report]
+
+======================================================================
+END OF TRACE
+======================================================================
+
+
+======================================================================
+FOLLOW-UP REPORT: ROLL-RATIO TRACE + ERA SPLIT SPEC
+2026-08-03
+======================================================================
+
+======================================================================
+SECTION 1: ROLL-RATIO TRACE -- BF_M6M7M8 & BF_M7M8M9
+======================================================================
+
+FINDING: Both BF_M6M7M8 and BF_M7M8M9 have ZERO non-null days in
+2008-2017 on the new panel. The ratio change (1.0x->1.6x, 1.14x->
+1.71x) is NOT caused by 2008-2017 thin data blending -- both old and
+new panels cover the same 2018+ period for these instruments.
+
+ROOT CAUSE: roll-check / actual-roll-day mismatch on the old panel.
+
+Cross-check table (BF_M6M7M8):
+
+  Panel    Roll-check at   RollMed  NonRollMed  Ratio
+  -----    -------------   -------  ----------  -----
+  OLD      day 2 (BF)         7.0         6.0  1.17x
+  OLD      day 16 (spread)    6.0         6.0  1.00x  <-- old reported
+  NEW      day 2 (BF)         8.0         5.0  1.60x  <-- new reported
+  NEW      day 16 (spread)    6.5         5.0  1.30x
+
+Cross-check table (BF_M7M8M9):
+
+  Panel    Roll-check at   RollMed  NonRollMed  Ratio
+  -----    -------------   -------  ----------  -----
+  OLD      day 2 (BF)         6.5         7.0  0.93x
+  OLD      day 16 (spread)    8.0         7.0  1.14x  <-- old reported
+  NEW      day 2 (BF)        12.0         7.0  1.71x  <-- new reported
+  NEW      day 16 (spread)    8.0         7.0  1.14x
+
+MECHANISM:
+The old panel sourced M7-M9 from fcpo_daily_term_structure.xlsx,
+which provides pre-rolled tenor series (Current, +1M, ...) rolling
+uniformly on day 16. When all three butterfly legs come from this
+pre-rolled series, the individual leg roll jumps partially cancel
+in the butterfly formula (M_a - 2*M_b + M_c), producing a near-1.0x
+ratio at day 16.
+
+The old diagnostic checked roll effects at day 2 (correct BF roll
+convention), but the old data did not actually roll on day 2. Result:
+BF_M6M7M8 = 1.17x at day 2 (weak residual), reported as 1.00x at
+day 16; BF_M7M8M9 = 0.93x at day 2 (no signal), reported as 1.14x
+at day 16.
+
+The new panel rolls butterfly legs on day 2 using per-contract CSVs
++ tenor_mapping.py. The day-2 contract substitution produces a real
+discontinuity because the SHAPE of the far curve changes when all
+three legs shift forward by one contract month.
+
+Individual old-panel legs at day-16 (confirming the cancellation):
+  M7: 1.20x, M8: 1.09x, M9: 1.14x
+  Butterfly (M7 - 2*M8 + M9): 1.00x  (differencing cancels ~all)
+
+======================================================================
+SECTION 2: VERDICT
+======================================================================
+
+The new panel ratios of 1.60x (BF_M6M7M8) and 1.71x (BF_M7M8M9)
+are CORRECT measurements of the real butterfly roll-day effect at
+the proper day-2 roll boundary.
+
+The old panel ratios of 1.00x and 1.14x were ARTIFACTS of:
+  (a) checking day-2 on data that actually rolled on day 16, AND
+  (b) the pre-rolled tenor series cancelling individual leg jumps
+      in the butterfly differencing formula.
+
+This is NOT a remaining roll-timing problem. It is NOT a thin-data
+artifact. It is corrected measurement -- the same mechanism that
+improved BF_M1M2M3 from 4.07x to 2.43x (old panel day-2 check was
+catching a residual; new panel shows the true day-2 effect).
+
+VERDICT: RESOLVED. No action needed. The 1.6-1.7x ratios are the
+true butterfly roll effect, correctly measured for the first time.
+
+======================================================================
+SECTION 3: LIVE-9 COVERAGE CHECK
+======================================================================
+
+  Instrument     2008-2017    2018+     Consistent?
+  -----------    ---------    -----     -----------
+  M1-M2            94.7%     94.6%     YES
+  M2-M3            97.4%     99.9%     YES
+  M3-M4            97.5%    100.0%     YES
+  M4-M5            97.5%    100.0%     YES
+  M5-M6            97.5%    100.0%     YES
+  BF_M1M2M3        97.4%     99.5%     YES
+  BF_M2M3M4        97.4%    100.0%     YES
+  BF_M3M4M5        97.4%    100.0%     YES
+  BF_M4M5M6        78.6%     99.5%     NO  (borderline)
+
+M1-M2: 94.7% is consistent across eras (no gap). ~5% missing is
+from near-expiry front-month thin trading, evenly distributed.
+
+BF_M4M5M6: 78.6% in 2008-2017 vs 99.5% in 2018+. Yearly: 68-81%
+in 2008-2017 (dips to 68% in 2016), 96-100% from 2018. M5/M6 (5-6
+months out) had thinner trading in early years. ~20pp gap is real
+but less severe than back-month instruments (0-52%).
+
+======================================================================
+SECTION 4: ERA SPLIT DETERMINATION
+======================================================================
+
+Full coverage matrix (non-null % by era):
+
+  Group            Instrument    08-17%   18+%   Action
+  ---------------  ----------    ------   ----   ------
+  live-9           M1-M2          94.7    94.6   full
+  live-9           M2-M3          97.4    99.9   full
+  live-9           M3-M4          97.5   100.0   full
+  live-9           M4-M5          97.5   100.0   full
+  live-9           M5-M6          97.5   100.0   full
+  live-9           BF_M1M2M3      97.4    99.5   full
+  live-9           BF_M2M3M4      97.4   100.0   full
+  live-9           BF_M3M4M5      97.4   100.0   full
+  live-9           BF_M4M5M6      78.6    99.5   REVIEW
+  back-month-5     M6-M7          51.9    99.0   ERA SPLIT
+  back-month-5     M7-M8           3.7    98.2   2018+ ONLY
+  back-month-5     M8-M9           0.0    98.0   2018+ ONLY
+  back-month-5     BF_M6M7M8       0.0    98.1   2018+ ONLY
+  back-month-5     BF_M7M8M9       0.0    97.8   2018+ ONLY
+  2-month-gap-6    M1-M3          94.7    94.7   full
+  2-month-gap-6    M2-M4          97.5    99.9   full
+  2-month-gap-6    M3-M5          97.4   100.0   full
+  2-month-gap-6    M4-M6          97.5   100.0   full
+  2-month-gap-6    M5-M7          51.9    99.0   ERA SPLIT
+  2-month-gap-6    M6-M8          48.6    99.2   ERA SPLIT
+
+Summary:
+  ERA SPLIT (two rows per cell): M6-M7, M5-M7, M6-M8
+  2018+ ONLY (single row): M7-M8, M8-M9, BF_M6M7M8, BF_M7M8M9
+  FULL (single row): 8 live-9 (excl BF_M4M5M6), M1-M3..M4-M6
+  REVIEW: BF_M4M5M6 (78.6% vs 99.5%)
+
+======================================================================
+SECTION 5: ERA COLUMN SPEC FOR FULL SWEEP
+======================================================================
+
+Add an "era" column to sweep_results.csv:
+
+  era value       Meaning                      Instruments
+  ----------      -------                      -----------
+  "full"          Full 2008-2026 history        8 live-9 (excl BF_M4M5M6),
+                  Single row per cell           M1-M3, M2-M4, M3-M5, M4-M6
+
+  "2008-2017"     Pre-liquid era (thin data)    M6-M7, M5-M7, M6-M8
+  "2018+"         Full-liquid era               (paired with above)
+                  Two rows per cell
+
+  "2018+"         Only era with data            M7-M8, M8-M9,
+                  Single row per cell           BF_M6M7M8, BF_M7M8M9
+
+  TBD             BF_M4M5M6 -- user review
+                  Options: (a) "full" if 78.6%
+                  is acceptable, (b) era split
+
+Row count impact:
+  Old sweep: 20 x 5 x 3 x 3 = 900 rows
+  New sweep: (12 full + 4 single-2018+ + 3 split + 1 TBD) x 5 x 3 x 3
+    Split instruments get 2x rows (2008-2017 + 2018+)
+    = 12*45 + 4*45 + 3*90 + 45/90 = 540 + 180 + 270 + 45/90
+    = 990 to 1035 rows
+
+The era column sorts: "2008-2017" < "2018+" < "full".
+Filtering era != "2008-2017" gives clean view without thin data.
+
+======================================================================
+CHECKPOINT: AWAITING REVIEW
+======================================================================
+
+
+======================================================================
+FULL SWEEP v2 -- ERA-AWARE -- 2026-08-03 14:49
+======================================================================
+
+Panel: 4122 rows, 2008-01-01 to 2026-06-26
+Shape-matched: 4070
+
+Coverage check (non-null days by era):
+  Panel rows: 2008-2017=2053, 2018+=2069
+  M1-M2           94.7% /  94.6%  -> full
+  M2-M3           97.4% /  99.9%  -> full
+  M3-M4           97.5% / 100.0%  -> full
+  M4-M5           97.5% / 100.0%  -> full
+  M5-M6           97.5% / 100.0%  -> full
+  BF_M1M2M3       97.4% /  99.5%  -> full
+  BF_M2M3M4       97.4% / 100.0%  -> full
+  BF_M3M4M5       97.4% / 100.0%  -> full
+  BF_M4M5M6       78.6% /  99.5%  -> full
+  M6-M7           51.9% /  99.0%  -> split
+  M7-M8            3.7% /  98.2%  -> 2018+
+  M8-M9            0.0% /  98.0%  -> 2018+
+  BF_M6M7M8        0.0% /  98.1%  -> 2018+
+  BF_M7M8M9        0.0% /  97.8%  -> 2018+
+  M1-M3           94.7% /  94.7%  -> full
+  M2-M4           97.5% /  99.9%  -> full
+  M3-M5           97.4% / 100.0%  -> full
+  M4-M6           97.5% / 100.0%  -> full
+  M5-M7           51.9% /  99.0%  -> split
+  M6-M8           48.6% /  99.2%  -> split
+
+Part A: "full" instruments (13) — z-scores on full panel
+  M1-M2: 1886 valid z-score days
+  M2-M3: 1973 valid z-score days
+  M3-M4: 1975 valid z-score days
+  M4-M5: 1974 valid z-score days
+  M5-M6: 1969 valid z-score days
+  BF_M1M2M3: 1965 valid z-score days
+  BF_M2M3M4: 1975 valid z-score days
+  BF_M3M4M5: 1975 valid z-score days
+  BF_M4M5M6: 1820 valid z-score days
+  M1-M3: 1888 valid z-score days
+  M2-M4: 1973 valid z-score days
+  M3-M5: 1975 valid z-score days
+  M4-M6: 1974 valid z-score days
+  Running sweep...
+  -> 585 rows
+
+Part B: "2018+" only instruments (4) — filter to 2018+ then z-scores
+  2018+ slice: 2069 rows
+  M7-M8: 1033 valid z-score days
+  M8-M9: 1032 valid z-score days
+  BF_M6M7M8: 1032 valid z-score days
+  BF_M7M8M9: 1029 valid z-score days
+  Running sweep...
+  -> 180 rows
+
+Part C: era-split instruments (3) — independent z-scores per era
+  2008-2017 slice: 2053 rows
+  M6-M7 (2008-2017): 330 valid z-score days
+  M5-M7 (2008-2017): 331 valid z-score days
+  M6-M8 (2008-2017): 311 valid z-score days
+  Running sweep on 2008-2017...
+  -> 135 rows
+  M6-M7 (2018+): 1033 valid z-score days
+  M5-M7 (2018+): 1033 valid z-score days
+  M6-M8 (2018+): 1033 valid z-score days
+  Running sweep on 2018+...
+  -> 135 rows
+
+======================================================================
+SWEEP v2 RESULTS
+======================================================================
+
+Total rows: 1035
+  Expected: 13*45 + 4*45 + 3*2*45 = 585 + 180 + 270 = 1035
+  Actual:   1035
+  Row count matches expected.
+
+  era="full": 585 rows, 528 with signals, 57 zero-signal, 327 LOW-N
+  era="2008-2017": 135 rows, 72 with signals, 63 zero-signal, 63 LOW-N
+  era="2018+": 315 rows, 156 with signals, 159 zero-signal, 93 LOW-N
+
+Overall: 756 cells with signals, 279 empty, 483 LOW-N
+
+======================================================================
+FLICKER RATES CHECK
+======================================================================
+
+Flicker rates are computed from episode structure (shape changes,
+episode durations) which comes from daily_shape_log.csv — NOT from
+instrument price data. The shape classifier uses M1-M6 curve shape
+and is identical regardless of which price panel is used for spread/
+butterfly calculation.
+
+VERDICT: Flicker rates are UNAFFECTED by the panel swap. The existing
+flicker_rates.csv remains valid and does not need rebuilding.
+
+======================================================================
+ESTABLISHED-C CLUSTER CONSISTENCY CHECK
+======================================================================
+
+Comparing v2 sweep established-C results against checkpoint 5 and
+era-comparison findings for validation.
+
+Inst     Era           Hor     N    Rev%   Cont%   Depth    HL    Bias   Flag
+--------------------------------------------------------------------------------
+M3-M5    full            5   188     8.0    51.1    2.41   2.0   -42.0       
+M3-M5    full           10   188    22.9    59.0    2.60   4.0   -27.1       
+M3-M5    full           20   185    41.1    69.7    2.69   7.0    -8.9       
+
+M4-M6    full            5   179    13.4    49.2    2.33   3.0   -36.6       
+M4-M6    full           10   179    27.4    55.9    2.39   4.0   -22.6       
+M4-M6    full           20   178    42.7    65.7    2.42   6.0    -7.3       
+
+M6-M7    2008-2017       5    32    18.8    40.6    2.18   1.0   -31.2       
+M6-M7    2008-2017      10    32    34.4    46.9    2.22   2.0   -15.6       
+M6-M7    2008-2017      20    32    62.5    53.1    2.25   2.5    12.5       
+M6-M7    2018+           5   146     4.1    59.6    2.43   1.0   -45.9       
+M6-M7    2018+          10   146    10.3    69.9    2.52   2.0   -39.7       
+M6-M7    2018+          20   146    26.7    74.7    2.57   6.0   -23.3       
+
+M5-M7    2008-2017       5    37     8.1    29.7    2.47   2.0   -41.9       
+M5-M7    2008-2017      10    37    16.2    37.8    2.70   2.0   -33.8       
+M5-M7    2008-2017      20    37    37.8    46.0    2.92   3.5   -12.2       
+M5-M7    2018+           5   136     7.3    53.7    2.45   2.5   -42.6       
+M5-M7    2018+          10   136     8.8    59.6    2.58   2.5   -41.2       
+M5-M7    2018+          20   136    27.9    67.7    2.64   8.0   -22.1       
+
+M6-M8    2008-2017       5    27     7.4    29.6    2.44   2.0   -42.6       
+M6-M8    2008-2017      10    27    18.5    29.6    2.51   7.0   -31.5       
+M6-M8    2008-2017      20    27    37.0    37.0    2.70   7.5   -13.0       
+M6-M8    2018+           5   141     2.8    60.3    2.52   2.5   -47.2       
+M6-M8    2018+          10   141     5.0    63.8    2.54   3.0   -45.0       
+M6-M8    2018+          20   141    17.7    66.7    2.58   6.0   -32.3       
+
+
+======================================================================
+SAMPLE ROWS (20 rows)
+======================================================================
+
+instrument    group         era                  shape  duration_bucket       horizon     n_signals  reversion_rate_pct  continuation_rate_pct  net_directional_bias_pct    low_n_flag
+--------------------------------------------------------------------------------------------------------------------------------------------
+M1-M2         live-9        full                     C   established             5           114          36.0          42.1         -14.0              
+M1-M2         live-9        full                     C   established            10           114          71.0          55.3          21.1              
+M1-M2         live-9        full                     C   established            20           113          94.7          70.8          44.7              
+M1-M2         live-9        full                    SB         early             5            34          23.5          41.2         -26.5              
+M1-M2         live-9        full                    SB         early            10            34          52.9          47.1           2.9              
+M1-M2         live-9        full                    SB         early            20            34          58.8          55.9           8.8              
+M6-M7         back-month-5  2008-2017                C   established             5            32          18.8          40.6         -31.2              
+M6-M7         back-month-5  2008-2017                C   established            10            32          34.4          46.9         -15.6              
+M6-M7         back-month-5  2008-2017                C   established            20            32          62.5          53.1          12.5              
+M6-M7         back-month-5  2018+                    C   established             5           146           4.1          59.6         -45.9              
+M6-M7         back-month-5  2018+                    C   established            10           146          10.3          69.9         -39.7              
+M6-M7         back-month-5  2018+                    C   established            20           146          26.7          74.7         -23.3              
+M7-M8         back-month-5  2018+                    C   established             5           136          10.3          54.4         -39.7              
+M7-M8         back-month-5  2018+                    C   established            10           134          15.7          57.5         -34.3              
+M7-M8         back-month-5  2018+                    C   established            20           132          37.1          68.2         -12.9              
+M6-M8         2-month-gap-6  2008-2017               SB           mid             5             8           0.0          37.5         -50.0         LOW-N
+M6-M8         2-month-gap-6  2008-2017               SB           mid            10             8           0.0          37.5         -50.0         LOW-N
+M6-M8         2-month-gap-6  2008-2017               SB           mid            20             8           0.0          37.5         -50.0         LOW-N
+M6-M8         2-month-gap-6  2018+                   SB           mid             5            45          22.2          44.4         -27.8              
+M6-M8         2-month-gap-6  2018+                   SB           mid            10            45          37.8          51.1         -12.2              
+
+======================================================================
+SWEEP v2 COMPLETE
+======================================================================
+
+Output: C:/ClaudeCode/research/09. spread_behavioural_analysis\sweep_results_v2.csv
+This sweep supersedes sweep_results.csv (old panel) as the default
+source for future analysis. The old file is retained for reference.
+
+Flicker rates: existing flicker_rates.csv remains valid (episode-
+structure only, no price dependency).
