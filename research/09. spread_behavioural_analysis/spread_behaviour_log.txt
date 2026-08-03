@@ -1,0 +1,213 @@
+
+
+======================================================================
+SPREAD BEHAVIOURAL ANALYSIS — 2026-08-03 10:06
+======================================================================
+
+STEP 0: DATA LOADING & EPISODE CONSTRUCTION
+--------------------------------------------------
+Panel: 4070 rows, 2008-01-01 to 2026-06-26
+
+  live-9:
+    M1-M2: 4070 non-null days
+    M2-M3: 4070 non-null days
+    M3-M4: 4070 non-null days
+    M4-M5: 4070 non-null days
+    M5-M6: 4070 non-null days
+    BF_M1M2M3: 4070 non-null days
+    BF_M2M3M4: 4070 non-null days
+    BF_M3M4M5: 4070 non-null days
+    BF_M4M5M6: 4070 non-null days
+
+  back-month-5:
+    M6-M7: 1516 non-null days
+    M7-M8: 1516 non-null days
+    M8-M9: 1516 non-null days
+    BF_M6M7M8: 1516 non-null days
+    BF_M7M8M9: 1516 non-null days
+
+  2-month-gap-6:
+    M1-M3: 4070 non-null days
+    M2-M4: 4070 non-null days
+    M3-M5: 4070 non-null days
+    M4-M6: 4070 non-null days
+    M5-M7: 1516 non-null days
+    M6-M8: 1516 non-null days
+
+======================================================================
+STEP 1: EPISODE-CONSTRUCTION CONSISTENCY CHECK
+======================================================================
+
+All 20 instruments use the SAME episode construction:
+  - Episodes defined by M1-M6 shape classification (6D KMeans)
+  - Episode boundary = shape change from prior day
+  - days_in_shape increments within each episode
+  - Z-score: rolling 60d window within episode, min 10 obs
+
+Back-month (M6-M9) and 2-month-gap instruments inherit the same
+episode structure from the M1-M6 shape log. No independent shape
+classifier exists for M6-M9 (documented blocker from prior research).
+
+Z-score window: CONSISTENT across all 3 groups.
+  - Window cap: 60 days
+  - Min observations: 10
+  - Same rolling within-episode computation for all instruments.
+
+CONSISTENCY VERDICT: CONFIRMED — same episode construction, same
+z-score methodology across all 20 instruments. Proceeding.
+
+Computing z-scores for all 20 instruments...
+  M1-M2: 1975 valid z-score days
+  M2-M3: 1975 valid z-score days
+  M3-M4: 1975 valid z-score days
+  M4-M5: 1974 valid z-score days
+  M5-M6: 1970 valid z-score days
+  BF_M1M2M3: 1975 valid z-score days
+  BF_M2M3M4: 1975 valid z-score days
+  BF_M3M4M5: 1975 valid z-score days
+  BF_M4M5M6: 1975 valid z-score days
+  M6-M7: 902 valid z-score days
+  M7-M8: 900 valid z-score days
+  M8-M9: 904 valid z-score days
+  BF_M6M7M8: 904 valid z-score days
+  BF_M7M8M9: 903 valid z-score days
+  M1-M3: 1975 valid z-score days
+  M2-M4: 1975 valid z-score days
+  M3-M5: 1975 valid z-score days
+  M4-M6: 1975 valid z-score days
+  M5-M7: 903 valid z-score days
+  M6-M8: 902 valid z-score days
+
+======================================================================
+STEP 2: REPRODUCTION CHECK — 3 PRIOR CONFIRMED RESULTS
+======================================================================
+
+--- CHECK 1: M6-M9 spreads SB/C anti-reversion at 20-30d ---
+  Prior: anti-reversion -12% to -35% vs 50% baseline at 20-30d
+
+  M6-M7 (SB/C):
+    5d: delta=+0.0%, N=164
+    10d: delta=+0.0%, N=164
+    20d: delta=-12.8%, N=164
+    30d: delta=-15.2%, N=164
+    20d ALL-SHAPES: delta=-11.6%, N=190
+    30d ALL-SHAPES: delta=-17.9%, N=187
+  M7-M8 (SB/C):
+    5d: delta=-5.1%, N=167
+    10d: delta=-2.7%, N=167
+    20d: delta=-12.3%, N=167
+    30d: delta=-23.1%, N=167
+    20d ALL-SHAPES: delta=-10.7%, N=191
+    30d ALL-SHAPES: delta=-23.5%, N=189
+  M8-M9 (SB/C):
+    5d: delta=+12.8%, N=137
+    10d: delta=+13.5%, N=137
+    20d: delta=-3.3%, N=137
+    30d: delta=-8.4%, N=137
+    20d ALL-SHAPES: delta=-4.6%, N=163
+    30d ALL-SHAPES: delta=-10.5%, N=162
+
+  Expected (all-shapes, from log): M6-M7 20d=-18.3%, M7-M8 20d=-21.3%,
+    M8-M9 20d=-19.0%. M6-M7 30d=-24.5%, M7-M8 30d=-29.7%, M8-M9 30d=-28.1%.
+  Checking range: anti-reversion delta should be in [-12%, -35%] at 20-30d.
+
+--- CHECK 2: M1-M3 genuine positive reversion edge ---
+  Prior: M1-M3 adjSharpe=+0.705, win%=61.4%, n=44 (SB+C backtest)
+  M1-M3 SB/C 5d: reversion=56.9%, delta=+6.9%, N=327
+  M1-M3 SB/C 10d: reversion=54.9%, delta=+4.9%, N=326
+  M1-M3 SB/C 20d: reversion=57.4%, delta=+7.4%, N=324
+
+--- CHECK 3: M5-M7 / M6-M8 structural negative ---
+  Prior: ZERO positive combos across full 42-combo grid (n>=20)
+  Checking reversion rates — expect consistently negative delta.
+  M5-M7 (SB/C):
+    5d: delta=+0.6%, N=178
+    10d: delta=-1.7%, N=178
+    20d: delta=-12.4%, N=178
+    Verdict: MISMATCH — positive cell found
+  M6-M8 (SB/C):
+    5d: delta=-5.5%, N=182
+    10d: delta=-7.1%, N=182
+    20d: delta=-17.6%, N=182
+    Verdict: CONFIRMED (all negative)
+
+STEP 2 COMPLETE — REPRODUCTION RESULTS ABOVE.
+Review before proceeding to Step 3.
+If results match prior confirmed range, continuing to full sweep.
+
+======================================================================
+STEP 3: FULL SWEEP — 20 instruments × 5 shapes × 3 durations × 3 horizons
+======================================================================
+  [1/20] M1-M2 (live-9)...
+  [2/20] M2-M3 (live-9)...
+  [3/20] M3-M4 (live-9)...
+  [4/20] M4-M5 (live-9)...
+  [5/20] M5-M6 (live-9)...
+  [6/20] BF_M1M2M3 (live-9)...
+  [7/20] BF_M2M3M4 (live-9)...
+  [8/20] BF_M3M4M5 (live-9)...
+  [9/20] BF_M4M5M6 (live-9)...
+  [10/20] M6-M7 (back-month-5)...
+  [11/20] M7-M8 (back-month-5)...
+  [12/20] M8-M9 (back-month-5)...
+  [13/20] BF_M6M7M8 (back-month-5)...
+  [14/20] BF_M7M8M9 (back-month-5)...
+  [15/20] M1-M3 (2-month-gap-6)...
+  [16/20] M2-M4 (2-month-gap-6)...
+  [17/20] M3-M5 (2-month-gap-6)...
+  [18/20] M4-M6 (2-month-gap-6)...
+  [19/20] M5-M7 (2-month-gap-6)...
+  [20/20] M6-M8 (2-month-gap-6)...
+
+Sweep complete: 900 rows
+  Non-zero signal rows: 768
+  Zero-signal rows: 132
+  LOW-N rows: 493
+
+======================================================================
+STEP 4: FLICKER RATES (shape survival / episode termination)
+======================================================================
+Flicker table: 100 rows
+NOTE: Flicker rates are identical across instruments (same M1-M6 episode
+structure). Table includes per-instrument rows for schema consistency.
+
+======================================================================
+STEP 5: OUTPUT
+======================================================================
+  Sweep results: C:/ClaudeCode/research/09. spread_behavioural_analysis\sweep_results.csv
+  Flicker rates: C:/ClaudeCode/research/09. spread_behavioural_analysis\flicker_rates.csv
+
+  Sweep table: 900 rows (20 inst × 5 shapes × 3 dur × 3 hor = 900)
+  Flicker table: 100 rows (20 inst × 5 shapes = 100)
+
+SAMPLE — sweep_results.csv (15 rows):
+------------------------------------------------------------------------------------------------------------------------
+instrument           shape  duration_bucket       horizon     n_signals  reversion_rate_pct  continuation_rate_pct  anti_rev_depth_z  time_to_turn_days  half_life_days  net_directional_bias_pct    low_n_flag
+M1-M2                   SB         early             5            34          23.5          44.1           2.7           3.0           2.0         -26.5              
+M1-M2                   SB         early            10            34          52.9          47.1           2.7           3.0           4.5           2.9              
+M1-M2                   SB         early            20            34          58.8          55.9           2.8           4.0           5.0           8.8              
+M1-M2                   SB           mid             5            56          42.9          35.7           2.3           2.5           2.0          -7.1              
+M1-M2                   SB           mid            10            56          53.6          48.2           2.4           3.0           2.0           3.6              
+M1-M2                   SB           mid            20            56          76.8          58.9           2.9          10.0           3.0          26.8              
+M1-M2                   SB   established             5            54          33.3          35.2           3.0           2.0           2.0         -16.7              
+M1-M2                   SB   established            10            54          59.3          46.3           2.9           3.0           4.0           9.3              
+M1-M2                   SB   established            20            54          74.1          59.3           2.9           9.5           4.5          24.1              
+M1-M2                   MB         early             5            18          16.7           5.6           3.1           5.0           3.0         -33.3         LOW-N
+M1-M2                   MB         early            10            18          55.6          16.7           2.5           9.0           5.0           5.6         LOW-N
+M1-M2                   MB         early            20            18          88.9          44.4           2.9          16.0           6.5          38.9         LOW-N
+M1-M2                   MB           mid             5            22          31.8          31.8           2.4           5.0           2.0         -18.2              
+M1-M2                   MB           mid            10            22          36.4          50.0           2.5           8.0           1.5         -13.6              
+M1-M2                   MB           mid            20            22          63.6          68.2           2.6          10.0           2.0          13.6              
+
+SAMPLE — flicker_rates.csv (10 rows):
+--------------------------------------------------------------------------------
+instrument             shape      n_episodes  flicker_5d_pct  flicker_10d_pct  flicker_20d_pct
+M1-M2                     SB              89            49.4            73.0            84.3
+M1-M2                     MB              81            61.7            79.0            93.8
+M1-M2                     TB              68            47.1            64.7            91.2
+M1-M2                      C              67            49.3            65.7            85.1
+M1-M2                      F              84            58.3            78.6            92.9
+
+======================================================================
+RUN COMPLETE
+======================================================================
